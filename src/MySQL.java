@@ -11,7 +11,7 @@ public class MySQL {
             System.out.println("数据库驱动加载成功");
         }catch(ClassNotFoundException e){
             e.printStackTrace();
-        }//aaaa
+        }
         try{
             con = DriverManager.getConnection(url,user,pass);
             System.out.println("数据库连接完成");
@@ -26,10 +26,11 @@ public class MySQL {
         String name = getInput("Name:");
         String user = getInput("User:");
         String password = getInput("Password:");
-        c.getConnection(ip,name,user, password);
+        c.getConnection(ip,name,user, password);//连接SQL
     }
     public static String getInput(String prompt) {
         System.out.print(prompt);
         return sc.nextLine();
+        //自定义输入
     }
 }
