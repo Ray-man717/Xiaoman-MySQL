@@ -27,10 +27,30 @@ public class MySQL {
         String user = getInput("User:");
         String password = getInput("Password:");
         c.getConnection(ip,name,user, password);//连接SQL
+        CreateTable(c.con);
     }
     public static String getInput(String prompt) {
         System.out.print(prompt);
         return sc.nextLine();
         //自定义输入
+    }
+    public static void CreateTable(Connection con) {
+        //创建表方法
+        String sql = "CREATE TABLE EMS(" +
+                "id INT PRIMARY KEY AUTO_INCREMENT" + "," +
+                "ALI DOUBLE NOT NULL DEFAULT 0" + "," +
+                "Temp DOUBLE NOT NULL DEFAULT 0" + "," +
+                "Humidity DOUBLE NOT NULL DEFAULT 0" + "," +
+                "Time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP" + ")";
+
+        try {
+            Statement stmt = con.createStatement();
+            stmt.executeUpdate(sql);//执行动态SQL语句
+            System.out.println("建表完成");
+            stmt.close();//释放内存与资源
+        }catch(SQLException e){
+            System.out.println("建表失败，报错：");
+            e.printStackTrace();
+        }
     }
 }
