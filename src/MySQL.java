@@ -27,7 +27,7 @@ public class MySQL {
         String user = getInput("User:");
         String password = getInput("Password:");
         c.getConnection(ip,name,user, password);//连接SQL
-        CreateTable(c.con);
+        //CreateTable(c.con);      //建表
     }
     public static String getInput(String prompt) {
         System.out.print(prompt);
