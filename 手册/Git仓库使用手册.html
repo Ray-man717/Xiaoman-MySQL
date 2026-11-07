@@ -4,21 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Git 仓库使用手册（E:\UP\MySQL 项目版）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
 <style>
   :root {
     --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
     --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
     font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
     font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
   }
   article {
     max-width: 940px; margin: 0 auto; background: var(--card);
     padding: 48px 56px 56px; border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(31, 35, 40, .10);
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
   }
   h1 {
     font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
@@ -26,18 +49,19 @@
   }
   h2 {
     font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
-    border-left: 5px solid var(--accent); background: #f6f8fa;
+    border-left: 5px solid var(--accent); background: var(--soft);
   }
-  h3 { font-size: 18px; margin: 28px 0 10px; color: #1f2937; }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
   h4 { font-size: 16px; margin: 22px 0 8px; }
   p { margin: 12px 0; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  strong { color: #b3261e; }
+  strong { color: var(--strong); }
   hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
   blockquote {
     margin: 16px 0; padding: 10px 18px; color: var(--muted);
-    background: #f6f8fa; border-left: 4px solid #afb8c1; border-radius: 0 6px 6px 0;
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
   }
   blockquote p { margin: 0; }
   ul, ol { margin: 12px 0; padding-left: 2.2em; }
@@ -46,36 +70,53 @@
   :not(pre) > code {
     font-family: Consolas, "Cascadia Code", "Courier New", monospace;
     font-size: .9em; padding: .18em .42em; border-radius: 5px;
-    background: rgba(27, 31, 36, .07); color: #c7254e;
+    background: var(--code-bg); color: var(--code-fg);
   }
   pre {
     margin: 14px 0; padding: 16px 18px; overflow-x: auto;
-    background: #0f172a; border-radius: 8px;
-    font-size: 13.5px; line-height: 1.65;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
   }
   pre code {
     font-family: Consolas, "Cascadia Code", "Courier New", monospace;
-    color: #e6edf3; white-space: pre;
+    color: var(--pre-fg); white-space: pre;
   }
-  pre .kw  { color: #79c0ff; }
-  pre .st  { color: #a5d6ff; }
-  pre .cm  { color: #8b949e; font-style: italic; }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
   table {
     border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
   }
-  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
-  th { background: #f6f8fa; white-space: nowrap; }
-  tbody tr:nth-child(even) { background: #fbfcfd; }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
   @media print {
     body { background: #fff; padding: 0; }
-    article { box-shadow: none; max-width: none; padding: 0; }
-    h2 { page-break-after: avoid; }
-    pre { page-break-inside: avoid; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
     table { page-break-inside: avoid; }
   }
 </style>
 </head>
 <body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
 <h1 id="git-仓库使用手册eupmysql-项目版">Git 仓库使用手册（E:\UP\MySQL 项目版）</h1>
 <blockquote><p>本仓库：远程 <code>origin</code> = <code>git@github.com:Ray-man717/Xiaoman-MySQL.git</code>（SSH 方式），默认分支 <code>master</code>。本机 Git 版本 2.53，命令以新版 <code>switch</code> / <code>restore</code> 写法为主，同时给出老版本兼容写法。</p></blockquote>
@@ -320,5 +361,23 @@ git push</code></pre>
 <table><thead><tr><th>项目</th><th>当前值</th></tr></thead><tbody><tr><td>仓库位置</td><td><code>E:\UP\MySQL</code></td></tr><tr><td>当前分支</td><td><code>master</code>（已关联 <code>origin/master</code>）</td></tr><tr><td>远程地址</td><td><code>git@github.com:Ray-man717/Xiaoman-MySQL.git</code>（SSH）</td></tr><tr><td>用户名 / 邮箱</td><td><code>xiaoman</code> / <code>man_0723_ruilin@outlook.com</code></td></tr><tr><td>已忽略</td><td><code>SQL.txt</code>、<code>*.properties</code>、<code>out/</code>、<code>logs/</code>、<code>bin/</code>、<code>.vscode/</code> 等</td></tr><tr><td>建议补进 .gitignore</td><td><code>.idea/</code>、<code>*.iml</code>（IDE 配置，本机相关）</td></tr></tbody></table>
 <p>常用三条命令记牢即可：<code>git status</code> 看状态，<code>git add</code> + <code>git commit</code> 存版本，<code>git push</code> 做同步。</p>
 </article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
 </body>
 </html>
