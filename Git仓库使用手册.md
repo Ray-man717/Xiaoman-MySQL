@@ -387,16 +387,17 @@ ssh -T git@github.com      # 返回 Hi 用户名! You've successfully authentica
 | `SQL.txt` | 数据库服务器账号密码笔记 | 含密码，不能公开 |
 | `*.properties` | `config.properties` 等配置 | 含 `db.password`，不能公开 |
 | `out/`、`bin/`、`logs/` | 编译输出与日志 | 可重新生成，体积大 |
-| `*.class`、`.idea/`、`*.iml` | IDE 和编译产物 | 本机环境相关，别人用不上 |
+| `.vscode/`、`.classpath`、`.project`、`.settings/` | IDE 本地配置 | 本机环境相关，别人用不上 |
+| `.DS_Store`、`.kotlin` | 系统 / 工具残留文件 | 与本项目无关 |
 
-建议补充（本项目目前还没提交过它们，但容易误提交）：
+注意：`.idea/` 和 `*.iml` 目前**还没有**被忽略，所以 `git status` 里会一直出现它们。建议补进 `.gitignore`：
 
 ```gitignore
 # IntelliJ IDEA 本地配置
 .idea/
 *.iml
 
-# 依赖包（如果希望仓库轻量）
+# 依赖包（如果希望仓库轻量，也可以忽略 jar）
 *.jar
 ```
 
@@ -447,7 +448,7 @@ git push                       # 推到 GitHub
 
 ```bash
 git clone git@github.com:Ray-man717/Xiaoman-MySQL.git
-cd MySQL-esay                  # 克隆下来的目录名（或自己指定）
+cd Xiaoman-MySQL                 # 默认用仓库名做目录名（也可以自己指定）
 ```
 
 clone 之后，`git push` / `git pull` 都不用再配置远程，上游地址已经指好。
@@ -545,7 +546,7 @@ git push
 | 当前分支 | `master`（已关联 `origin/master`） |
 | 远程地址 | `git@github.com:Ray-man717/Xiaoman-MySQL.git`（SSH） |
 | 用户名 / 邮箱 | `xiaoman` / `man_0723_ruilin@outlook.com` |
-| 已忽略 | `SQL.txt`、`*.properties`、`out/`、`logs/`、`*.class` 等 |
+| 已忽略 | `SQL.txt`、`*.properties`、`out/`、`logs/`、`bin/`、`.vscode/` 等 |
 | 建议补进 .gitignore | `.idea/`、`*.iml`（IDE 配置，本机相关） |
 
 常用三条命令记牢即可：`git status` 看状态，`git add` + `git commit` 存版本，`git push` 做同步。

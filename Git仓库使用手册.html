@@ -263,13 +263,13 @@ cat ~/.ssh/id_ed25519.pub                                  # 复制公钥内容<
 <h2 id="8-gitignore哪些文件不该进仓库">8. .gitignore：哪些文件不该进仓库</h2>
 <h3 id="81-本项目的忽略规则">8.1 本项目的忽略规则</h3>
 <p>当前 <code>.gitignore</code> 已经忽略了这些：</p>
-<table><thead><tr><th>规则</th><th>忽略的内容</th><th>为什么</th></tr></thead><tbody><tr><td><code>SQL.txt</code></td><td>数据库服务器账号密码笔记</td><td>含密码，不能公开</td></tr><tr><td><code>*.properties</code></td><td><code>config.properties</code> 等配置</td><td>含 <code>db.password</code>，不能公开</td></tr><tr><td><code>out/</code>、<code>bin/</code>、<code>logs/</code></td><td>编译输出与日志</td><td>可重新生成，体积大</td></tr><tr><td><code>*.class</code>、<code>.idea/</code>、<code>*.iml</code></td><td>IDE 和编译产物</td><td>本机环境相关，别人用不上</td></tr></tbody></table>
-<p>建议补充（本项目目前还没提交过它们，但容易误提交）：</p>
+<table><thead><tr><th>规则</th><th>忽略的内容</th><th>为什么</th></tr></thead><tbody><tr><td><code>SQL.txt</code></td><td>数据库服务器账号密码笔记</td><td>含密码，不能公开</td></tr><tr><td><code>*.properties</code></td><td><code>config.properties</code> 等配置</td><td>含 <code>db.password</code>，不能公开</td></tr><tr><td><code>out/</code>、<code>bin/</code>、<code>logs/</code></td><td>编译输出与日志</td><td>可重新生成，体积大</td></tr><tr><td><code>.vscode/</code>、<code>.classpath</code>、<code>.project</code>、<code>.settings/</code></td><td>IDE 本地配置</td><td>本机环境相关，别人用不上</td></tr><tr><td><code>.DS_Store</code>、<code>.kotlin</code></td><td>系统 / 工具残留文件</td><td>与本项目无关</td></tr></tbody></table>
+<p>注意：<code>.idea/</code> 和 <code>*.iml</code> 目前<strong>还没有</strong>被忽略，所以 <code>git status</code> 里会一直出现它们。建议补进 <code>.gitignore</code>：</p>
 <pre class="language-gitignore"><code># IntelliJ IDEA 本地配置
 .idea/
 *.iml
 
-# 依赖包（如果希望仓库轻量）
+# 依赖包（如果希望仓库轻量，也可以忽略 jar）
 *.jar</code></pre>
 <h3 id="82-gitignore-语法">8.2 .gitignore 语法</h3>
 <table><thead><tr><th>写法</th><th>含义</th></tr></thead><tbody><tr><td><code># 注释</code></td><td>注释行</td></tr><tr><td><code>*.log</code></td><td>任意位置的 .log 文件</td></tr><tr><td><code>/out/</code></td><td>只忽略根目录下的 out 目录</td></tr><tr><td><code>logs/</code></td><td>忽略所有名为 logs 的目录</td></tr><tr><td><code>**/temp</code></td><td>任意层级的 temp</td></tr><tr><td><code>!README.md</code></td><td>例外：不忽略（放在忽略规则后面才生效）</td></tr><tr><td><code>config.properties</code></td><td>忽略指定文件</td></tr></tbody></table>
@@ -291,7 +291,7 @@ git commit -m "优化数据库连接方法"
 git push                       # 推到 GitHub</code></pre>
 <h3 id="92-换一台电脑接着写">9.2 换一台电脑接着写</h3>
 <pre class="language-bash"><code>git clone git@github.com:Ray-man717/Xiaoman-MySQL.git
-cd MySQL-esay                  # 克隆下来的目录名（或自己指定）</code></pre>
+cd Xiaoman-MySQL                 # 默认用仓库名做目录名（也可以自己指定）</code></pre>
 <p>clone 之后，<code>git push</code> / <code>git pull</code> 都不用再配置远程，上游地址已经指好。</p>
 <h3 id="93-两台电脑交替提交的推荐节奏">9.3 两台电脑交替提交的推荐节奏</h3>
 <pre class="language-bash"><code># 动手前先同步，减少冲突
@@ -317,7 +317,7 @@ git push</code></pre>
 <table><thead><tr><th>我想……</th><th>命令</th></tr></thead><tbody><tr><td>看看当前改了什么</td><td><code>git status -s</code> + <code>git diff</code></td></tr><tr><td>只提交其中一部分改动</td><td><code>git add -p 文件名</code></td></tr><tr><td>丢掉某个文件的所有改动</td><td><code>git restore 文件名</code></td></tr><tr><td>把误 add 的文件撤出暂存</td><td><code>git restore --staged 文件名</code></td></tr><tr><td>改刚提交的说明</td><td><code>git commit --amend -m "新说明"</code></td></tr><tr><td>撤销刚提交（还没推）</td><td><code>git reset --soft HEAD~1</code></td></tr><tr><td>撤销已推送的提交</td><td><code>git revert 提交号</code> + <code>git push</code></td></tr><tr><td>回到某个历史版本看看</td><td><code>git switch --detach 提交号</code>，看完 <code>git switch master</code></td></tr><tr><td>找回误删/误 reset 的提交</td><td><code>git reflog</code> 找到提交号，<code>git reset --hard 提交号</code></td></tr><tr><td>某行代码是谁改的</td><td><code>git blame -L 行号,行号 文件名</code></td></tr><tr><td>看某次提交改了什么</td><td><code>git show 提交号</code></td></tr><tr><td>临时保存现场去处理别的事</td><td><code>git stash</code> → 回来后 <code>git stash pop</code></td></tr><tr><td>同步其他人的提交</td><td><code>git pull</code>（或 <code>git fetch</code> 后 <code>git merge origin/master</code>）</td></tr><tr><td>看远程有哪些分支</td><td><code>git branch -r</code></td></tr><tr><td>新建功能分支并推送</td><td><code>git switch -c feature-x</code> → 提交 → <code>git push -u origin feature-x</code></td></tr><tr><td>合并分支并删除</td><td><code>git switch master</code> → <code>git merge feature-x</code> → <code>git branch -d feature-x</code></td></tr><tr><td>让某个文件不再被跟踪</td><td><code>git rm --cached 文件名</code> + 写进 <code>.gitignore</code></td></tr><tr><td>检查文件是否被忽略</td><td><code>git check-ignore -v 文件名</code></td></tr><tr><td>强行让本地和远程一致</td><td><code>git fetch</code> + <code>git reset --hard origin/master</code>（会丢弃本地改动）</td></tr><tr><td>看所有提交图</td><td><code>git log --oneline --graph --all</code></td></tr></tbody></table>
 <hr>
 <h2 id="附本仓库现状">附：本仓库现状</h2>
-<table><thead><tr><th>项目</th><th>当前值</th></tr></thead><tbody><tr><td>仓库位置</td><td><code>E:\UP\MySQL</code></td></tr><tr><td>当前分支</td><td><code>master</code>（已关联 <code>origin/master</code>）</td></tr><tr><td>远程地址</td><td><code>git@github.com:Ray-man717/Xiaoman-MySQL.git</code>（SSH）</td></tr><tr><td>用户名 / 邮箱</td><td><code>xiaoman</code> / <code>man_0723_ruilin@outlook.com</code></td></tr><tr><td>已忽略</td><td><code>SQL.txt</code>、<code>*.properties</code>、<code>out/</code>、<code>logs/</code>、<code>*.class</code> 等</td></tr><tr><td>建议补进 .gitignore</td><td><code>.idea/</code>、<code>*.iml</code>（IDE 配置，本机相关）</td></tr></tbody></table>
+<table><thead><tr><th>项目</th><th>当前值</th></tr></thead><tbody><tr><td>仓库位置</td><td><code>E:\UP\MySQL</code></td></tr><tr><td>当前分支</td><td><code>master</code>（已关联 <code>origin/master</code>）</td></tr><tr><td>远程地址</td><td><code>git@github.com:Ray-man717/Xiaoman-MySQL.git</code>（SSH）</td></tr><tr><td>用户名 / 邮箱</td><td><code>xiaoman</code> / <code>man_0723_ruilin@outlook.com</code></td></tr><tr><td>已忽略</td><td><code>SQL.txt</code>、<code>*.properties</code>、<code>out/</code>、<code>logs/</code>、<code>bin/</code>、<code>.vscode/</code> 等</td></tr><tr><td>建议补进 .gitignore</td><td><code>.idea/</code>、<code>*.iml</code>（IDE 配置，本机相关）</td></tr></tbody></table>
 <p>常用三条命令记牢即可：<code>git status</code> 看状态，<code>git add</code> + <code>git commit</code> 存版本，<code>git push</code> 做同步。</p>
 </article>
 </body>
