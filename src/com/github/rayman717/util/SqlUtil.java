@@ -1,42 +1,35 @@
-import java.sql.*;
-import java.util.Scanner;
+package com.github.rayman717.util;
 
-public class MySQL {
-    private static final Scanner sc = new Scanner(System.in);//创建全局扫描器
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class SqlUtil {
     Connection con;
     public Connection getConnection(String ip, String name,String user, String pass) {
-        String url = "jdbc:mysql://"+ ip +":3306/"+ name + "?useSSL=false&characterEncoding=utf8";
+        String url = "JDBC:mysql://"+ ip +":3306/"+ name + "?useSSL=false&characterEncoding=utf8";
         try{
             Class.forName("com.mysql.jdbc.Driver");
             System.out.println("数据库驱动加载成功");
+            LogUtil.info("数据库驱动加载成功");
         }catch(ClassNotFoundException e){
+            LogUtil.error("驱动加载失败"+e.getMessage());
             e.printStackTrace();
         }
         try{
             con = DriverManager.getConnection(url,user,pass);
             System.out.println("数据库连接完成");
+            LogUtil.info("数据库路径成功");
         }catch(SQLException e){
+            LogUtil.error("连接失败"+e.getMessage());
             e.printStackTrace();
         }
         return con;
     }
-    public static void main(String[] args) {
-        MySQL c = new MySQL();
-        String ip = getInput("IP:");
-        String name = getInput("Name:");
-        String user = getInput("User:");
-        String password = getInput("Password:");
-        c.getConnection(ip,name,user, password);//连接SQL
-        //CreateTable(c.con);      //建表
-    }
-    public static String getInput(String prompt) {
-        System.out.print(prompt);
-        return sc.nextLine();
-        //自定义输入
-    }
     public static void CreateTable(Connection con) {
         //创建表方法
-        String sql = "CREATE TABLE EMS(" +
+        String sql = "CREATE TABLE ems(" +
                 "id INT PRIMARY KEY AUTO_INCREMENT" + "," +
                 "ALI DOUBLE NOT NULL DEFAULT 0" + "," +
                 "Temp DOUBLE NOT NULL DEFAULT 0" + "," +
@@ -47,9 +40,11 @@ public class MySQL {
             Statement stmt = con.createStatement();
             stmt.executeUpdate(sql);//执行动态SQL语句
             System.out.println("建表完成");
+            LogUtil.info("建表完成");
             stmt.close();//释放内存与资源
         }catch(SQLException e){
             System.out.println("建表失败，报错：");
+            LogUtil.error("建表失败 "+e.getMessage());
             e.printStackTrace();
         }
     }
