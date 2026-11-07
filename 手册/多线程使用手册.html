@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java 多线程使用手册（EMS 项目版）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="java-多线程使用手册ems-项目版">Java 多线程使用手册（EMS 项目版）</h1>
+<blockquote><p>面向本项目：<code>EMS</code> 环境监测系统（MySQL + JDBC + Swing + TCP 服务端），讲清「多台设备同时上报怎么处理」「界面为什么不能卡」「锁该怎么加」这些实际问题。环境：JDK 17，<code>java.util.concurrent</code> 全部内置。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-什么时候需要多线程">什么时候需要多线程</a></li><li><a href="#2-创建线程的四种方式">创建线程的四种方式</a></li><li><a href="#3-线程的常用操作">线程的常用操作</a></li><li><a href="#4-线程安全问题">线程安全问题</a></li><li><a href="#5-synchronized-与-volatile">synchronized 与 volatile</a></li><li><a href="#6-原子类">原子类</a></li><li><a href="#7-lock-与条件变量">Lock 与条件变量</a></li><li><a href="#8-waitnotify-与生产者消费者">wait/notify 与生产者消费者</a></li><li><a href="#9-并发集合与阻塞队列">并发集合与阻塞队列</a></li><li><a href="#10-线程池">线程池</a></li><li><a href="#11-completablefuture">CompletableFuture</a></li><li><a href="#12-线程协作工具">线程协作工具</a></li><li><a href="#13-死锁">死锁</a></li><li><a href="#14-实战ems-数据接收的并发处理">实战：EMS 数据接收的并发处理</a></li><li><a href="#15-常见坑">常见坑</a></li><li><a href="#16-速查表">速查表</a></li></ol>
+<hr>
+<h2 id="1-什么时候需要多线程">1. 什么时候需要多线程</h2>
+<table><thead><tr><th>场景</th><th>为什么需要</th></tr></thead><tbody><tr><td>服务端接收多台设备</td><td>一台设备一个连接，不能让第二台排队等第一台</td></tr><tr><td>Swing / 桌面界面</td><td>界面刷新在 EDT，查库、网络请求必须放后台，否则窗口卡死</td></tr><tr><td>批量导入、导出文件</td><td>大文件读写耗时，放后台不耽误用户操作</td></tr><tr><td>定时任务</td><td>每 5 分钟汇总一次数据，独立线程跑</td></tr></tbody></table>
+<p>多线程不会让单件事变快，它解决的是「同时做多件事」和「不阻塞」。</p>
+<p>判断密集类型：</p>
+<table><thead><tr><th>类型</th><th>特征</th><th>线程数建议</th></tr></thead><tbody><tr><td>CPU 密集</td><td>大量计算、循环</td><td>CPU 核数 + 1</td></tr><tr><td>IO 密集</td><td>等数据库、等网络、读写文件</td><td>CPU 核数 × 2 或更多</td></tr></tbody></table>
+<p>网络和数据库操作属于「等」，线程多一些反而吞吐更高。</p>
+<hr>
+<h2 id="2-创建线程的四种方式">2. 创建线程的四种方式</h2>
+<h3 id="21-继承-thread">2.1 继承 Thread</h3>
+<pre class="language-java"><code>public class CountThread extends Thread {
+    @Override
+    public void run() {
+        System.out.println("线程执行：" + getName());
+    }
+}
+
+new CountThread().start();</code></pre>
+<p>缺点：Java 单继承，继承 <code>Thread</code> 就不能再继承别的类，一般不推荐。</p>
+<h3 id="22-实现-runnable">2.2 实现 Runnable</h3>
+<pre class="language-java"><code>Runnable task = () -&gt; System.out.println("任务执行：" + Thread.currentThread().getName());
+Thread t = new Thread(task, "worker-1");
+t.start();</code></pre>
+<p>推荐这一种：任务和线程解耦，还能交给线程池执行。</p>
+<h3 id="23-实现-callable有返回值能抛异常">2.3 实现 Callable（有返回值、能抛异常）</h3>
+<pre class="language-java"><code>ExecutorService pool = Executors.newFixedThreadPool(2);
+
+Future&lt;Integer&gt; future = pool.submit(() -&gt; {
+    Thread.sleep(1000);
+    return 42;
+});
+
+int value = future.get();          // 阻塞等结果
+System.out.println("结果：" + value);</code></pre>
+<p><code>Callable</code> 与 <code>Runnable</code> 的区别：有返回值、可以抛受检异常。</p>
+<h3 id="24-用线程池最推荐">2.4 用线程池（最推荐）</h3>
+<pre class="language-java"><code>ExecutorService pool = Executors.newFixedThreadPool(4);
+pool.submit(() -&gt; doSomething());</code></pre>
+<p>四种方式对比：</p>
+<table><thead><tr><th>方式</th><th>返回值</th><th>复用线程</th><th>推荐度</th></tr></thead><tbody><tr><td>继承 <code>Thread</code></td><td>无</td><td>不能</td><td>低</td></tr><tr><td>实现 <code>Runnable</code></td><td>无</td><td>交给线程池可复用</td><td>中</td></tr><tr><td>实现 <code>Callable</code></td><td>有</td><td>可</td><td>中</td></tr><tr><td>线程池 + 任务</td><td>都可</td><td>是</td><td>高</td></tr></tbody></table>
+<p><strong>永远不要</strong>用 <code>new Thread(...).start()</code> 去跑大量任务，线程创建和销毁都很贵。</p>
+<hr>
+<h2 id="3-线程的常用操作">3. 线程的常用操作</h2>
+<pre class="language-java"><code>Thread t = new Thread(() -&gt; {
+    System.out.println("子线程开始");
+    try {
+        Thread.sleep(2000);                 // 睡眠 2 秒
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();  // 恢复中断标志，别吞掉
+    }
+    System.out.println("子线程结束");
+}, "worker-1");
+
+t.setDaemon(true);      // 守护线程：主线程结束时它也会被结束
+t.start();              // 启动
+t.join();               // 等它结束（阻塞当前线程）
+System.out.println("主线程继续");
+
+System.out.println(t.isAlive());        // 是否还活着
+System.out.println(t.getState());       // NEW / RUNNABLE / BLOCKED / WAITING / TIMED_WAITING / TERMINATED</code></pre>
+<p>几个容易写错的点：</p>
+<table><thead><tr><th>写法</th><th>结果</th></tr></thead><tbody><tr><td><code>t.run()</code></td><td>在<strong>当前线程</strong>里同步执行，不是新线程</td></tr><tr><td><code>t.start()</code></td><td>真正启动新线程</td></tr><tr><td><code>Thread.sleep(1000)</code></td><td>会抛 <code>InterruptedException</code>，必须处理</td></tr><tr><td><code>Thread.currentThread().interrupt()</code></td><td>捕获中断异常后恢复标志，方便上层判断</td></tr><tr><td>守护线程</td><td>主线程结束即结束，适合后台心跳/监控</td></tr></tbody></table>
+<p>线程状态流转（简化）：</p>
+<pre class="language-text"><code>NEW → RUNNABLE → (BLOCKED / WAITING / TIMED_WAITING) → TERMINATED</code></pre>
+<hr>
+<h2 id="4-线程安全问题">4. 线程安全问题</h2>
+<h3 id="41-一个必现的错误">4.1 一个必现的错误</h3>
+<pre class="language-java"><code>public class Counter {
+    private int count = 0;
+
+    public void add() {
+        count++;          // 不是原子操作：读 → 加 → 写
+    }
+
+    public int get() {
+        return count;
+    }
+}
+
+// 1000 个线程各加 1 次，结果经常小于 1000</code></pre>
+<p>原因：<code>count++</code> 分三步执行，两个线程可能同时读到旧值再写回，后写的覆盖先写的。</p>
+<h3 id="42-根源">4.2 根源</h3>
+<p>只有一条：<strong>多个线程共享同一个可变状态，且至少有一个线程在写</strong>。</p>
+<h3 id="43-三种解决思路">4.3 三种解决思路</h3>
+<table><thead><tr><th>思路</th><th>做法</th><th>例子</th></tr></thead><tbody><tr><td>不共享</td><td>用局部变量、不可变对象</td><td>方法内 <code>int sum = 0</code></td></tr><tr><td>加锁</td><td><code>synchronized</code>、<code>Lock</code></td><td>累加、复合判断</td></tr><tr><td>用并发工具</td><td>原子类、并发集合</td><td><code>AtomicInteger</code>、<code>ConcurrentHashMap</code></td></tr></tbody></table>
+<p>EMS 里的真实例子：多台设备同时上报，如果多个线程往同一个 <code>ArrayList</code> 里 <code>add</code>，可能丢数据甚至抛 <code>ConcurrentModificationException</code>。要么加锁，要么换 <code>CopyOnWriteArrayList</code> 或 <code>BlockingQueue</code>。</p>
+<hr>
+<h2 id="5-synchronized-与-volatile">5. synchronized 与 volatile</h2>
+<h3 id="51-synchronized-的三种写法">5.1 synchronized 的三种写法</h3>
+<pre class="language-java"><code>// ① 实例方法：锁当前对象 this
+public synchronized void add() {
+    count++;
+}
+
+// ② 静态方法：锁这个类的 Class 对象
+public static synchronized void init() {
+    // ...
+}
+
+// ③ 代码块：自己指定锁对象
+private final Object lock = new Object();
+
+public void add() {
+    synchronized (lock) {
+        count++;
+    }
+}</code></pre>
+<p>要点：</p>
+<ul><li>锁的是<strong>对象</strong>，同一个锁对象才互斥；</li><li>可重入：同一个线程可以重复进入同一个锁；</li><li>锁对象建议用 <code>private final Object</code>，不要用 <code>String</code> 常量（字符串常量池可能被别处复用）；</li><li>代码块比方法粒度小，只包住真正需要互斥的部分，别把耗时的数据库操作也包进去。</li></ul>
+<h3 id="52-可见性问题">5.2 可见性问题</h3>
+<pre class="language-java"><code>public class StopFlag {
+    private volatile boolean running = true;
+
+    public void stop() {
+        running = false;
+    }
+
+    public void loop() {
+        while (running) {
+            // 干活
+        }
+    }
+}</code></pre>
+<p>不加 <code>volatile</code> 时，线程可能永远读到缓存的 <code>true</code>，循环停不下来。</p>
+<p><code>volatile</code> 保证「写入立刻对其他线程可见」，但它<strong>不保证原子性</strong>：</p>
+<pre class="language-java"><code>private volatile int count = 0;
+count++;          // 依然不安全！volatile 只管可见，不管原子</code></pre>
+<p>需要原子性时用 <code>AtomicInteger</code> 或 <code>synchronized</code>。</p>
+<hr>
+<h2 id="6-原子类">6. 原子类</h2>
+<pre class="language-java"><code>import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
+
+private final AtomicInteger received = new AtomicInteger();
+
+received.incrementAndGet();          // 等价于 ++received，原子
+received.getAndIncrement();          // 先取值再加
+received.addAndGet(10);
+received.compareAndSet(10, 20);      // 如果当前是 10 就改成 20，成功返回 true
+int now = received.get();</code></pre>
+<p>高并发计数（只增不减、不需要立刻读取精确值）用 <code>LongAdder</code> 更快：</p>
+<pre class="language-java"><code>LongAdder counter = new LongAdder();
+counter.increment();
+long total = counter.sum();</code></pre>
+<p>原子类适合「单个变量的读写和计数」，多变量或复杂逻辑还是要用锁。</p>
+<hr>
+<h2 id="7-lock-与条件变量">7. Lock 与条件变量</h2>
+<p><code>synchronized</code> 够用就别换，但遇到「需要超时」「需要中断」「需要多个条件」时用 <code>ReentrantLock</code>。</p>
+<pre class="language-java"><code>import java.util.concurrent.locks.ReentrantLock;
+
+private final ReentrantLock lock = new ReentrantLock();
+
+public void add() {
+    lock.lock();
+    try {
+        count++;
+    } finally {
+        lock.unlock();          // 必须在 finally 里释放
+    }
+}</code></pre>
+<p>几个 <code>synchronized</code> 没有的能力：</p>
+<pre class="language-java"><code>// ① 尝试加锁，拿不到不阻塞
+if (lock.tryLock()) {
+    try {
+        // ...
+    } finally {
+        lock.unlock();
+    }
+}
+
+// ② 限时加锁，避免死等
+if (lock.tryLock(2, TimeUnit.SECONDS)) {
+    try {
+        // ...
+    } finally {
+        lock.unlock();
+    }
+}
+
+// ③ 公平锁：按等待顺序获得锁（性能略低）
+ReentrantLock fairLock = new ReentrantLock(true);
+
+// ④ 可中断
+lock.lockInterruptibly();</code></pre>
+<p>条件变量（替代 <code>wait/notify</code>）：</p>
+<pre class="language-java"><code>private final ReentrantLock lock = new ReentrantLock();
+private final Condition notEmpty = lock.newCondition();
+private final Condition notFull = lock.newCondition();
+private final LinkedList&lt;String&gt; queue = new LinkedList&lt;&gt;();
+
+public void put(String item) throws InterruptedException {
+    lock.lock();
+    try {
+        while (queue.size() &gt;= 100) {
+            notFull.await();          // 满了就等
+        }
+        queue.addLast(item);
+        notEmpty.signalAll();         // 通知消费者
+    } finally {
+        lock.unlock();
+    }
+}
+
+public String take() throws InterruptedException {
+    lock.lock();
+    try {
+        while (queue.isEmpty()) {
+            notEmpty.await();         // 空了就等
+        }
+        String item = queue.removeFirst();
+        notFull.signalAll();
+        return item;
+    } finally {
+        lock.unlock();
+    }
+}</code></pre>
+<p>读写锁（读多写少，比如配置缓存）：</p>
+<pre class="language-java"><code>ReadWriteLock rw = new ReentrantReadWriteLock();
+rw.readLock().lock();     // 多线程可同时读
+rw.writeLock().lock();    // 写时独占</code></pre>
+<hr>
+<h2 id="8-waitnotify-与生产者消费者">8. wait/notify 与生产者消费者</h2>
+<p><code>synchronized</code> 配合 <code>wait/notify</code> 也能做生产者消费者，但要注意三个硬性要求：</p>
+<ol><li><code>wait/notify</code> 必须在 <code>synchronized</code> 块里调用；</li><li>必须用 <code>while</code> 循环判断条件（防「虚假唤醒」）；</li><li>唤醒用 <code>notifyAll</code> 而不是 <code>notify</code>（<code>notify</code> 可能叫错线程导致卡死）。</li></ol>
+<pre class="language-java"><code>public class Buffer {
+    private final String[] items = new String[10];
+    private int count = 0;
+    private int putIndex = 0;
+    private int takeIndex = 0;
+
+    public synchronized void put(String item) throws InterruptedException {
+        while (count == items.length) {
+            wait();                    // 满了，等消费者取
+        }
+        items[putIndex] = item;
+        putIndex = (putIndex + 1) % items.length;
+        count++;
+        notifyAll();                   // 通知等待的线程
+    }
+
+    public synchronized String take() throws InterruptedException {
+        while (count == 0) {
+            wait();                    // 空了，等生产者放
+        }
+        String item = items[takeIndex];
+        takeIndex = (takeIndex + 1) % items.length;
+        count--;
+        notifyAll();
+        return item;
+    }
+}</code></pre>
+<p>实际项目里<strong>直接用 <code>BlockingQueue</code></strong>，它就是把这个模式封装好了：</p>
+<pre class="language-java"><code>BlockingQueue&lt;String&gt; queue = new LinkedBlockingQueue&lt;&gt;(100);
+queue.put("data");      // 满了阻塞
+String item = queue.take();   // 空了阻塞</code></pre>
+<hr>
+<h2 id="9-并发集合与阻塞队列">9. 并发集合与阻塞队列</h2>
+<h3 id="91-常用并发集合">9.1 常用并发集合</h3>
+<table><thead><tr><th>类</th><th>特点</th><th>适用</th></tr></thead><tbody><tr><td><code>ConcurrentHashMap</code></td><td>分段/桶级并发，读写都快</td><td>共享缓存、在线设备表</td></tr><tr><td><code>CopyOnWriteArrayList</code></td><td>写时复制，读极快、写很贵</td><td>监听器列表、配置项（读多写少）</td></tr><tr><td><code>ConcurrentLinkedQueue</code></td><td>无锁队列</td><td>高并发生产者消费者</td></tr><tr><td><code>BlockingQueue</code> 家族</td><td>支持阻塞等待</td><td>任务队列、数据缓冲</td></tr></tbody></table>
+<pre class="language-java"><code>ConcurrentHashMap&lt;String, Double&gt; lastTemp = new ConcurrentHashMap&lt;&gt;();
+lastTemp.put("device-1", 26.4);
+lastTemp.computeIfAbsent("device-2", k -&gt; 0.0);      // 不存在才放，原子
+lastTemp.merge("device-1", 0.5, Double::sum);        // 原子累加</code></pre>
+<p>普通 <code>HashMap</code> 在多线程下同时 put 可能丢数据甚至死循环（JDK 8 之前），别裸用。</p>
+<h3 id="92-blockingqueue-的四个方法">9.2 BlockingQueue 的四个方法</h3>
+<table><thead><tr><th>方法</th><th>队列满/空时</th></tr></thead><tbody><tr><td><code>put(e)</code></td><td>满了阻塞等待</td></tr><tr><td><code>offer(e)</code></td><td>满了返回 <code>false</code></td></tr><tr><td><code>offer(e, timeout, unit)</code></td><td>满了等一会儿，超时返回 <code>false</code></td></tr><tr><td><code>take()</code></td><td>空了阻塞等待</td></tr><tr><td><code>poll()</code></td><td>空了返回 <code>null</code></td></tr><tr><td><code>poll(timeout, unit)</code></td><td>空了等一会儿，超时返回 <code>null</code></td></tr></tbody></table>
+<p>EMS 场景：设备上报很猛、数据库写得慢，中间放一个有界队列缓冲，满了就拒绝（而不是把内存撑爆）。</p>
+<pre class="language-java"><code>BlockingQueue&lt;EmsRecord&gt; queue = new LinkedBlockingQueue&lt;&gt;(5000);
+
+// 接收线程
+if (!queue.offer(record)) {
+    System.out.println("队列已满，丢弃一条");
+}
+
+// 写库线程
+EmsRecord r = queue.take();
+saveToDatabase(r);</code></pre>
+<hr>
+<h2 id="10-线程池">10. 线程池</h2>
+<h3 id="101-为什么用线程池">10.1 为什么用线程池</h3>
+<ul><li>线程创建/销毁开销大，复用一批线程更划算；</li><li>能限制并发数量，防止线程爆炸；</li><li>统一管理、监控、优雅关闭。</li></ul>
+<h3 id="102-不要直接-new-线程">10.2 不要直接 new 线程</h3>
+<pre class="language-java"><code>// 反例：1000 台设备就 1000 个线程，内存和调度都扛不住
+while (true) {
+    Socket socket = server.accept();
+    new Thread(() -&gt; handle(socket)).start();
+}</code></pre>
+<h3 id="103-executors-的四种快捷工厂">10.3 Executors 的四种快捷工厂</h3>
+<table><thead><tr><th>方法</th><th>线程数</th><th>风险</th></tr></thead><tbody><tr><td><code>newFixedThreadPool(n)</code></td><td>固定 n</td><td>队列无界（<code>LinkedBlockingQueue</code>），任务堆积可能 OOM</td></tr><tr><td><code>newCachedThreadPool()</code></td><td>无上限（空闲 60 秒回收）</td><td>线程数可能爆炸</td></tr><tr><td><code>newSingleThreadExecutor()</code></td><td>1</td><td>同样队列无界</td></tr><tr><td><code>newScheduledThreadPool(n)</code></td><td>固定 n</td><td>定时任务用</td></tr></tbody></table>
+<p>小项目用 <code>newFixedThreadPool</code> 就行，但要知道它的队列是无界的。</p>
+<h3 id="104-直接构造-threadpoolexecutor生产推荐">10.4 直接构造 ThreadPoolExecutor（生产推荐）</h3>
+<pre class="language-java"><code>ThreadPoolExecutor pool = new ThreadPoolExecutor(
+        4,                          // 核心线程数
+        8,                          // 最大线程数
+        60, TimeUnit.SECONDS,       // 空闲线程存活时间
+        new ArrayBlockingQueue&lt;&gt;(1000),       // 有界队列，防止任务无限堆积
+        r -&gt; {
+            Thread t = new Thread(r);
+            t.setName("ems-worker-" + t.getId());
+            t.setDaemon(false);
+            return t;               // 给线程起名，jstack 排查时好认
+        },
+        new ThreadPoolExecutor.AbortPolicy()  // 满了怎么办
+);</code></pre>
+<p>七个参数的含义：</p>
+<table><thead><tr><th>参数</th><th>作用</th></tr></thead><tbody><tr><td><code>corePoolSize</code></td><td>常驻线程数，任务少也不回收</td></tr><tr><td><code>maximumPoolSize</code></td><td>最多线程数</td></tr><tr><td><code>keepAliveTime</code></td><td>超过核心数的空闲线程存活多久</td></tr><tr><td><code>workQueue</code></td><td>任务队列，有界还是无界很关键</td></tr><tr><td><code>threadFactory</code></td><td>线程工厂，用来命名、设守护</td></tr><tr><td><code>handler</code></td><td>拒绝策略</td></tr><tr><td>（时间单位）</td><td>keepAliveTime 的单位</td></tr></tbody></table>
+<p>任务提交后的执行顺序：</p>
+<pre class="language-text"><code>核心线程未满 → 创建核心线程
+核心线程已满 → 任务进队列
+队列已满 → 创建非核心线程（直到 maximumPoolSize）
+队列满且线程也满 → 执行拒绝策略</code></pre>
+<p>四种拒绝策略：</p>
+<table><thead><tr><th>策略</th><th>行为</th></tr></thead><tbody><tr><td><code>AbortPolicy</code></td><td>抛 <code>RejectedExecutionException</code>（默认）</td></tr><tr><td><code>CallerRunsPolicy</code></td><td>让提交任务的线程自己跑，相当于限速</td></tr><tr><td><code>DiscardPolicy</code></td><td>静默丢弃</td></tr><tr><td><code>DiscardOldestPolicy</code></td><td>丢掉队列里最老的，再提交</td></tr></tbody></table>
+<p>设备上报这种场景，建议 <code>CallerRunsPolicy</code> 或自己实现「记录日志 + 丢弃」。</p>
+<h3 id="105-线程池大小估算">10.5 线程池大小估算</h3>
+<pre class="language-java"><code>int cpu = Runtime.getRuntime().availableProcessors();
+int poolSize = cpu * 2;      // IO 密集型（查库、网络）大致经验值</code></pre>
+<p>数据库查询、网络请求都是「等待」，线程可以多一些；纯计算就 <code>cpu + 1</code>。</p>
+<h3 id="106-优雅关闭">10.6 优雅关闭</h3>
+<pre class="language-java"><code>pool.shutdown();                              // 不再接收新任务，等已提交的跑完
+if (!pool.awaitTermination(30, TimeUnit.SECONDS)) {
+    pool.shutdownNow();                       // 超时强制中断
+}</code></pre>
+<p><code>shutdownNow()</code> 只是给线程发中断信号，任务要自己响应 <code>isInterrupted()</code> 才会真的停。</p>
+<h3 id="107-监控">10.7 监控</h3>
+<pre class="language-java"><code>System.out.println("活跃线程：" + pool.getActiveCount());
+System.out.println("排队任务：" + pool.getQueue().size());
+System.out.println("已完成任务：" + pool.getCompletedTaskCount());</code></pre>
+<hr>
+<h2 id="11-completablefuture">11. CompletableFuture</h2>
+<p>适合「多个异步任务串联 / 并行后合并」的场景，比手写回调干净。</p>
+<h3 id="111-基本用法">11.1 基本用法</h3>
+<pre class="language-java"><code>ExecutorService pool = Executors.newFixedThreadPool(4);
+
+CompletableFuture&lt;Double&gt; future = CompletableFuture.supplyAsync(() -&gt; {
+    return queryAvgTemp();          // 后台执行，有返回值
+}, pool);
+
+future.thenAccept(avg -&gt; System.out.println("平均温度：" + avg));</code></pre>
+<h3 id="112-串联与转换">11.2 串联与转换</h3>
+<pre class="language-java"><code>CompletableFuture&lt;Integer&gt; result = CompletableFuture
+        .supplyAsync(() -&gt; loadRows(), pool)          // 查条目数
+        .thenApply(n -&gt; n * 2)                        // 转换
+        .thenApply(n -&gt; n + 1);                       // 继续处理
+
+CompletableFuture&lt;Void&gt; done = result.thenAccept(n -&gt; System.out.println(n));</code></pre>
+<p><code>thenApply</code> 是「转换」，<code>thenCompose</code> 是「再返回一个新的 Future」（类似 flatMap）。</p>
+<h3 id="113-并行合并">11.3 并行合并</h3>
+<pre class="language-java"><code>CompletableFuture&lt;Double&gt; tempTask = CompletableFuture.supplyAsync(() -&gt; avgTemp(), pool);
+CompletableFuture&lt;Double&gt; humTask = CompletableFuture.supplyAsync(() -&gt; avgHumidity(), pool);
+
+CompletableFuture&lt;Void&gt; all = CompletableFuture.allOf(tempTask, humTask);
+all.join();
+
+System.out.println("温度：" + tempTask.join());
+System.out.println("湿度：" + humTask.join());</code></pre>
+<h3 id="114-异常处理">11.4 异常处理</h3>
+<pre class="language-java"><code>CompletableFuture&lt;Double&gt; safe = CompletableFuture
+        .supplyAsync(() -&gt; mayThrow(), pool)
+        .exceptionally(ex -&gt; {
+            System.out.println("出错：" + ex.getCause());
+            return 0.0;                              // 出错时的兜底值
+        })
+        .handle((value, ex) -&gt; ex == null ? value : 0.0);   // 统一处理</code></pre>
+<h3 id="115-超时jdk-9">11.5 超时（JDK 9+）</h3>
+<pre class="language-java"><code>CompletableFuture&lt;Double&gt; f = CompletableFuture.supplyAsync(() -&gt; slowQuery(), pool)
+        .orTimeout(3, TimeUnit.SECONDS)
+        .exceptionally(ex -&gt; -1.0);</code></pre>
+<hr>
+<h2 id="12-线程协作工具">12. 线程协作工具</h2>
+<table><thead><tr><th>工具</th><th>作用</th><th>场景</th></tr></thead><tbody><tr><td><code>CountDownLatch</code></td><td>等 N 个任务都完成再继续</td><td>启动时加载多个模块</td></tr><tr><td><code>CyclicBarrier</code></td><td>N 个线程互相等，到齐了一起走</td><td>分批并行计算</td></tr><tr><td><code>Semaphore</code></td><td>限制同时访问的数量</td><td>限流、连接数控制</td></tr><tr><td><code>Exchanger</code></td><td>两个线程交换数据</td><td>少见</td></tr></tbody></table>
+<pre class="language-java"><code>// CountDownLatch：等 5 个设备数据都到齐，再算平均值
+CountDownLatch latch = new CountDownLatch(5);
+for (int i = 0; i &lt; 5; i++) {
+    pool.submit(() -&gt; {
+        try {
+            fetchAndStore();
+        } finally {
+            latch.countDown();
+        }
+    });
+}
+latch.await();
+System.out.println("5 个任务都完成了");
+
+// Semaphore：最多 3 个线程同时查库
+Semaphore semaphore = new Semaphore(3);
+semaphore.acquire();
+try {
+    queryDatabase();
+} finally {
+    semaphore.release();
+}</code></pre>
+<hr>
+<h2 id="13-死锁">13. 死锁</h2>
+<h3 id="131-典型成因">13.1 典型成因</h3>
+<p>两个线程以相反顺序抢同一对锁：</p>
+<pre class="language-java"><code>// 线程 A
+synchronized (lockA) {
+    synchronized (lockB) { ... }
+}
+
+// 线程 B
+synchronized (lockB) {
+    synchronized (lockA) { ... }
+}</code></pre>
+<h3 id="132-避免方法">13.2 避免方法</h3>
+<ul><li>固定加锁顺序（所有线程都先拿 A 再拿 B）；</li><li>用 <code>tryLock(timeout)</code>，拿不到就放弃并重试；</li><li>缩小锁范围，尽量不在持有锁时调用其他可能加锁的方法；</li><li>不要嵌套太多锁。</li></ul>
+<h3 id="133-诊断">13.3 诊断</h3>
+<pre class="language-powershell"><code>jps                          # 找到 Java 进程的 pid
+jstack 12345                 # 打印线程栈</code></pre>
+<p>如果发生死锁，<code>jstack</code> 输出里会有：</p>
+<pre class="language-text"><code>Found one Java-level deadlock:</code></pre>
+<p>然后列出两个线程分别持有什么锁、等什么锁。</p>
+<hr>
+<h2 id="14-实战ems-数据接收的并发处理">14. 实战：EMS 数据接收的并发处理</h2>
+<p>需求：多台设备并发上报 → 不丢数据、不撑爆内存 → 单线程批量写库 → 支持优雅关闭。</p>
+<p>结构：</p>
+<pre class="language-text"><code>设备连接（多个线程）
+      │  offer 到有界队列
+      ▼
+BlockingQueue（容量 5000）
+      │  take 批量取
+      ▼
+写库线程（单线程，批量 INSERT）</code></pre>
+<pre class="language-java"><code>package com.github.rayman717.concurrent;
+
+import com.github.rayman717.entity.DbConfig;
+import com.github.rayman717.util.ConfigManager;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * EMS 数据接收的并发处理示例。
+ * &lt;p&gt;
+ * 生产端：多个线程并发把数据放进有界队列；
+ * 消费端：单线程批量写数据库，减少连接与事务开销。
+ */
+public class EmsIngestService {
+
+    /** 一条上报数据 */
+    public static class Record {
+        final double ali;
+        final double temp;
+        final double humidity;
+
+        public Record(double ali, double temp, double humidity) {
+            this.ali = ali;
+            this.temp = temp;
+            this.humidity = humidity;
+        }
+    }
+
+    private static final int QUEUE_CAPACITY = 5000;
+    private static final int BATCH_SIZE = 200;
+
+    private final BlockingQueue&lt;Record&gt; queue = new ArrayBlockingQueue&lt;&gt;(QUEUE_CAPACITY);
+    private final AtomicLong accepted = new AtomicLong();
+    private final AtomicLong rejected = new AtomicLong();
+    private final AtomicLong saved = new AtomicLong();
+
+    private final ExecutorService producers = Executors.newFixedThreadPool(8);
+    private final ExecutorService consumer = Executors.newSingleThreadExecutor();
+    private volatile boolean running = true;
+
+    /** 启动写库线程 */
+    public void start() {
+        consumer.submit(this::consumeLoop);
+    }
+
+    /** 模拟一台设备上报（真实场景从 Socket 读到后调用） */
+    public void submit(Record record) {
+        if (!running) {
+            return;
+        }
+        if (queue.offer(record)) {
+            accepted.incrementAndGet();
+        } else {
+            rejected.incrementAndGet();               // 队列满：宁可丢，不撑爆内存
+        }
+    }
+
+    /** 批量写库：攒够 BATCH_SIZE 或超时 1 秒就写一次 */
+    private void consumeLoop() {
+        List&lt;Record&gt; batch = new ArrayList&lt;&gt;(BATCH_SIZE);
+        while (running || !queue.isEmpty()) {
+            try {
+                Record first = queue.poll(1, TimeUnit.SECONDS);
+                if (first != null) {
+                    batch.add(first);
+                }
+                queue.drainTo(batch, BATCH_SIZE - batch.size());
+                if (!batch.isEmpty()) {
+                    saveBatch(batch);
+                    saved.addAndGet(batch.size());
+                    batch.clear();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();   // 恢复中断标志
+                break;
+            } catch (Exception e) {
+                System.out.println("批量写库失败：" + e.getMessage());
+            }
+        }
+    }
+
+    private void saveBatch(List&lt;Record&gt; batch) throws Exception {
+        DbConfig config = ConfigManager.getDbConfig();
+        String url = "jdbc:mysql://" + config.ip + ":3306/" + config.dbName
+                + "?useSSL=false&amp;characterEncoding=utf8";
+        String sql = "INSERT INTO ems (ALI, Temp, Humidity) VALUES (?, ?, ?)";
+
+        try (Connection con = DriverManager.getConnection(url, config.user, config.password);
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            for (Record r : batch) {
+                ps.setDouble(1, r.ali);
+                ps.setDouble(2, r.temp);
+                ps.setDouble(3, r.humidity);
+                ps.addBatch();
+            }
+            ps.executeBatch();                        // 一次网络往返写多条
+        }
+    }
+
+    /** 优雅关闭：不再接收 → 等队列写完 → 关线程池 */
+    public void shutdown() throws InterruptedException {
+        running = false;
+        consumer.shutdown();
+        consumer.awaitTermination(10, TimeUnit.SECONDS);
+        producers.shutdownNow();
+        System.out.println("接收 " + accepted + " 条，拒绝 " + rejected + " 条，入库 " + saved + " 条");
+    }
+}</code></pre>
+<p>使用：</p>
+<pre class="language-java"><code>EmsIngestService service = new EmsIngestService();
+service.start();
+
+// 模拟 8 台设备并发上报
+ExecutorService devices = Executors.newFixedThreadPool(8);
+for (int i = 0; i &lt; 8; i++) {
+    devices.submit(() -&gt; {
+        for (int j = 0; j &lt; 1000; j++) {
+            service.submit(new EmsIngestService.Record(300, 25.5, 55.0));
+        }
+    });
+}
+devices.shutdown();
+devices.awaitTermination(1, TimeUnit.MINUTES);
+
+service.shutdown();</code></pre>
+<p>这个结构解决了四件事：</p>
+<table><thead><tr><th>问题</th><th>手段</th></tr></thead><tbody><tr><td>多设备并发</td><td>多个生产者线程 + 线程安全队列</td></tr><tr><td>内存不被撑爆</td><td>有界队列 + 满了拒绝</td></tr><tr><td>写库慢拖累接收</td><td>接收与写库解耦，异步消费</td></tr><tr><td>关闭时不丢数据</td><td><code>running</code> 标志 + 队列排空 + <code>awaitTermination</code></td></tr></tbody></table>
+<hr>
+<h2 id="15-常见坑">15. 常见坑</h2>
+<table><thead><tr><th>坑</th><th>现象</th><th>正确处理</th></tr></thead><tbody><tr><td>在 Swing EDT 里 <code>sleep</code> 或查库</td><td>界面卡死</td><td>用 <code>SwingWorker</code> 或后台线程，见《Swing 使用手册》</td></tr><tr><td>用 <code>t.run()</code> 代替 <code>start()</code></td><td>根本没起新线程</td><td>用 <code>start()</code></td></tr><tr><td><code>volatile</code> 当原子用</td><td>计数还是不准</td><td>用 <code>AtomicInteger</code> 或 <code>synchronized</code></td></tr><tr><td>锁对象用 <code>String</code> 或包装类</td><td>可能锁到别处的同一个对象</td><td>用 <code>private final Object lock</code></td></tr><tr><td>锁方法包住数据库查询</td><td>并发量暴跌</td><td>只锁必要的小范围</td></tr><tr><td>捕获 <code>InterruptedException</code> 后不恢复标志</td><td>上层无法感知中断，关不掉</td><td><code>Thread.currentThread().interrupt()</code></td></tr><tr><td>线程池不关闭</td><td>程序退不出去</td><td><code>shutdown()</code> + <code>awaitTermination</code></td></tr><tr><td><code>newCachedThreadPool</code> 不限流</td><td>线程数爆炸 OOM</td><td>用有界队列 + 固定大小</td></tr><tr><td><code>SimpleDateFormat</code> 共享</td><td>解析结果错乱</td><td>每线程一个实例，或用 <code>ThreadLocal</code> / <code>DateTimeFormatter</code></td></tr><tr><td><code>ThreadLocal</code> 用完不 <code>remove</code></td><td>线程池里内存泄漏</td><td><code>finally { local.remove(); }</code></td></tr><tr><td><code>HashMap</code> 多线程 put</td><td>丢数据、异常</td><td>换 <code>ConcurrentHashMap</code></td></tr><tr><td><code>notify</code> 而不是 <code>notifyAll</code></td><td>偶尔卡死</td><td>用 <code>notifyAll</code></td></tr><tr><td>死锁</td><td>程序不动、CPU 不高</td><td><code>jstack</code> 看死锁，固定加锁顺序</td></tr><tr><td><code>Executors</code> 无界队列</td><td>内存慢慢涨到 OOM</td><td>直接 <code>new ThreadPoolExecutor</code> 用有界队列</td></tr><tr><td>用 <code>Thread.stop()</code> 杀线程</td><td>数据不一致、已废弃</td><td>用中断标志或 <code>shutdownNow</code></td></tr></tbody></table>
+<hr>
+<h2 id="16-速查表">16. 速查表</h2>
+<h3 id="161-创建与启动">16.1 创建与启动</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>跑一个任务</td><td><code>new Thread(() -&gt; task()).start();</code></td></tr><tr><td>有返回值的任务</td><td><code>Future&lt;T&gt; f = pool.submit(() -&gt; value);</code></td></tr><tr><td>等任务结束</td><td><code>f.get()</code> 或 <code>t.join()</code></td></tr><tr><td>线程池</td><td><code>Executors.newFixedThreadPool(4)</code></td></tr><tr><td>自定义线程池</td><td><code>new ThreadPoolExecutor(...)</code> + 有界队列</td></tr><tr><td>关闭线程池</td><td><code>pool.shutdown(); pool.awaitTermination(30, SECONDS);</code></td></tr></tbody></table>
+<h3 id="162-线程安全">16.2 线程安全</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>累加计数</td><td><code>AtomicInteger.incrementAndGet()</code></td></tr><tr><td>高并发计数</td><td><code>LongAdder.increment()</code></td></tr><tr><td>互斥一段代码</td><td><code>synchronized (lock) { ... }</code></td></tr><tr><td>可见性</td><td><code>private volatile boolean running</code></td></tr><tr><td>需要超时/中断的锁</td><td><code>ReentrantLock.tryLock(2, TimeUnit.SECONDS)</code></td></tr><tr><td>共享缓存</td><td><code>ConcurrentHashMap</code></td></tr><tr><td>生产者消费者</td><td><code>BlockingQueue.put/take</code></td></tr></tbody></table>
+<h3 id="163-协作与异步">16.3 协作与异步</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>等 N 个任务</td><td><code>CountDownLatch.await()</code></td></tr><tr><td>限制并发数</td><td><code>Semaphore.acquire/release</code></td></tr><tr><td>并行后合并</td><td><code>CompletableFuture.allOf(a, b).join()</code></td></tr><tr><td>异步转换</td><td><code>.thenApply(...).thenAccept(...)</code></td></tr><tr><td>异常兜底</td><td><code>.exceptionally(ex -&gt; 0.0)</code></td></tr><tr><td>超时</td><td><code>.orTimeout(3, TimeUnit.SECONDS)</code></td></tr></tbody></table>
+<h3 id="164-排查">16.4 排查</h3>
+<table><thead><tr><th>命令</th><th>用途</th></tr></thead><tbody><tr><td><code>jps</code></td><td>列出 Java 进程 pid</td></tr><tr><td><code>jstack &lt;pid&gt;</code></td><td>看线程栈，查死锁和卡住的线程</td></tr><tr><td><code>jcmd &lt;pid&gt; Thread.print</code></td><td>同上</td></tr><tr><td><code>top</code> / 任务管理器</td><td>看 CPU 占用（死锁时通常不高）</td></tr></tbody></table>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
