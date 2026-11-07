@@ -6,13 +6,26 @@ import com.github.rayman717.util.SqlUtil;
 
 import java.util.*;
 
+import static com.github.rayman717.util.SqlUtil.CreateTable;
+
+/**
+ * 程序入口类。
+ * <p>
+ * 启动流程：初始化配置 → 取出数据库配置 → 建立数据库连接。
+ * （建表等后续操作可按需在此扩展）
+ */
 public class MysqlMain {
     private static final Scanner sc = new Scanner(System.in);//创建全局扫描器
 
+    /**
+     * 主方法：程序启动入口。
+     *
+     * @param args 命令行参数（本程序未使用）
+     */
     public static void main(String[] args) {
-        SqlUtil c = new SqlUtil();
-        ConfigManager.initConfig();
-        DbConfig config = ConfigManager.getDbConfig();
+        SqlUtil c = new SqlUtil();                              //数据库操作工具实例
+        ConfigManager.initConfig();                             //加载或创建 config.properties
+        DbConfig config = ConfigManager.getDbConfig();          //取出数据库连接配置
         c.getConnection(config.ip,config.dbName,config.user,config.password);//连接SQL
         //CreateTable(c.con);      //建表
     }
