@@ -3,10 +3,9 @@ package com.github.rayman717;
 import com.github.rayman717.entity.DbConfig;
 import com.github.rayman717.util.ConfigManager;
 import com.github.rayman717.util.SqlUtil;
+import com.github.rayman717.view.SwingJFrame;
 
 import java.util.*;
-
-import static com.github.rayman717.util.SqlUtil.CreateTable;
 
 /**
  * 程序入口类。
@@ -28,5 +27,6 @@ public class MysqlMain {
         DbConfig config = ConfigManager.getDbConfig();          //取出数据库连接配置
         c.getConnection(config.ip,config.dbName,config.user,config.password);//连接SQL
         //CreateTable(c.con);      //建表
+        SwingJFrame fw = new SwingJFrame("EMS");
     }
 }
