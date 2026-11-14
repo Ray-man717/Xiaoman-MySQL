@@ -9,7 +9,7 @@ public class SwingJFrame extends JFrame {
     public SwingJFrame(String title) {
         setTitle(title);
         Container container = getContentPane();
-        setBounds(200, 200, 400, 300); // 稍微改扁一点
+        setBounds(200, 200, 600, 500); // 稍微改扁一点
         container.setBackground(Color.WHITE);
         container.setLayout(new BorderLayout());
 
@@ -47,13 +47,14 @@ class SignIn extends JDialog {
         container.setLayout(new BorderLayout());
 
         // 设置弹窗大小，并用 setLocationRelativeTo 让它绝对居中于主窗口
-        setSize(300, 150);
+        setSize(400, 500);
         setLocationRelativeTo(frame);
 
         // 1. 提示文字
-        JLabel sign = new JLabel("请输入密码:", SwingConstants.CENTER);
-        sign.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        container.add(sign, BorderLayout.NORTH);
+        JLabel signUser = new JLabel("用户:", SwingConstants.CENTER);
+        signUser.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        signUser.setBounds(50,20,100,10);
+        container.add(signUser);
 
         // 2. 密码输入框
         JPasswordField pwdField = new JPasswordField();

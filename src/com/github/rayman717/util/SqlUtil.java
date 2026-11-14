@@ -30,18 +30,16 @@ public class SqlUtil {
         String url = "JDBC:mysql://"+ ip +":3306/"+ name + "?useSSL=false&characterEncoding=utf8";
         try{
             Class.forName("com.mysql.jdbc.Driver");   //加载 MySQL 驱动（5.x 驱动类名）
-            System.out.println("数据库驱动加载成功");
             LogUtil.info("数据库驱动加载成功");
         }catch(ClassNotFoundException e){
-            LogUtil.error("驱动加载失败"+e.getMessage());
+            LogUtil.error("SQL驱动加载失败:"+e.getMessage());
             e.printStackTrace();
         }
         try{
             con = DriverManager.getConnection(url,user,pass);   //真正建立连接
-            System.out.println("数据库连接完成");
-            LogUtil.info("数据库路径成功");
+            LogUtil.info("数据库连接成功");
         }catch(SQLException e){
-            LogUtil.error("连接失败"+e.getMessage());
+            LogUtil.error("SQL连接失败:"+e.getMessage());
             e.printStackTrace();
         }
         return con;

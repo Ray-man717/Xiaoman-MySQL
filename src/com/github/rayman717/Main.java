@@ -1,7 +1,9 @@
 package com.github.rayman717;
 
+import com.github.rayman717.Server.NetworkMain;
 import com.github.rayman717.entity.DbConfig;
 import com.github.rayman717.util.ConfigManager;
+import com.github.rayman717.util.LogUtil;
 import com.github.rayman717.util.SqlUtil;
 import com.github.rayman717.view.SwingJFrame;
 
@@ -22,10 +24,13 @@ public class Main {
      * @param args 命令行参数（本程序未使用）
      */
     public static void main(String[] args) {
+        LogUtil.info("————————程序开始————————");
         SqlUtil c = new SqlUtil();                              //数据库操作工具实例
         ConfigManager.initConfig();                             //加载或创建 config.properties
         DbConfig config = ConfigManager.getDbConfig();          //取出数据库连接配置
-        c.getConnection(config.ip,config.dbName,config.user,config.password);//连接SQL
+        c.getConnection(config.ip, config.dbName, config.user, config.password);//连接SQL
+        NetworkMain network = new NetworkMain();
+        network.HttpNetworkConnect();
         //CreateTable(c.con);      //建表
         SwingJFrame fw = new SwingJFrame("HMS");
     }
