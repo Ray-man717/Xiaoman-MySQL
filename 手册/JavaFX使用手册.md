@@ -1,0 +1,1413 @@
+# JavaFX 使用手册（Java 桌面界面 · EMS 项目版）
+
+> 面向本项目：`EMS` 环境监测（MySQL + JDBC + Swing 已有界面），这一本讲 JavaFX：
+> 一个更现代、能用 CSS 和 FXML 的桌面界面方案，适合把 EMS 监控界面做得更好看。
+> 环境：JDK 17 + JavaFX 17 LTS（JDK 11 起 JavaFX 不再随 JDK 发布，需要单独下载）。
+
+---
+
+## 目录
+
+1. [JavaFX 是什么，和 Swing 怎么选](#1-javafx-是什么和-swing-怎么选)
+2. [环境准备（最容易卡住的一步）](#2-环境准备最容易卡住的一步)
+3. [第一个程序](#3-第一个程序)
+4. [场景图：Stage、Scene、Node](#4-场景图stagescenenode)
+5. [布局面板](#5-布局面板)
+6. [常用控件](#6-常用控件)
+7. [FXML：把界面和代码分开](#7-fxml把界面和代码分开)
+8. [事件处理与属性绑定](#8-事件处理与属性绑定)
+9. [CSS 样式](#9-css-样式)
+10. [表格 TableView](#10-表格-tableview)
+11. [属性与观察者](#11-属性与观察者)
+12. [并发：后台任务与界面更新](#12-并发后台任务与界面更新)
+13. [动画](#13-动画)
+14. [图表](#14-图表)
+15. [对话框与文件选择](#15-对话框与文件选择)
+16. [窗口 Stage](#16-窗口-stage)
+17. [打包与分发](#17-打包与分发)
+18. [实战：EMS 数据监控界面](#18-实战ems-数据监控界面)
+19. [常见坑](#19-常见坑)
+20. [速查表](#20-速查表)
+
+---
+
+## 1. JavaFX 是什么，和 Swing 怎么选
+
+JavaFX 是 Java 的另一个桌面 UI 工具包，和 Swing 并列，但设计更现代：
+
+| 维度 | Swing | JavaFX |
+| --- | --- | --- |
+| 出场时间 | 1998 年，JDK 1.x | 2008 年，JDK 11 起移出 JDK |
+| 外观 | 传统控件风格，可换肤 | 默认扁平，支持 CSS 深度定制 |
+| 界面描述 | 纯 Java 代码 | Java 代码 或 FXML（XML） |
+| 数据绑定 | 手动监听 | 属性绑定（`bind`） |
+| 动画 | `Timer` + `repaint` | `Timeline`、`Transition` 内置 |
+| 图表 | 无（要自己画） | `LineChart`、`BarChart` 等自带 |
+| 依赖 | JDK 自带 | 需额外下载 JavaFX SDK |
+| 生态与教程 | 老、多 | 新、少一些 |
+
+怎么选：
+
+| 情况 | 选择 |
+| --- | --- |
+| 课程作业、机房环境、必须「一个 jar 就能跑」 | Swing |
+| 想要好看的界面、图表、动画 | JavaFX |
+| 团队没有构建工具（纯 javac） | Swing 更省事 |
+| 愿意配 Maven/Gradle | JavaFX 完全可以 |
+
+本项目现在用 Swing 已经能跑；如果只是想把界面做漂亮，JavaFX 值得一试，但要知道它多了一步「配置 JavaFX 库」的成本（第 2 章）。
+
+---
+
+## 2. 环境准备（最容易卡住的一步）
+
+### 2.1 下载 JavaFX SDK
+
+1. 打开 <https://openjfx.io>，点 Download；
+2. 选 **JavaFX 17 LTS**（和 JDK 17 匹配）；
+3. 下载 Windows x64 的 SDK zip，解压，例如：
+
+```
+E:\javafx-sdk-17.0.9\
+└── lib\
+    ├── javafx.base.jar
+    ├── javafx.controls.jar
+    ├── javafx.fxml.jar
+    ├── javafx.graphics.jar
+    ├── javafx.media.jar
+    └── ...
+```
+
+记住 `lib` 目录的路径，后面要用。
+
+### 2.2 命令行运行
+
+JavaFX 不能只放进 `-cp`，必须用 `--module-path` 并把需要的模块加进来：
+
+```bash
+# 编译（和普通 Java 一样，classpath 里加 JavaFX 的 jar）
+javac -encoding UTF-8 -d out --module-path "E:\javafx-sdk-17.0.9\lib" ^
+      --add-modules javafx.controls,javafx.fxml ^
+      src\com\github\rayman717\ui\EmsFxApp.java
+
+# 运行
+java --module-path "E:\javafx-sdk-17.0.9\lib" ^
+     --add-modules javafx.controls,javafx.fxml ^
+     -cp "out;mysql-connector-java-5.1.49.jar" ^
+     com.github.rayman717.ui.EmsFxApp
+```
+
+关键参数：
+
+| 参数 | 作用 |
+| --- | --- |
+| `--module-path` | 告诉 JVM 去哪找 JavaFX 模块 |
+| `--add-modules javafx.controls` | 界面控件、布局、图表 |
+| `--add-modules javafx.fxml` | 用 FXML 时需要 |
+| `-cp` | 自己的类 + 数据库驱动 |
+
+少了 `--add-modules` 会报：
+
+```
+Error: JavaFX runtime components are missing, and are required to run this application
+```
+
+### 2.3 IDEA 里配置
+
+1. **File → Project Structure → Libraries → + → Java**，选 `E:\javafx-sdk-17.0.9\lib`，添加；
+2. **Run → Edit Configurations → VM options** 填：
+
+```
+--module-path "E:\javafx-sdk-17.0.9\lib" --add-modules javafx.controls,javafx.fxml
+```
+
+3. 运行主类即可。
+
+如果报「找不到 javafx 包」，检查 Libraries 是否加到了当前 Module（Modules → Dependencies）。
+
+### 2.4 Maven（有构建工具时）
+
+```xml
+<dependency>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-controls</artifactId>
+    <version>17.0.9</version>
+</dependency>
+<dependency>
+    <groupId>org.openjfx</groupId>
+    <artifactId>javafx-fxml</artifactId>
+    <version>17.0.9</version>
+</dependency>
+```
+
+Maven 的 `javafx-maven-plugin` 会自动处理 module-path，命令行 `mvn javafx:run` 就能跑。
+
+---
+
+## 3. 第一个程序
+
+```java
+package com.github.rayman717.ui;
+
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+
+public class HelloFx extends Application {
+
+    @Override
+    public void start(Stage stage) {
+        Label label = new Label("EMS 环境监测");
+
+        StackPane root = new StackPane(label);
+
+        Scene scene = new Scene(root, 420, 240);
+
+        stage.setTitle("JavaFX 示例");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+```
+
+四条固定套路：
+
+| 步骤 | 代码 | 说明 |
+| --- | --- | --- |
+| 继承 | `extends Application` | 入口类 |
+| 入口 | `launch(args)` | 由 JavaFX 启动，内部会调 `start` |
+| 界面 | `start(Stage stage)` | 在这里创建 Scene、加控件 |
+| 显示 | `stage.show()` | 少了它窗口不出现 |
+
+和 Swing 最大的区别：**没有 EDT 的繁文缛节**，但有类似的规则——界面更新必须在 JavaFX 应用线程（FX Application Thread）上，后台任务要用 `Platform.runLater` 或 `Task`（第 12 章）。
+
+---
+
+## 4. 场景图：Stage、Scene、Node
+
+JavaFX 的界面是一棵树：
+
+```
+Stage（窗口）
+└── Scene（场景）
+    └── Parent（根布局，如 BorderPane）
+        ├── Label
+        ├── Button
+        └── TableView
+```
+
+| 概念 | 对应 Swing | 说明 |
+| --- | --- | --- |
+| `Stage` | `JFrame` | 窗口，有标题、图标、大小 |
+| `Scene` | `JPanel` 的容器 | 场景，管理内容树的根 |
+| `Parent` | `JPanel` | 容器，负责子节点布局 |
+| `Node` | `JComponent` | 任何可见元素 |
+
+```java
+Stage stage = new Stage();
+stage.setTitle("EMS");
+stage.setWidth(800);
+stage.setHeight(600);
+
+BorderPane root = new BorderPane();
+Scene scene = new Scene(root, 800, 600);
+stage.setScene(scene);
+stage.show();
+
+// 换根节点
+stage.getScene().setRoot(new StackPane());
+```
+
+多窗口就是多个 `Stage`：
+
+```java
+Stage dialog = new Stage();
+dialog.initOwner(stage);          // 设置父窗口
+dialog.initModality(Modality.WINDOW_MODAL);
+dialog.setScene(new Scene(new Label("子窗口")));
+dialog.show();
+```
+
+---
+
+## 5. 布局面板
+
+JavaFX 的布局面板都是 `Parent` 的子类，用法和 Swing 的布局管理器类似：
+
+| 面板 | 作用 | 类似 Swing |
+| --- | --- | --- |
+| `VBox` | 竖排 | `BoxLayout.Y_AXIS` |
+| `HBox` | 横排 | `BoxLayout.X_AXIS` |
+| `BorderPane` | 东南西北中 | `BorderLayout` |
+| `GridPane` | 网格 | `GridBagLayout` / `GridLayout` |
+| `FlowPane` | 自动换行 | `FlowLayout` |
+| `StackPane` | 层叠（居中） | 无直接对应 |
+| `AnchorPane` | 锚点定位 | 几乎等于绝对布局 |
+| `ScrollPane` | 滚动容器 | `JScrollPane` |
+| `TabPane` | 分页 | `JTabbedPane` |
+| `SplitPane` | 分栏 | `JSplitPane` |
+
+```java
+// VBox：竖排 + 间距 + 内边距
+VBox box = new VBox(8);
+box.setPadding(new Insets(12));
+box.getChildren().addAll(new Label("温度"), new TextField(), new Button("确定"));
+
+// HBox：横排，按钮靠右
+HBox bar = new HBox(8);
+bar.setAlignment(Pos.CENTER_RIGHT);
+bar.getChildren().addAll(new Button("刷新"), new Button("导出"));
+
+// BorderPane：上中下
+BorderPane root = new BorderPane();
+root.setTop(new Label("EMS 监控"));
+root.setCenter(new TableView<>());
+root.setBottom(new Label("就绪"));
+
+// GridPane：两列表单
+GridPane grid = new GridPane();
+grid.setHgap(8);
+grid.setVgap(8);
+grid.setPadding(new Insets(12));
+grid.add(new Label("温度："), 0, 0);
+grid.add(new TextField(), 1, 0);
+grid.add(new Label("湿度："), 0, 1);
+grid.add(new TextField(), 1, 1);
+```
+
+让某个控件在 `HBox` 里占满剩余空间：
+
+```java
+HBox.setHgrow(searchField, Priority.ALWAYS);   // 横向拉伸
+```
+
+`VBox` 里用 `VBox.setVgrow(node, Priority.ALWAYS)`。
+
+---
+
+## 6. 常用控件
+
+| 需求 | 控件 |
+| --- | --- |
+| 文字 | `Label` |
+| 按钮 | `Button` |
+| 单行输入 | `TextField` |
+| 密码 | `PasswordField` |
+| 多行文本 | `TextArea` |
+| 勾选 | `CheckBox` |
+| 单选 | `RadioButton` + `ToggleGroup` |
+| 下拉 | `ComboBox` |
+| 列表 | `ListView` |
+| 表格 | `TableView` |
+| 树 | `TreeView` |
+| 进度 | `ProgressBar` / `ProgressIndicator` |
+| 滑动 | `Slider` |
+| 分页 | `TabPane` |
+| 菜单 | `MenuBar` / `Menu` / `MenuItem` |
+
+```java
+Label status = new Label("就绪");
+Button refresh = new Button("刷新");
+
+TextField tempField = new TextField();
+tempField.setPromptText("请输入温度");        // 占位提示（Swing 没有，JavaFX 原生支持）
+
+TextArea logArea = new TextArea();
+logArea.setEditable(false);
+logArea.setPrefRowCount(6);
+
+CheckBox autoRefresh = new CheckBox("自动刷新");
+boolean on = autoRefresh.isSelected();
+
+RadioButton byDay = new RadioButton("按天");
+RadioButton byHour = new RadioButton("按小时");
+ToggleGroup group = new ToggleGroup();
+byDay.setToggleGroup(group);
+byHour.setToggleGroup(group);
+
+ComboBox<String> rangeCombo = new ComboBox<>();
+rangeCombo.getItems().addAll("最近 10 条", "最近 50 条", "全部");
+rangeCombo.getSelectionModel().selectFirst();
+
+ListView<String> deviceList = new ListView<>();
+deviceList.getItems().addAll("设备 A", "设备 B");
+
+ProgressBar bar = new ProgressBar(0.35);      // 0~1 的小数，不是百分比
+
+Slider slider = new Slider(0, 100, 40);
+```
+
+几个和 Swing 不一样的地方：
+
+| 项目 | Swing | JavaFX |
+| --- | --- | --- |
+| 占位提示 | 要自己用 `FocusListener` 模拟 | `setPromptText("...")` |
+| 进度值 | 0~100 整数 | 0~1 小数，或 `setProgress(-1)` 表示不确定 |
+| 单选互斥 | `ButtonGroup` | `ToggleGroup` |
+| 列表数据 | `DefaultListModel` | `ObservableList` |
+| 文本换行 | `setLineWrap(true)` | 默认自动换行 |
+
+---
+
+## 7. FXML：把界面和代码分开
+
+FXML 是 XML 描述的界面，好处是「界面改样式不用改 Java 代码」。
+
+### 7.1 FXML 文件
+
+`src/main/resources/view/ems.fxml`（或 `src/view/ems.fxml`，放在资源目录）：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.github.rayman717.ui.EmsController"
+            prefWidth="800" prefHeight="520">
+
+    <top>
+        <ToolBar>
+            <Button fx:id="refreshBtn" text="刷新" onAction="#onRefresh"/>
+            <Button fx:id="addBtn" text="添加记录"/>
+            <CheckBox fx:id="autoRefreshBox" text="自动刷新"/>
+        </ToolBar>
+    </top>
+
+    <center>
+        <TableView fx:id="table">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="aliColumn" text="光照" prefWidth="100"/>
+                <TableColumn fx:id="tempColumn" text="温度" prefWidth="100"/>
+                <TableColumn fx:id="humidityColumn" text="湿度" prefWidth="100"/>
+                <TableColumn fx:id="timeColumn" text="时间" prefWidth="180"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <Label fx:id="statusLabel" text="就绪"/>
+    </bottom>
+</BorderPane>
+```
+
+### 7.2 Controller
+
+```java
+package com.github.rayman717.ui;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+public class EmsController {
+
+    @FXML private Button refreshBtn;
+    @FXML private Button addBtn;
+    @FXML private CheckBox autoRefreshBox;
+    @FXML private TableView<EmsRecord> table;
+    @FXML private TableColumn<EmsRecord, Integer> idColumn;
+    @FXML private TableColumn<EmsRecord, Double> aliColumn;
+    @FXML private TableColumn<EmsRecord, Double> tempColumn;
+    @FXML private TableColumn<EmsRecord, Double> humidityColumn;
+    @FXML private TableColumn<EmsRecord, String> timeColumn;
+    @FXML private Label statusLabel;
+
+    @FXML
+    private void initialize() {
+        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        aliColumn.setCellValueFactory(new PropertyValueFactory<>("ali"));
+        tempColumn.setCellValueFactory(new PropertyValueFactory<>("temp"));
+        humidityColumn.setCellValueFactory(new PropertyValueFactory<>("humidity"));
+        timeColumn.setCellValueFactory(new PropertyValueFactory<>("time"));
+        statusLabel.setText("已加载 " + table.getItems().size() + " 条");
+    }
+
+    @FXML
+    private void onRefresh() {
+        loadData();
+    }
+
+    private void loadData() {
+        // 查库、填 table.getItems()
+    }
+}
+```
+
+### 7.3 加载 FXML
+
+```java
+public class EmsFxApp extends Application {
+    @Override
+    public void start(Stage stage) throws Exception {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/ems.fxml"));
+        Parent root = loader.load();                  // 资源路径以 / 开头，从 classpath 根开始
+        stage.setScene(new Scene(root, 800, 520));
+        stage.setTitle("EMS 监控");
+        stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+```
+
+要点：
+
+| 要点 | 说明 |
+| --- | --- |
+| 路径 | `getResource("/view/ems.fxml")` 从 classpath 根找；打包后也能用 |
+| Controller | FXML 里的 `fx:controller` 类名必须完整 |
+| `fx:id` | 和 Controller 里的字段名一致，否则注入为 null |
+| `onAction="#onRefresh"` | 方法要加 `@FXML` |
+| `initialize()` | Controller 构造后自动调用，适合初始化 |
+
+### 7.4 Scene Builder
+
+Scene Builder 是可拖拽的 FXML 编辑器（<https://gluonhq.com/products/scene-builder/>），
+拖控件生成 XML，保存后 IDEA 里直接加载。入门可以先用纯代码写界面，熟悉后再用 FXML。
+
+---
+
+## 8. 事件处理与属性绑定
+
+### 8.1 事件
+
+```java
+Button refresh = new Button("刷新");
+refresh.setOnAction(e -> loadData());
+
+TextField tempField = new TextField();
+tempField.textProperty().addListener((obs, oldValue, newValue) -> {
+    System.out.println("输入变化：" + newValue);
+});
+
+ComboBox<String> combo = new ComboBox<>();
+combo.setOnAction(e -> {
+    String value = combo.getSelectionModel().getSelectedItem();
+    System.out.println("选了：" + value);
+});
+
+CheckBox check = new CheckBox("自动刷新");
+check.selectedProperty().addListener((obs, oldV, newV) -> {
+    if (newV) {
+        timer.play();
+    } else {
+        timer.stop();
+    }
+});
+
+// 鼠标、键盘
+Button btn = new Button("点我");
+btn.setOnMouseClicked(e -> System.out.println("鼠标点击"));
+btn.setOnKeyPressed(e -> {
+    if (e.getCode() == KeyCode.F5) {
+        loadData();
+    }
+});
+```
+
+### 8.2 属性绑定
+
+这是 JavaFX 比 Swing 最好用的地方：一个值变了，另一个自动跟着变。
+
+```java
+TextField input = new TextField();
+Label preview = new Label();
+
+// 单向绑定：preview 的文字永远等于输入框文字
+preview.textProperty().bind(input.textProperty());
+
+// 解除绑定
+preview.textProperty().unbind();
+
+// 双向绑定：两边互相影响
+TextField a = new TextField();
+TextField b = new TextField();
+a.textProperty().bindBidirectional(b.textProperty());
+
+// 表达式绑定
+Label summary = new Label();
+summary.textProperty().bind(
+        Bindings.concat("温度：", input.textProperty(), " ℃")
+);
+
+// 数值计算绑定
+doubleProperty total = new SimpleDoubleProperty(0);
+Label totalLabel = new Label();
+totalLabel.textProperty().bind(total.asString("%.1f"));
+```
+
+和 Swing 的对应：
+
+| JavaFX | Swing 做法 |
+| --- | --- |
+| `bind` | 在监听器里手动 `setText` |
+| `bindBidirectional` | 两个 `DocumentListener` 互相写 |
+| `Bindings.concat` | `String.format` |
+| `asString("%.1f")` | `String.format` |
+
+---
+
+## 9. CSS 样式
+
+JavaFX 用 CSS 写样式，选择器规则和网页几乎一样：
+
+```css
+/* 全局 */
+.root {
+    -fx-background-color: #f2f5f8;
+    -fx-font-family: "Microsoft YaHei";
+    -fx-font-size: 13px;
+}
+
+/* 按钮 */
+.button {
+    -fx-background-color: #2f6fdd;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+    -fx-padding: 6 16 6 16;
+}
+
+/* 悬停 */
+.button:hover {
+    -fx-background-color: #1f5fd0;
+}
+
+/* 按 id 选中 */
+#statusLabel {
+    -fx-text-fill: #666;
+}
+
+/* 表格表头 */
+.table-view .column-header {
+    -fx-background-color: #e8eef7;
+}
+```
+
+三种用法：
+
+```java
+// ① 外部样式表
+scene.getStylesheets().add(getClass().getResource("/css/ems.css").toExternalForm());
+
+// ② 组件加样式类
+button.getStyleClass().add("primary-button");
+
+// ③ 内联样式（临时调试用）
+button.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white;");
+```
+
+常用属性：
+
+| CSS 属性 | 作用 |
+| --- | --- |
+| `-fx-background-color` | 背景色 |
+| `-fx-text-fill` | 文字颜色 |
+| `-fx-font-size` / `-fx-font-family` | 字体 |
+| `-fx-background-radius` | 圆角 |
+| `-fx-border-color` / `-fx-border-width` | 边框 |
+| `-fx-padding` | 内边距 |
+| `-fx-effect` | 阴影 |
+| `-fx-opacity` | 透明度 |
+
+注意：JavaFX 的 CSS 是**自己实现的子集**，不是完整 CSS（没有 flexbox、没有 float），属性名都带 `-fx-` 前缀。
+
+---
+
+## 10. 表格 TableView
+
+```java
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
+
+ObservableList<EmsRecord> data = FXCollections.observableArrayList();
+TableView<EmsRecord> table = new TableView<>(data);
+
+TableColumn<EmsRecord, Integer> idCol = new TableColumn<>("ID");
+idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+
+TableColumn<EmsRecord, Double> tempCol = new TableColumn<>("温度");
+tempCol.setCellValueFactory(cell -> cell.getValue().tempProperty().asObject());
+
+TableColumn<EmsRecord, String> timeCol = new TableColumn<>("时间");
+timeCol.setCellValueFactory(cell -> cell.getValue().timeProperty());
+
+table.getColumns().addAll(idCol, tempCol, timeCol);
+table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+```
+
+`setCellValueFactory` 有两种写法：
+
+| 写法 | 适用 |
+| --- | --- |
+| `new PropertyValueFactory<>("id")` | 实体属性是 JavaFX 属性（`SimpleIntegerProperty` 等） |
+| `cell -> cell.getValue().tempProperty().asObject()` | 实体属性是普通字段，或需要转换 |
+| `cell -> new ReadOnlyObjectWrapper<>(cell.getValue().getTemp())` | 属性不是 JavaFX Property 时 |
+
+### 10.1 实体类（JavaFX 属性风格）
+
+```java
+public class EmsRecord {
+    private final SimpleIntegerProperty id;
+    private final SimpleDoubleProperty temp;
+    private final SimpleStringProperty time;
+
+    public EmsRecord(int id, double temp, String time) {
+        this.id = new SimpleIntegerProperty(id);
+        this.temp = new SimpleDoubleProperty(temp);
+        this.time = new SimpleStringProperty(time);
+    }
+
+    public int getId() { return id.get(); }
+    public void setId(int v) { id.set(v); }
+    public SimpleIntegerProperty idProperty() { return id; }
+
+    public double getTemp() { return temp.get(); }
+    public void setTemp(double v) { temp.set(v); }
+    public SimpleDoubleProperty tempProperty() { return temp; }
+
+    public String getTime() { return time.get(); }
+    public void setTime(String v) { time.set(v); }
+    public SimpleStringProperty timeProperty() { return time; }
+}
+```
+
+规律：每个字段三个方法——`getXxx()`、`setXxx()`、`xxxProperty()`。
+
+### 10.2 自定义单元格（按温度变色）
+
+```java
+tempCol.setCellFactory(col -> new TableCell<EmsRecord, Double>() {
+    @Override
+    protected void updateItem(Double value, boolean empty) {
+        super.updateItem(value, empty);
+        if (empty || value == null) {
+            setText(null);
+            setStyle("");
+        } else {
+            setText(String.format("%.1f", value));
+            setStyle(value > 30 ? "-fx-text-fill: red; -fx-font-weight: bold;" : "");
+        }
+    }
+});
+```
+
+### 10.3 选中行
+
+```java
+EmsRecord selected = table.getSelectionModel().getSelectedItem();
+if (selected != null) {
+    System.out.println("选中：" + selected.getId());
+}
+
+// 只允许单选
+table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+
+table.getItems().remove(selected);            // 删掉选中行
+table.getItems().add(new EmsRecord(1, 25.5, "2026-01-01"));
+table.getItems().clear();
+```
+
+`TableView` 的数据变化（增删改）会自动刷新界面，不用手动通知——这是 `ObservableList` 的功劳。
+
+---
+
+## 11. 属性与观察者
+
+JavaFX 的核心设计：**一切可观察**。
+
+```java
+SimpleStringProperty name = new SimpleStringProperty("EMS");
+SimpleDoubleProperty temp = new SimpleDoubleProperty(26.4);
+SimpleIntegerProperty count = new SimpleIntegerProperty(0);
+SimpleBooleanProperty running = new SimpleBooleanProperty(false);
+
+// 监听变化
+temp.addListener((obs, oldValue, newValue) -> {
+    System.out.println("温度从 " + oldValue + " 变成 " + newValue);
+});
+
+// 手动改
+temp.set(27.1);
+
+// 绑定：另一个属性跟着变
+SimpleStringProperty label = new SimpleStringProperty();
+label.bind(Bindings.concat("温度：", temp.asString("%.1f"), " ℃"));
+
+// 数值运算
+SimpleDoubleProperty doubled = new SimpleDoubleProperty();
+doubled.bind(temp.multiply(2));
+```
+
+集合也可以观察：
+
+```java
+ObservableList<String> list = FXCollections.observableArrayList();
+
+list.addListener((ListChangeListener<String>) change -> {
+    while (change.next()) {
+        if (change.wasAdded()) {
+            System.out.println("新增：" + change.getAddedSubList());
+        }
+        if (change.wasRemoved()) {
+            System.out.println("删除：" + change.getRemoved());
+        }
+    }
+});
+```
+
+---
+
+## 12. 并发：后台任务与界面更新
+
+规则和 Swing 一样：**界面更新必须在 JavaFX 应用线程上，耗时操作放后台**。
+
+### 12.1 Platform.runLater
+
+```java
+new Thread(() -> {
+    String result = queryDatabase();          // 后台
+    Platform.runLater(() -> {
+        statusLabel.setText("结果：" + result); // 回界面线程
+    });
+}).start();
+```
+
+### 12.2 Task（带进度和结果）
+
+```java
+import javafx.concurrent.Task;
+
+Task<List<EmsRecord>> task = new Task<>() {
+    @Override
+    protected List<EmsRecord> call() throws Exception {
+        return queryAll();                     // 后台执行
+    }
+
+    @Override
+    protected void succeeded() {
+        table.getItems().setAll(getValue());   // 界面线程
+        statusLabel.setText("共 " + getValue().size() + " 条");
+    }
+
+    @Override
+    protected void failed() {
+        statusLabel.setText("失败：" + getException().getMessage());
+    }
+};
+
+new Thread(task).start();
+```
+
+### 12.3 Service（可复用的任务）
+
+```java
+Service<List<EmsRecord>> service = new Service<>() {
+    @Override
+    protected Task<List<EmsRecord>> createTask() {
+        return new Task<>() {
+            @Override
+            protected List<EmsRecord> call() throws Exception {
+                return queryAll();
+            }
+        };
+    }
+};
+
+service.setOnSucceeded(e -> table.getItems().setAll(service.getValue()));
+service.restart();          // 每次刷新都调 restart
+```
+
+### 12.4 定时刷新
+
+```java
+Timeline autoRefresh = new Timeline(
+        new KeyFrame(Duration.seconds(5), e -> loadData())
+);
+autoRefresh.setCycleCount(Timeline.INDEFINITE);
+autoRefresh.play();          // 开始
+autoRefresh.stop();          // 停止
+```
+
+和 Swing 的对应：
+
+| Swing | JavaFX |
+| --- | --- |
+| `SwingWorker` | `Task` / `Service` |
+| `SwingUtilities.invokeLater` | `Platform.runLater` |
+| `javax.swing.Timer` | `Timeline` / `AnimationTimer` |
+| `setProgress()` + 监听 | `task.progressProperty().addListener` |
+
+进度条绑定：
+
+```java
+ProgressBar bar = new ProgressBar(0);
+bar.progressProperty().bind(task.progressProperty());
+```
+
+---
+
+## 13. 动画
+
+### 13.1 Timeline
+
+```java
+Timeline timeline = new Timeline(
+        new KeyFrame(Duration.ZERO, new KeyValue(node.opacityProperty(), 1.0)),
+        new KeyFrame(Duration.seconds(1), new KeyValue(node.opacityProperty(), 0.2)),
+        new KeyFrame(Duration.seconds(2), new KeyValue(node.opacityProperty(), 1.0))
+);
+timeline.setCycleCount(Timeline.INDEFINITE);
+timeline.play();
+```
+
+### 13.2 内置过渡
+
+```java
+// 淡入淡出
+FadeTransition fade = new FadeTransition(Duration.millis(600), label);
+fade.setFromValue(1.0);
+fade.setToValue(0.0);
+fade.play();
+
+// 平移
+TranslateTransition move = new TranslateTransition(Duration.millis(500), button);
+move.setByX(120);
+move.play();
+
+// 缩放
+ScaleTransition zoom = new ScaleTransition(Duration.millis(300), node);
+zoom.setToX(1.2);
+zoom.setToY(1.2);
+zoom.setAutoReverse(true);
+zoom.setCycleCount(2);
+zoom.play();
+```
+
+动画用于「数据更新时轻微提示」效果不错：新记录到来时让表格行闪一下，比弹窗友好。
+
+---
+
+## 14. 图表
+
+JavaFX 自带图表，比 Swing 里手画方便得多。
+
+```java
+import javafx.scene.chart.*;
+
+CategoryAxis xAxis = new CategoryAxis();
+NumberAxis yAxis = new NumberAxis();
+yAxis.setLabel("温度 ℃");
+
+LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+chart.setTitle("最近温度趋势");
+
+XYChart.Series<String, Number> series = new XYChart.Series<>();
+series.setName("温度");
+series.getData().add(new XYChart.Data<>("08:00", 24.1));
+series.getData().add(new XYChart.Data<>("09:00", 25.3));
+series.getData().add(new XYChart.Data<>("10:00", 27.0));
+
+chart.getData().add(series);
+```
+
+刷新数据：
+
+```java
+series.getData().clear();
+for (EmsRecord r : records) {
+    series.getData().add(new XYChart.Data<>(r.getTime(), r.getTemp()));
+}
+```
+
+其它图表：
+
+| 图表 | 用途 |
+| --- | --- |
+| `LineChart` | 趋势 |
+| `BarChart` | 对比 |
+| `PieChart` | 占比 |
+| `ScatterChart` | 分布 |
+| `AreaChart` | 累计 |
+
+给图表数据点设置样式（让点可见、变色）：
+
+```java
+chart.lookup(".chart-series-line").setStyle("-fx-stroke: #e0533d; -fx-stroke-width: 2px;");
+```
+
+---
+
+## 15. 对话框与文件选择
+
+### 15.1 Alert
+
+```java
+Alert info = new Alert(Alert.AlertType.INFORMATION);
+info.setTitle("提示");
+info.setHeaderText(null);
+info.setContentText("保存成功");
+info.showAndWait();
+
+Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+confirm.setTitle("确认");
+confirm.setHeaderText("确定删除这一行？");
+Optional<ButtonType> result = confirm.showAndWait();
+if (result.isPresent() && result.get() == ButtonType.OK) {
+    deleteSelected();
+}
+
+// 错误
+Alert error = new Alert(Alert.AlertType.ERROR, "数据库连接失败");
+error.showAndWait();
+```
+
+### 15.2 输入框
+
+```java
+TextInputDialog dialog = new TextInputDialog("25.0");
+dialog.setTitle("输入温度");
+dialog.setHeaderText("请输入温度值（-20 ~ 60）");
+dialog.setContentText("温度：");
+
+Optional<String> value = dialog.showAndWait();
+value.ifPresent(v -> System.out.println("输入：" + v));
+```
+
+### 15.3 文件选择
+
+```java
+import javafx.stage.FileChooser;
+
+FileChooser chooser = new FileChooser();
+chooser.setTitle("导出 CSV");
+chooser.getExtensionFilters().add(
+        new FileChooser.ExtensionFilter("CSV 文件", "*.csv"));
+
+File file = chooser.showSaveDialog(stage);
+if (file != null) {
+    exportCsv(file.toPath());
+}
+```
+
+### 15.4 自定义对话框
+
+用 `Dialog<ButtonType>` 或直接 `Stage`：
+
+```java
+Dialog<ButtonType> dialog = new Dialog<>();
+dialog.setTitle("添加记录");
+dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+TextField tempField = new TextField();
+dialog.getDialogPane().setContent(new VBox(8, new Label("温度："), tempField));
+
+Optional<ButtonType> result = dialog.showAndWait();
+if (result.isPresent() && result.get() == ButtonType.OK) {
+    System.out.println(tempField.getText());
+}
+```
+
+---
+
+## 16. 窗口 Stage
+
+```java
+stage.setTitle("EMS 环境监测");
+stage.getIcons().add(new Image(getClass().getResourceAsStream("/icons/app.png")));
+stage.setWidth(900);
+stage.setHeight(560);
+stage.setMinWidth(600);
+stage.setMinHeight(400);
+stage.centerOnScreen();
+stage.setResizable(true);
+
+// 模态
+stage.initModality(Modality.WINDOW_MODAL);
+stage.initOwner(mainStage);
+
+// 关闭事件
+stage.setOnCloseRequest(event -> {
+    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "确定退出？");
+    if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
+        event.consume();          // 取消关闭
+    }
+});
+```
+
+窗口大小保存（和 Swing 手册第 18.2 节思路一致，存到 properties）。
+
+程序退出：
+
+```java
+Platform.exit();          // 正常退出
+System.exit(0);           // 强制退出（确保后台线程也结束）
+```
+
+JavaFX 默认在最后一个窗口关闭时退出；如果有非守护线程（比如数据库连接池、定时器）还活着，要显式退出。
+
+---
+
+## 17. 打包与分发
+
+### 17.1 为什么不能直接打普通 jar
+
+JavaFX 是独立模块，普通 fat jar 双击会因为找不到模块而报
+`JavaFX runtime components are missing`。
+
+### 17.2 jpackage（推荐，生成 exe）
+
+JDK 14+ 自带 `jpackage`：
+
+```bash
+jpackage --type app-image ^
+         --name EmsMonitor ^
+         --input out ^
+         --main-jar EmsMonitor.jar ^
+         --main-class com.github.rayman717.ui.EmsFxApp ^
+         --module-path "E:\javafx-sdk-17.0.9\lib" ^
+         --add-modules javafx.controls,javafx.fxml ^
+         --win-console
+```
+
+参数说明：
+
+| 参数 | 作用 |
+| --- | --- |
+| `--type app-image` | 生成免安装目录（`--type exe` 生成安装包） |
+| `--input out` | 放 class 的目录 |
+| `--main-jar` | 主 jar（可以是普通 jar） |
+| `--module-path` | JavaFX 库位置 |
+| `--win-console` | 保留控制台，方便看报错（调试时加） |
+
+生成 `EmsMonitor\EmsMonitor.exe`，双击就能跑，目标机器**不需要装 Java**。
+
+### 17.3 临时方案：写 bat 启动
+
+```bat
+@echo off
+java --module-path "E:\javafx-sdk-17.0.9\lib" ^
+     --add-modules javafx.controls,javafx.fxml ^
+     -cp "out;mysql-connector-java-5.1.49.jar" ^
+     com.github.rayman717.ui.EmsFxApp
+pause
+```
+
+`pause` 保证能看到报错。
+
+---
+
+## 18. 实战：EMS 数据监控界面
+
+把前面内容串起来：JavaFX 版监控窗口——表格 + 定时刷新 + 状态栏，数据来自 `ems` 表。
+
+```java
+package com.github.rayman717.ui;
+
+import com.github.rayman717.entity.DbConfig;
+import com.github.rayman717.util.ConfigManager;
+
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * JavaFX 版 EMS 数据监控窗口。
+ */
+public class EmsFxApp extends Application {
+
+    private final ObservableList<EmsFxRecord> records = FXCollections.observableArrayList();
+    private final Label statusLabel = new Label("就绪");
+    private final TableView<EmsFxRecord> table = new TableView<>(records);
+    private ScheduledExecutorService scheduler;
+    private boolean autoRefresh = false;
+
+    @Override
+    public void start(Stage stage) {
+        ConfigManager.initConfig();
+
+        // 列
+        TableColumn<EmsFxRecord, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        idCol.setPrefWidth(60);
+
+        TableColumn<EmsFxRecord, Double> tempCol = new TableColumn<>("温度");
+        tempCol.setCellValueFactory(new PropertyValueFactory<>("temp"));
+        tempCol.setPrefWidth(100);
+        tempCol.setCellFactory(col -> new TableCell<EmsFxRecord, Double>() {
+            @Override
+            protected void updateItem(Double value, boolean empty) {
+                super.updateItem(value, empty);
+                if (empty || value == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(String.format("%.1f", value));
+                    setStyle(value > 30 ? "-fx-text-fill: red; -fx-font-weight: bold;" : "");
+                }
+            }
+        });
+
+        TableColumn<EmsFxRecord, Double> humCol = new TableColumn<>("湿度");
+        humCol.setCellValueFactory(new PropertyValueFactory<>("humidity"));
+        humCol.setPrefWidth(100);
+
+        TableColumn<EmsFxRecord, String> timeCol = new TableColumn<>("时间");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+        timeCol.setPrefWidth(180);
+
+        table.getColumns().addAll(idCol, tempCol, humCol, timeCol);
+        table.setPlaceholder(new Label("暂无数据"));
+
+        // 顶部按钮
+        Button refreshBtn = new Button("刷新");
+        refreshBtn.setOnAction(e -> loadData());
+
+        CheckBox autoBox = new CheckBox("自动刷新（5 秒）");
+        autoBox.selectedProperty().addListener((obs, oldV, newV) -> {
+            autoRefresh = newV;
+        });
+
+        HBox toolbar = new HBox(10, refreshBtn, autoBox);
+        toolbar.setPadding(new Insets(8));
+
+        BorderPane root = new BorderPane();
+        root.setTop(toolbar);
+        root.setCenter(table);
+        root.setBottom(new HBox(8, statusLabel));
+
+        Scene scene = new Scene(root, 860, 520);
+        stage.setTitle("EMS 环境监测（JavaFX）");
+        stage.setScene(scene);
+        stage.show();
+
+        // 每 5 秒检查一次是否需要刷新
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "ems-refresh");
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.scheduleAtFixedRate(() -> {
+            if (autoRefresh) {
+                loadData();
+            }
+        }, 5, 5, TimeUnit.SECONDS);
+
+        loadData();
+    }
+
+    /** 后台查库，回界面线程更新表格 */
+    private void loadData() {
+        statusLabel.setText("正在读取…");
+
+        Task<List<EmsFxRecord>> task = new Task<>() {
+            @Override
+            protected List<EmsFxRecord> call() throws Exception {
+                return queryLatest(50);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            records.setAll(task.getValue());
+            statusLabel.setText("共 " + records.size() + " 条");
+        });
+        task.setOnFailed(e -> statusLabel.setText("读取失败：" + task.getException().getMessage()));
+
+        new Thread(task, "ems-query").start();
+    }
+
+    private List<EmsFxRecord> queryLatest(int limit) throws Exception {
+        DbConfig config = ConfigManager.getDbConfig();
+        String url = "jdbc:mysql://" + config.ip + ":3306/" + config.dbName
+                + "?useSSL=false&characterEncoding=utf8";
+        String sql = "SELECT id, Temp, Humidity, `Time` FROM ems ORDER BY id DESC LIMIT ?";
+
+        List<EmsFxRecord> list = new ArrayList<>();
+        try (Connection con = DriverManager.getConnection(url, config.user, config.password);
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new EmsFxRecord(
+                            rs.getInt("id"),
+                            rs.getDouble("Temp"),
+                            rs.getDouble("Humidity"),
+                            String.valueOf(rs.getTimestamp("Time"))));
+                }
+            }
+        }
+        return list;
+    }
+
+    @Override
+    public void stop() {
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+        Platform.exit();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+```
+
+实体类（属性风格）：
+
+```java
+package com.github.rayman717.ui;
+
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+
+public class EmsFxRecord {
+    private final SimpleIntegerProperty id;
+    private final SimpleDoubleProperty temp;
+    private final SimpleDoubleProperty humidity;
+    private final SimpleStringProperty time;
+
+    public EmsFxRecord(int id, double temp, double humidity, String time) {
+        this.id = new SimpleIntegerProperty(id);
+        this.temp = new SimpleDoubleProperty(temp);
+        this.humidity = new SimpleDoubleProperty(humidity);
+        this.time = new SimpleStringProperty(time);
+    }
+
+    public int getId() { return id.get(); }
+    public SimpleIntegerProperty idProperty() { return id; }
+
+    public double getTemp() { return temp.get(); }
+    public SimpleDoubleProperty tempProperty() { return temp; }
+
+    public double getHumidity() { return humidity.get(); }
+    public SimpleDoubleProperty humidityProperty() { return humidity; }
+
+    public String getTime() { return time.get(); }
+    public SimpleStringProperty timeProperty() { return time; }
+}
+```
+
+运行：
+
+```bash
+javac -encoding UTF-8 -d out --module-path "E:\javafx-sdk-17.0.9\lib" ^
+      --add-modules javafx.controls ^
+      -cp "mysql-connector-java-5.1.49.jar" ^
+      src\com\github\rayman717\ui\*.java
+
+java --module-path "E:\javafx-sdk-17.0.9\lib" ^
+     --add-modules javafx.controls ^
+     -cp "out;mysql-connector-java-5.1.49.jar" ^
+     com.github.rayman717.ui.EmsFxApp
+```
+
+---
+
+## 19. 常见坑
+
+| 坑 | 现象 | 解决 |
+| --- | --- | --- |
+| 没配 JavaFX 模块 | `JavaFX runtime components are missing` | 加 `--module-path` 和 `--add-modules` |
+| 只把 jar 加到 `-cp` | 编译过、运行报错 | 必须用 `--module-path` |
+| IDEA 里没加 Libraries | 找不到 `javafx.*` | Project Structure 里添加 SDK 的 lib |
+| FXML 路径写错 | `NullPointerException` 或 `Location is not set` | 用 `/` 开头、确认在 classpath 里 |
+| `fx:id` 和字段名不一致 | 注入的字段是 null | 名字必须一模一样 |
+| `onAction` 方法没加 `@FXML` | 点击无反应（或反射异常） | 加 `@FXML` |
+| 后台线程直接改界面 | 界面不刷新或抛异常 | 用 `Platform.runLater` / `Task` |
+| 关闭窗口进程不退出 | 后台线程还活着 | `Platform.exit()` 或 `System.exit(0)` |
+| 打包成 jar 双击没反应 | 找不到 JavaFX 模块 | 用 `jpackage` 打包 |
+| 中文显示成方块 | 字体没有中文 | CSS 指定微软雅黑 |
+| 表格列空白 | 实体没有 `xxxProperty()` 方法 | 补属性方法，或改用 lambda 取值 |
+| 图表数据不更新 | 没清空旧数据 | `series.getData().clear()` 再重加 |
+| 关闭窗口后定时器还在跑 | 没 `shutdown` | `stop()` 里关闭线程池 |
+
+---
+
+## 20. 速查表
+
+### 20.1 程序骨架
+
+| 我想…… | 代码 |
+| --- | --- |
+| 启动应用 | `launch(args)` |
+| 创建窗口 | `Stage stage = new Stage(); stage.show();` |
+| 设置场景 | `stage.setScene(new Scene(root, 800, 600));` |
+| 加载 FXML | `new FXMLLoader(getClass().getResource("/view/x.fxml")).load()` |
+| 退出 | `Platform.exit()` / `System.exit(0)` |
+
+### 20.2 布局与控件
+
+| 我想…… | 代码 |
+| --- | --- |
+| 竖排 | `new VBox(8, a, b)` |
+| 横排 | `new HBox(8, a, b)` |
+| 上中下 | `BorderPane` + `setTop/setCenter/setBottom` |
+| 两列表单 | `GridPane` + `add(node, col, row)` |
+| 占位提示 | `field.setPromptText("请输入")` |
+| 按钮点击 | `btn.setOnAction(e -> run())` |
+| 下拉选择 | `combo.getSelectionModel().getSelectedItem()` |
+
+### 20.3 数据与绑定
+
+| 我想…… | 代码 |
+| --- | --- |
+| 可观察列表 | `FXCollections.observableArrayList()` |
+| 表格数据 | `new TableView<>(items)` |
+| 列绑定字段 | `col.setCellValueFactory(new PropertyValueFactory<>("id"))` |
+| 文字跟随输入 | `label.textProperty().bind(field.textProperty())` |
+| 双向同步 | `a.textProperty().bindBidirectional(b.textProperty())` |
+
+### 20.4 并发
+
+| 我想…… | 代码 |
+| --- | --- |
+| 后台执行 | `new Thread(task).start()` |
+| 回界面线程 | `Platform.runLater(() -> label.setText(...))` |
+| 带结果的任务 | `Task<T>` + `setOnSucceeded` |
+| 进度条 | `bar.progressProperty().bind(task.progressProperty())` |
+| 定时 | `Timeline` + `KeyFrame(Duration.seconds(5), e -> load())` |
+
+### 20.5 运行参数
+
+```bash
+javac --module-path "E:\javafx-sdk-17.0.9\lib" --add-modules javafx.controls,javafx.fxml -d out ...
+
+java --module-path "E:\javafx-sdk-17.0.9\lib" --add-modules javafx.controls,javafx.fxml -cp "out;mysql-connector-java-5.1.49.jar" 主类
+```
+
+一句话：**JavaFX 比 Swing 好看、好用，但要多配一个 JavaFX SDK；配置一次，之后和普通 Java 一样写。**
