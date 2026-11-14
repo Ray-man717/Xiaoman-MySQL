@@ -5,7 +5,7 @@ import com.github.rayman717.util.ConfigManager;
 import com.github.rayman717.util.SqlUtil;
 import com.github.rayman717.view.SwingJFrame;
 
-import java.util.*;
+import java.util.Scanner;
 
 /**
  * 程序入口类。
@@ -13,7 +13,7 @@ import java.util.*;
  * 启动流程：初始化配置 → 取出数据库配置 → 建立数据库连接。
  * （建表等后续操作可按需在此扩展）
  */
-public class MysqlMain {
+public class Main {
     private static final Scanner sc = new Scanner(System.in);//创建全局扫描器
 
     /**
@@ -27,6 +27,6 @@ public class MysqlMain {
         DbConfig config = ConfigManager.getDbConfig();          //取出数据库连接配置
         c.getConnection(config.ip,config.dbName,config.user,config.password);//连接SQL
         //CreateTable(c.con);      //建表
-        SwingJFrame fw = new SwingJFrame("EMS");
+        SwingJFrame fw = new SwingJFrame("HMS");
     }
 }

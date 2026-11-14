@@ -14,7 +14,7 @@ public class SwingJFrame extends JFrame {
         container.setLayout(new BorderLayout());
 
         // 1. 顶部标题
-        JLabel label = new JLabel("欢迎使用 EMS 监测系统", SwingConstants.CENTER);
+        JLabel label = new JLabel("欢迎使用 HMS 监测系统", SwingConstants.CENTER);
         label.setFont(new Font("微软雅黑", Font.BOLD, 20));
         label.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         container.add(label, BorderLayout.NORTH);
@@ -22,6 +22,7 @@ public class SwingJFrame extends JFrame {
         // 2. 底部登录按钮
         JPanel btnPanel = new JPanel(); // 用一个面板把按钮包起来，防止它被拉伸
         btnPanel.setBackground(Color.WHITE);
+
         JButton logIn = new JButton("点击登录");
         logIn.setFont(new Font("微软雅黑", Font.PLAIN, 16));
         logIn.addActionListener(new ActionListener() {

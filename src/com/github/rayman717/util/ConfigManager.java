@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.Scanner;
 
+import static com.github.rayman717.util.InputUtil.input;
+
 /**
  * 配置管理类。
  * <p>
@@ -30,19 +32,14 @@ public class ConfigManager {
             System.out.println("未找到config");
             Scanner sc = new Scanner(System.in);
             System.out.println("输入信息");
-            System.out.print("MySQL IP(默认值:127.0.0.1):");
-            String ip = sc.nextLine();
+            String ip = input(sc,"MySQL IP(默认值:127.0.0.1):");
             if(ip.trim().isEmpty()) ip = "127.0.0.1";
-            System.out.print("MySQL Port(3306):");
-            String port = sc.nextLine();
+            String port = input(sc,"MySQL Port(3306):");
             if(port.trim().isEmpty()) port = "3306";
-            System.out.print("MySQL User(root):");
-            String user = sc.nextLine();
+            String user = input(sc,"MySQL User(root):");
             if(user.trim().isEmpty()) user = "root";
-            System.out.print("MySQL Password:");
-            String password = sc.nextLine();
-            System.out.print("MySQL dbName:");
-            String dbName = sc.nextLine();
+            String password = input(sc,"MySQL Password:");
+            String dbName = input(sc,"MySQL dbName:");
 
             //把用户输入写入 Properties，键名与读取时保持一致
             prop.setProperty("db.ip",ip);

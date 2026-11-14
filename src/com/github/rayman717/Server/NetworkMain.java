@@ -1,10 +1,8 @@
 package com.github.rayman717.Server;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-
-public class K10HttpServer {
-
+public class NetworkMain {
+    Thread serverThread = new Thread(new NetworkHttpThread());
+    public NetworkMain() {
+        serverThread.start();
+    }
 }
-public class   throws IOException {}
