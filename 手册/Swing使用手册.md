@@ -21,7 +21,15 @@
 11. [编译、运行与打包](#11-编译运行与打包)
 12. [实战：EMS 数据监控窗口](#12-实战ems-数据监控窗口)
 13. [常见错误与坑](#13-常见错误与坑)
-14. [速查表](#14-速查表)
+14. [表格进阶](#14-表格进阶)
+15. [树与列表进阶](#15-树与列表进阶)
+16. [输入框与文档模型](#16-输入框与文档模型)
+17. [自定义绘制与动画](#17-自定义绘制与动画)
+18. [窗口进阶](#18-窗口进阶)
+19. [应用结构与 MVC](#19-应用结构与-mvc)
+20. [调试与性能](#20-调试与性能)
+21. [组件速查补充](#21-组件速查补充)
+22. [速查表](#22-速查表)
 
 ---
 
@@ -1398,7 +1406,1098 @@ java -cp "out;mysql-connector-java-5.1.49.jar" com.github.rayman717.ui.EmsApp
 
 ---
 
-## 14. 速查表
+## 14. 表格进阶
+
+第 7 章讲的是「能用」，这一章讲「用得好」：自定义模型、按值变色、下拉编辑、过滤搜索、排序、分页。
+
+### 14.1 自定义 TableModel
+
+`DefaultTableModel` 内部用 `Vector` 存数据，适合小表格。数据来自数据库、需要控制列类型和编辑权限时，继承 `AbstractTableModel` 更灵活：
+
+```java
+import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
+import java.util.List;
+
+public class EmsTableModel extends AbstractTableModel {
+
+    private final String[] columns = {"ID", "光照", "温度", "湿度", "时间"};
+    private final List<Object[]> rows = new ArrayList<>();
+
+    @Override
+    public int getRowCount() {
+        return rows.size();
+    }
+
+    @Override
+    public int getColumnCount() {
+        return columns.length;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        return columns[column];
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        return rows.get(rowIndex)[columnIndex];
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return false;                     // 全部只读
+    }
+
+    /** 整批替换数据：清空 + 通知刷新 */
+    public void setRows(List<Object[]> newRows) {
+        rows.clear();
+        rows.addAll(newRows);
+        fireTableDataChanged();
+    }
+
+    public Object[] getRow(int rowIndex) {
+        return rows.get(rowIndex);
+    }
+}
+```
+
+数据变了必须「通知」表格，否则界面不刷新：
+
+| 方法 | 使用场景 |
+| --- | --- |
+| `fireTableDataChanged()` | 整表数据全变了 |
+| `fireTableRowsInserted(first, last)` | 插入了若干行 |
+| `fireTableRowsUpdated(first, last)` | 修改了若干行 |
+| `fireTableRowsDeleted(first, last)` | 删除了若干行 |
+| `fireTableStructureChanged()` | 列变了（列数、列名） |
+
+```java
+public void addRow(Object[] row) {
+    rows.add(row);
+    fireTableRowsInserted(rows.size() - 1, rows.size() - 1);
+}
+
+public void removeRow(int index) {
+    rows.remove(index);
+    fireTableRowsDeleted(index, index);
+}
+```
+
+### 14.2 按值变色：单元格渲染器
+
+温度超过 30℃ 标红、湿度超标标黄，是最常见的需求。渲染器负责「怎么画」，不负责「存什么」。
+
+```java
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.Color;
+import java.awt.Component;
+
+public class TempCellRenderer extends DefaultTableCellRenderer {
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+            boolean isSelected, boolean hasFocus, int row, int column) {
+
+        Component c = super.getTableCellRendererComponent(
+                table, value, isSelected, hasFocus, row, column);
+
+        setHorizontalAlignment(SwingConstants.CENTER);
+
+        if (!isSelected && value != null) {
+            try {
+                double temp = Double.parseDouble(value.toString());
+                c.setForeground(temp > 30 ? Color.RED : table.getForeground());
+            } catch (NumberFormatException ignored) {
+                c.setForeground(table.getForeground());
+            }
+        }
+        return c;
+    }
+}
+
+// 只给温度列（第 3 列）设置
+table.getColumnModel().getColumn(2).setCellRenderer(new TempCellRenderer());
+```
+
+三个要点：
+
+- 一定要调 `super.getTableCellRendererComponent(...)`，否则选中高亮、边框都会丢；
+- 判断 `isSelected`，选中时不要改前景色（否则选中行颜色怪）；
+- 渲染器会被**反复调用**（每次重绘都会），里面只做轻量判断，不要查库、不要 new 图片。
+
+### 14.3 用进度条渲染单元格
+
+想让「湿度」列显示成进度条：
+
+```java
+public class ProgressRenderer extends JProgressBar implements TableCellRenderer {
+
+    public ProgressRenderer() {
+        super(0, 100);
+        setStringPainted(true);
+    }
+
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+            boolean isSelected, boolean hasFocus, int row, int column) {
+        int v = value == null ? 0 : (int) Double.parseDouble(value.toString());
+        setValue(Math.max(0, Math.min(100, v)));
+        setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+        return this;
+    }
+}
+
+table.getColumnModel().getColumn(3).setCellRenderer(new ProgressRenderer());
+```
+
+### 14.4 下拉框编辑某一列
+
+```java
+JComboBox<String> statusCombo = new JComboBox<>(new String[]{"在线", "离线", "未知"});
+table.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(statusCombo));
+```
+
+注意两点：
+
+1. 模型里对应列的 `isCellEditable` 必须返回 `true`；
+2. 编辑结果是写回模型的 `setValueAt`，`DefaultTableModel` 会自动处理；自定义模型要重写 `setValueAt`。
+
+```java
+@Override
+public void setValueAt(Object value, int rowIndex, int columnIndex) {
+    rows.get(rowIndex)[columnIndex] = value;
+    fireTableCellUpdated(rowIndex, columnIndex);
+}
+```
+
+### 14.5 表头设置
+
+```java
+JTableHeader header = table.getTableHeader();
+header.setReorderingAllowed(false);          // 禁止拖动列顺序
+header.setFont(new Font("微软雅黑", Font.BOLD, 13));
+header.setBackground(new Color(240, 244, 250));
+```
+
+自定义表头渲染器（居中、加图标）继承 `DefaultTableCellRenderer`，然后 `header.setDefaultRenderer(...)`。
+
+### 14.6 搜索过滤
+
+输入框一打字，表格只显示匹配行：
+
+```java
+TableRowSorter<EmsTableModel> sorter = new TableRowSorter<>(model);
+table.setRowSorter(sorter);
+
+JTextField searchField = new JTextField(15);
+searchField.getDocument().addDocumentListener(new DocumentListener() {
+    private void apply() {
+        String text = searchField.getText().trim();
+        if (text.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            // 用 Pattern.quote 防止用户输入被当成正则
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(text)));
+        }
+    }
+
+    @Override public void insertUpdate(DocumentEvent e) { apply(); }
+    @Override public void removeUpdate(DocumentEvent e) { apply(); }
+    @Override public void changedUpdate(DocumentEvent e) { apply(); }
+});
+```
+
+过滤只影响「显示」，不改变底层数据；取选中行时仍然要 `convertRowIndexToModel`。
+
+### 14.7 自定义排序
+
+数字列如果存成字符串，默认按字典序排（"10" 会排在 "9" 前面）。给排序列指定比较器：
+
+```java
+sorter.setComparator(1, Comparator.comparingDouble(
+        v -> Double.parseDouble(v.toString())));
+sorter.setComparator(4, Comparator.comparing(
+        v -> (java.sql.Timestamp) v));
+```
+
+### 14.8 隐藏列、固定列宽
+
+```java
+// 隐藏 ID 列
+TableColumn idColumn = table.getColumnModel().getColumn(0);
+idColumn.setMinWidth(0);
+idColumn.setMaxWidth(0);
+idColumn.setPreferredWidth(0);
+
+// 关闭自动拉伸，让列宽按设置值显示
+table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+```
+
+### 14.9 选中行与选中单元格
+
+```java
+table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);   // 多选（默认）
+table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);             // 单选
+table.setCellSelectionEnabled(true);                                     // 单元格级选中
+
+int[] viewRows = table.getSelectedRows();
+for (int viewRow : viewRows) {
+    int modelRow = table.convertRowIndexToModel(viewRow);
+    Object[] row = model.getRow(modelRow);
+    // ...
+}
+```
+
+注意 `getSelectedRows()` 返回的顺序是**用户点击顺序**，不是从上到下，需要排序的话自己排。
+
+### 14.10 分页
+
+数据量大时一次查全部会卡，分页有两种做法：
+
+| 做法 | 说明 |
+| --- | --- |
+| 数据库分页（推荐） | `LIMIT ? OFFSET ?`，只查当前页 |
+| 内存分页 | 一次查全部，`subList` 切页显示，适合几千条以内 |
+
+```java
+int pageSize = 50;
+int page = 0;                         // 第 0 页
+
+String sql = "SELECT id, ALI, Temp, Humidity, `Time` FROM ems ORDER BY id LIMIT ? OFFSET ?";
+try (PreparedStatement ps = con.prepareStatement(sql)) {
+    ps.setInt(1, pageSize);
+    ps.setInt(2, page * pageSize);
+    try (ResultSet rs = ps.executeQuery()) {
+        // 填充 model
+    }
+}
+```
+
+界面底部配「上一页 / 下一页 / 第 N 页」和总条数即可。
+
+---
+
+## 15. 树与列表进阶
+
+### 15.1 JTree 基础
+
+树适合展示「有层级」的数据：设备 → 日期 → 记录。
+
+```java
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+
+DefaultMutableTreeNode root = new DefaultMutableTreeNode("EMS 设备");
+DefaultMutableTreeNode dev1 = new DefaultMutableTreeNode("设备 A");
+dev1.add(new DefaultMutableTreeNode("2026-01-01"));
+dev1.add(new DefaultMutableTreeNode("2026-01-02"));
+root.add(dev1);
+root.add(new DefaultMutableTreeNode("设备 B"));
+
+DefaultTreeModel treeModel = new DefaultTreeModel(root);
+JTree tree = new JTree(treeModel);
+tree.setRootVisible(true);
+tree.setShowsRootHandles(true);
+tree.setRowHeight(24);
+```
+
+常用操作：
+
+```java
+// 全部展开 / 折叠
+for (int i = 0; i < tree.getRowCount(); i++) {
+    tree.expandRow(i);
+}
+tree.collapseRow(0);
+
+// 选中节点
+tree.setSelectionPath(new TreePath(dev1.getPath()));
+
+// 读取选中的节点
+tree.addTreeSelectionListener(e -> {
+    TreePath path = e.getNewLeadSelectionPath();
+    if (path != null) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+        System.out.println("选中：" + node.getUserObject());
+    }
+});
+
+// 动态加节点
+DefaultMutableTreeNode child = new DefaultMutableTreeNode("2026-01-03");
+treeModel.insertNodeInto(child, dev1, dev1.getChildCount());
+```
+
+### 15.2 自定义树渲染器
+
+默认渲染器只显示文字，想加图标或颜色就继承 `DefaultTreeCellRenderer`：
+
+```java
+import javax.swing.tree.DefaultTreeCellRenderer;
+
+class EmsTreeRenderer extends DefaultTreeCellRenderer {
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value,
+            boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+
+        Component c = super.getTreeCellRendererComponent(
+                tree, value, selected, expanded, leaf, row, hasFocus);
+
+        String text = value.toString();
+        if (text.contains("设备")) {
+            setIcon(null);
+            setForeground(selected ? Color.WHITE : new Color(30, 100, 200));
+        } else {
+            setForeground(selected ? Color.WHITE : tree.getForeground());
+        }
+        return c;
+    }
+}
+
+tree.setCellRenderer(new EmsTreeRenderer());
+```
+
+### 15.3 JList 自定义渲染器
+
+列表的渲染器和表格类似：
+
+```java
+class DeviceRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value,
+            int index, boolean isSelected, boolean cellHasFocus) {
+
+        Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        String text = value.toString();
+        setText("● " + text);
+        setForeground(isSelected ? Color.WHITE
+                : (text.contains("离线") ? Color.GRAY : new Color(0, 150, 0)));
+        return c;
+    }
+}
+
+list.setCellRenderer(new DeviceRenderer());
+```
+
+### 15.4 列表与树的联动
+
+「左边选设备，右边查这台设备的数据」是经典布局：
+
+```java
+JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(deviceList), new JScrollPane(table));
+split.setDividerLocation(200);
+
+deviceList.addListSelectionListener(e -> {
+    if (e.getValueIsAdjusting()) {
+        return;                       // 拖动选择时避免重复查询
+    }
+    String device = deviceList.getSelectedValue();
+    if (device != null) {
+        loadRecords(device);          // 后台查库，更新表格
+    }
+});
+```
+
+---
+
+## 16. 输入框与文档模型
+
+### 16.1 Document 与 DocumentListener
+
+`JTextField` 的内容由 `Document` 管理。想「边输入边校验/统计」，监听 Document 变化：
+
+```java
+JTextField tempField = new JTextField(10);
+JLabel hint = new JLabel();
+
+tempField.getDocument().addDocumentListener(new DocumentListener() {
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        check();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        check();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        // 纯文本组件不会触发，写空方法即可
+    }
+
+    private void check() {
+        String text = tempField.getText().trim();
+        try {
+            double v = Double.parseDouble(text);
+            boolean ok = v >= -20 && v <= 60;
+            hint.setText(ok ? "✓" : "超出 -20~60 范围");
+            hint.setForeground(ok ? new Color(0, 130, 0) : Color.RED);
+        } catch (NumberFormatException ex) {
+            hint.setText(text.isEmpty() ? "" : "请输入数字");
+            hint.setForeground(Color.RED);
+        }
+    }
+});
+```
+
+**注意**：不要在 DocumentListener 里直接改同一个 `Document`（会递归触发），要改的话用 `SwingUtilities.invokeLater(...)` 包一层。
+
+### 16.2 DocumentFilter：限制只能输数字
+
+`DocumentListener` 只能「看到」，`DocumentFilter` 能「拦住」。
+
+```java
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+
+((AbstractDocument) tempField.getDocument()).setDocumentFilter(new DocumentFilter() {
+    @Override
+    public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+            throws BadLocationException {
+        if (string != null && string.matches("[0-9.]*")) {
+            super.insertString(fb, offset, string, attr);
+        }
+    }
+
+    @Override
+    public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+            throws BadLocationException {
+        if (text == null || text.matches("[0-9.]*")) {
+            super.replace(fb, offset, length, text, attrs);
+        }
+    }
+
+    @Override
+    public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+        super.remove(fb, offset, length);
+    }
+});
+```
+
+粘贴、删除、替换都会走 `replace` / `remove`，只覆盖 `insertString` 拦不住粘贴。
+
+### 16.3 InputVerifier：失焦时校验
+
+用户切到别的控件时才校验，不通过就不让走：
+
+```java
+tempField.setInputVerifier(new InputVerifier() {
+    @Override
+    public boolean verify(JComponent input) {
+        JTextField field = (JTextField) input;
+        String text = field.getText().trim();
+        try {
+            double v = Double.parseDouble(text);
+            return v >= -20 && v <= 60;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+});
+```
+
+校验失败时焦点会停在这个输入框上。
+
+### 16.4 格式化输入：JFormattedTextField
+
+日期、编号这类固定格式，用 `MaskFormatter`：
+
+```java
+import javax.swing.text.MaskFormatter;
+
+MaskFormatter dateMask = new MaskFormatter("####-##-##");
+dateMask.setPlaceholderCharacter('_');
+JFormattedTextField dateField = new JFormattedTextField(dateMask);
+dateField.setColumns(10);
+
+MaskFormatter codeMask = new MaskFormatter("EMS-****");
+JFormattedTextField codeField = new JFormattedTextField(codeMask);
+```
+
+`*` 表示字母或数字，`#` 表示数字；`MaskFormatter` 的构造会抛 `ParseException`，用 try/catch 包一下。
+
+### 16.5 JSpinner 模型
+
+```java
+// 数字：初值 25，范围 -20~60，步长 0.5
+SpinnerNumberModel tempModel = new SpinnerNumberModel(25.0, -20.0, 60.0, 0.5);
+JSpinner tempSpinner = new JSpinner(tempModel);
+double temp = ((Number) tempSpinner.getValue()).doubleValue();
+
+// 日期
+SpinnerDateModel dateModel = new SpinnerDateModel();
+JSpinner dateSpinner = new JSpinner(dateModel);
+JSpinner.DateEditor editor = new JSpinner.DateEditor(dateSpinner, "yyyy-MM-dd");
+dateSpinner.setEditor(editor);
+```
+
+### 16.6 可编辑 JComboBox 与简单补全
+
+```java
+JComboBox<String> combo = new JComboBox<>(new String[]{"ems-01", "ems-02", "ems-03"});
+combo.setEditable(true);
+
+// 监听编辑框内容，自动选中匹配项（简单补全）
+combo.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+    @Override
+    public void keyReleased(KeyEvent e) {
+        String text = combo.getEditor().getItem().toString();
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            if (combo.getItemAt(i).startsWith(text)) {
+                combo.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+});
+```
+
+补全只是「选中匹配项」，不会自动填字；要做真正的下拉过滤，需要自定义 ComboBoxModel 或过滤列表。
+
+---
+
+## 17. 自定义绘制与动画
+
+### 17.1 重写 paintComponent
+
+Swing 的组件都是「画」出来的。自定义绘图只需继承 `JPanel` 重写 `paintComponent`：
+
+```java
+class ChartPanel extends JPanel {
+    private final List<Double> values = new ArrayList<>();
+
+    public void setValues(List<Double> values) {
+        this.values.clear();
+        this.values.addAll(values);
+        repaint();                        // 数据变了要重绘
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);          // 必须先调用：清背景
+        Graphics2D g2 = (Graphics2D) g;
+
+        // 抗锯齿，让线条更平滑
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int w = getWidth();
+        int h = getHeight();
+
+        // 画坐标轴
+        g2.setColor(Color.GRAY);
+        g2.drawLine(40, 10, 40, h - 30);
+        g2.drawLine(40, h - 30, w - 10, h - 30);
+
+        if (values.size() < 2) {
+            return;
+        }
+
+        // 数据映射到坐标
+        double max = values.stream().mapToDouble(Double::doubleValue).max().orElse(1);
+        double min = values.stream().mapToDouble(Double::doubleValue).min().orElse(0);
+        double range = Math.max(1e-6, max - min);
+
+        g2.setColor(new Color(220, 70, 70));
+        g2.setStroke(new BasicStroke(2f));
+
+        int prevX = -1;
+        int prevY = -1;
+        for (int i = 0; i < values.size(); i++) {
+            int x = 40 + (int) ((w - 60) * i / (double) (values.size() - 1));
+            int y = (h - 30) - (int) ((h - 40) * (values.get(i) - min) / range);
+            if (prevX >= 0) {
+                g2.drawLine(prevX, prevY, x, y);
+            }
+            prevX = x;
+            prevY = y;
+        }
+    }
+}
+```
+
+三条规则：
+
+| 规则 | 原因 |
+| --- | --- |
+| 先调 `super.paintComponent(g)` | 否则背景不刷新，残留旧图像 |
+| 不要在里面查库、读文件 | 每次重绘都会执行，卡死界面 |
+| 数据变了调 `repaint()` | 不调就不会重画 |
+
+### 17.2 Graphics2D 常用操作
+
+```java
+g2.setColor(new Color(30, 120, 200));               // 颜色
+g2.setFont(new Font("微软雅黑", Font.BOLD, 14));      // 字体
+g2.setStroke(new BasicStroke(2.0f));                 // 线宽
+g2.fillRect(10, 10, 100, 50);                        // 实心矩形
+g2.drawRect(10, 10, 100, 50);                        // 空心矩形
+g2.fillOval(10, 10, 30, 30);                         // 圆
+g2.drawString("温度", 50, 100);                       // 文字
+g2.drawLine(0, 0, 100, 100);                         // 线
+
+// 渐变
+GradientPaint paint = new GradientPaint(0, 0, new Color(200, 230, 255), 0, 100, Color.WHITE);
+g2.setPaint(paint);
+g2.fillRect(0, 0, getWidth(), 100);
+```
+
+### 17.3 用 Timer 做动画
+
+```java
+int[] angle = {0};
+Timer timer = new Timer(30, e -> {
+    angle[0] = (angle[0] + 3) % 360;
+    chartPanel.repaint();
+});
+timer.start();
+```
+
+`javax.swing.Timer` 的回调在 EDT 上，直接 `repaint()` 是安全的；不要用 `Thread.sleep` 做动画。
+
+### 17.4 重绘性能
+
+| 做法 | 说明 |
+| --- | --- |
+| `repaint()` | 重绘整个组件 |
+| `repaint(x, y, w, h)` | 只重绘指定区域，局部动画更快 |
+| 缓存 Font / Color / 图片 | 不要每次绘制都 new |
+| 避免在 paint 里循环上万次 | 数据先降采样再画 |
+| 双缓冲 | Swing 默认开启，一般不用管 |
+
+---
+
+## 18. 窗口进阶
+
+### 18.1 图标、最大化、窗口状态
+
+```java
+setIconImage(new ImageIcon("icons/app.png").getImage());
+setExtendedState(JFrame.MAXIMIZED_BOTH);          // 最大化
+setLocationRelativeTo(null);                       // 居中（非最大化时）
+```
+
+### 18.2 记住窗口大小和位置
+
+把窗口的位置、大小存进 `config.properties`，下次打开还原：
+
+```java
+private void restoreBounds() {
+    Properties prop = loadConfig();
+    int x = Integer.parseInt(prop.getProperty("win.x", "-1"));
+    int y = Integer.parseInt(prop.getProperty("win.y", "-1"));
+    int w = Integer.parseInt(prop.getProperty("win.w", "880"));
+    int h = Integer.parseInt(prop.getProperty("win.h", "520"));
+    if (x >= 0 && y >= 0) {
+        setBounds(x, y, w, h);
+    } else {
+        setSize(w, h);
+        setLocationRelativeTo(null);
+    }
+}
+
+private void saveBounds() {
+    Properties prop = loadConfig();
+    prop.setProperty("win.x", String.valueOf(getX()));
+    prop.setProperty("win.y", String.valueOf(getY()));
+    prop.setProperty("win.w", String.valueOf(getWidth()));
+    prop.setProperty("win.h", String.valueOf(getHeight()));
+    storeConfig(prop);
+}
+
+// 关窗前保存
+addWindowListener(new WindowAdapter() {
+    @Override
+    public void windowClosing(WindowEvent e) {
+        saveBounds();
+    }
+});
+```
+
+### 18.3 系统托盘
+
+```java
+if (SystemTray.isSupported()) {
+    SystemTray tray = SystemTray.getSystemTray();
+    Image image = Toolkit.getDefaultToolkit().getImage("icons/tray.png");
+
+    PopupMenu menu = new PopupMenu();
+    MenuItem showItem = new MenuItem("显示窗口");
+    showItem.addActionListener(e -> setVisible(true));
+    MenuItem exitItem = new MenuItem("退出");
+    exitItem.addActionListener(e -> System.exit(0));
+    menu.add(showItem);
+    menu.addSeparator();
+    menu.add(exitItem);
+
+    TrayIcon trayIcon = new TrayIcon(image, "EMS 监控", menu);
+    trayIcon.addActionListener(e -> setVisible(true));
+    tray.add(trayIcon);
+}
+```
+
+注意 `SystemTray.isSupported()` 在无桌面环境会返回 `false`，要先判断。
+
+### 18.4 启动画面
+
+```java
+// 程序启动时显示，加载完成后自动消失
+SplashScreen splash = SplashScreen.getSplashScreen();
+if (splash != null) {
+    Graphics2D g = splash.createGraphics();
+    g.setColor(Color.WHITE);
+    g.drawString("正在连接数据库…", 20, 100);
+    splash.update();
+    // 加载完成后 splash.close();
+}
+```
+
+需要在启动参数里指定图片：
+
+```bash
+java -splash:icons/splash.png -cp "out;mysql-connector-java-5.1.49.jar" com.github.rayman717.ui.EmsApp
+```
+
+### 18.5 打印表格
+
+Swing 的表格自带打印支持：
+
+```java
+table.print();          // 弹出打印对话框，直接打印表格
+```
+
+带标题的打印：
+
+```java
+MessageFormat header = new MessageFormat("EMS 数据报表");
+MessageFormat footer = new MessageFormat("第 {0} 页");
+table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+```
+
+### 18.6 复制到剪贴板
+
+```java
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
+
+int viewRow = table.getSelectedRow();
+if (viewRow >= 0) {
+    int modelRow = table.convertRowIndexToModel(viewRow);
+    StringBuilder sb = new StringBuilder();
+    for (int c = 0; c < model.getColumnCount(); c++) {
+        if (c > 0) {
+            sb.append('\t');
+        }
+        sb.append(model.getValueAt(modelRow, c));
+    }
+    StringSelection selection = new StringSelection(sb.toString());
+    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, null);
+}
+```
+
+粘贴到 Excel 时，用制表符 `\t` 分隔列最方便。
+
+### 18.7 文件拖放
+
+把 CSV 文件拖到窗口上自动导入：
+
+```java
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.datatransfer.DataFlavor;
+import java.io.File;
+
+new DropTarget(table, new DropTargetAdapter() {
+    @Override
+    public void drop(DropTargetDropEvent event) {
+        try {
+            event.acceptDrop(java.awt.dnd.DnDConstants.ACTION_COPY);
+            @SuppressWarnings("unchecked")
+            java.util.List<File> files = (java.util.List<File>)
+                    event.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+            for (File file : files) {
+                importCsv(file.toPath());
+            }
+            event.dropComplete(true);
+        } catch (Exception ex) {
+            event.dropComplete(false);
+        }
+    }
+});
+```
+
+---
+
+## 19. 应用结构与 MVC
+
+### 19.1 为什么分层
+
+界面代码一多，最容易出现「一个 JFrame 里塞了 1000 行」：查库、拼 SQL、更新表格全混在一起。分层的目的只有一个：**改一处不影响别处**。
+
+### 19.2 三层结构
+
+```
+view（界面）      只负责显示和收集输入，不含 SQL
+service（业务）   校验参数、编排流程、事务
+dao（数据访问）   只负责 SQL 与结果集映射
+entity（实体）    数据结构：DbConfig、EmsRecord
+```
+
+```
+com.github.rayman717
+├── entity      EmsRecord、DbConfig
+├── dao         EmsDao（查库、写库）
+├── service     EmsService（业务逻辑）
+├── view        界面（EmsMonitorFrame）
+└── util        SqlUtil、ConfigManager、LogUtil
+```
+
+### 19.3 一个完整的分层例子
+
+**entity**：
+
+```java
+package com.github.rayman717.entity;
+
+public class EmsRecord {
+    private int id;
+    private double ali;
+    private double temp;
+    private double humidity;
+    private String time;
+
+    // getter / setter 省略
+}
+```
+
+**dao**（只写 SQL）：
+
+```java
+package com.github.rayman717.dao;
+
+public class EmsDao {
+
+    public List<EmsRecord> findLatest(int limit) throws SQLException {
+        String sql = "SELECT id, ALI, Temp, Humidity, `Time` FROM ems ORDER BY id DESC LIMIT ?";
+        List<EmsRecord> list = new ArrayList<>();
+        try (Connection con = openConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    EmsRecord r = new EmsRecord();
+                    r.setId(rs.getInt("id"));
+                    r.setAli(rs.getDouble("ALI"));
+                    r.setTemp(rs.getDouble("Temp"));
+                    r.setHumidity(rs.getDouble("Humidity"));
+                    r.setTime(String.valueOf(rs.getTimestamp("Time")));
+                    list.add(r);
+                }
+            }
+        }
+        return list;
+    }
+}
+```
+
+**service**（业务校验）：
+
+```java
+package com.github.rayman717.service;
+
+public class EmsService {
+    private final EmsDao dao = new EmsDao();
+
+    public List<EmsRecord> latest(int limit) throws SQLException {
+        if (limit <= 0) {
+            limit = 10;
+        }
+        return dao.findLatest(Math.min(limit, 200));
+    }
+}
+```
+
+**view**（只碰界面）：
+
+```java
+private void loadData() {
+    new SwingWorker<List<EmsRecord>, Void>() {
+        @Override
+        protected List<EmsRecord> doInBackground() throws Exception {
+            return service.latest(50);            // 业务在后台跑
+        }
+
+        @Override
+        protected void done() {
+            try {
+                List<EmsRecord> records = get();
+                model.setRows(toRows(records));   // 界面只负责显示
+                statusLabel.setText("共 " + records.size() + " 条");
+            } catch (Exception ex) {
+                statusLabel.setText("读取失败：" + ex.getCause());
+            }
+        }
+    }.execute();
+}
+```
+
+### 19.4 和本项目现有代码的对照
+
+| 现有代码 | 属于哪一层 | 建议 |
+| --- | --- | --- |
+| `SqlUtil.getConnection` | util | 保留，dao 复用 |
+| `ConfigManager` / `DbConfig` | util / entity | 保留 |
+| `LogUtil` | util | 保留 |
+| `CreateTable` 里的建表 SQL | dao | 移到 `EmsDao` |
+| `MysqlMain` 里的连接逻辑 | 入口 | 界面启动应调用 service，不直接拼 SQL |
+| 界面里的 `loadData` | view | 只调 service，不写 `SELECT` |
+
+### 19.5 反例
+
+```java
+// 反例：界面里直接拼 SQL、开连接
+btnRefresh.addActionListener(e -> {
+    try (Connection con = DriverManager.getConnection(url, user, pwd);
+         Statement st = con.createStatement();
+         ResultSet rs = st.executeQuery("SELECT * FROM ems")) {
+        while (rs.next()) {
+            model.addRow(new Object[]{rs.getInt(1), rs.getDouble(2)});
+        }
+    } catch (Exception ex) { }
+});
+```
+
+问题：换库、改表结构、加缓存、写单测时都要改界面代码；而且这里还在 EDT 上做数据库 IO，界面会卡。
+
+---
+
+## 20. 调试与性能
+
+### 20.1 常见异常速查
+
+| 异常 | 常见原因 |
+| --- | --- |
+| `NullPointerException` | 控件还没创建就调用；`getSelectedRow()` 返回 -1 时没判断 |
+| `HeadlessException` | 无图形环境（远程/服务端）跑 Swing |
+| `ArrayIndexOutOfBoundsException` | TableModel 的 `getValueAt` 列数对不上 |
+| `IllegalStateException: not on FX/EDT` | 在后台线程更新界面（AWT 会抛 `NullPointerException` 或界面错乱） |
+| `ConcurrentModificationException` | 遍历集合时另一个线程修改 |
+| `IllegalArgumentException: Width (-1) and height (-1)` | 图片路径错，加载出空图 |
+
+### 20.2 布局调试
+
+给组件加个红色边框，一眼看出谁占了多大空间：
+
+```java
+panel.setBorder(BorderFactory.createLineBorder(Color.RED));
+```
+
+排查完记得删掉。
+
+### 20.3 定位 EDT 卡顿
+
+```bash
+jps                       # 找 pid
+jstack <pid>              # 看线程栈
+```
+
+如果 `AWT-EventQueue-0` 线程卡在 `SocketInputStream.read`、`ResultSet.next`、`Thread.sleep`，说明有耗时操作在 EDT 上，要挪到 `SwingWorker`。
+
+### 20.4 表格大数据性能
+
+| 问题 | 做法 |
+| --- | --- |
+| 一次查 10 万条 | 分页，只查当前页 |
+| 每行都触发重绘 | 批量 `fireTableRowsInserted` 一次通知 |
+| 单元格里查库 | 绝对不行，数据在后台一次查好 |
+| 频繁 `repaint` | 合并成一帧，用 Timer 限频 |
+
+### 20.5 监听器与内存泄漏
+
+窗口反复开关、每次都 `addActionListener` 而不移除，监听器会越积越多：
+
+```java
+// 同一个监听器只加一次
+btn.addActionListener(this::refresh);
+btn.removeActionListener(this::refresh);   // 需要移除时（注意方法引用每次是新对象，要用变量保存）
+```
+
+正确做法：
+
+```java
+private final ActionListener refreshListener = e -> refresh();
+...
+btn.addActionListener(refreshListener);
+btn.removeActionListener(refreshListener);
+```
+
+### 20.6 捕获 EDT 上的未处理异常
+
+默认情况下 EDT 抛异常只在控制台打印，界面可能处于半坏状态：
+
+```java
+Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
+    ex.printStackTrace();
+    JOptionPane.showMessageDialog(null, "程序出错：" + ex, "错误", JOptionPane.ERROR_MESSAGE);
+});
+```
+
+### 20.7 启动慢
+
+| 原因 | 处理 |
+| --- | --- |
+| 启动时连数据库、查大量数据 | 窗口先显示，数据在 `done()` 后再加载 |
+| 加载大量图片 | 懒加载、缓存 |
+| 一次创建所有面板 | `CardLayout` 按需创建 |
+
+---
+
+## 21. 组件速查补充
+
+| 需求 | 组件 | 关键方法 |
+| --- | --- | --- |
+| 树形展示 | `JTree` | `expandRow`、`addTreeSelectionListener` |
+| 带图标的列表 | `JList` + 渲染器 | `setCellRenderer` |
+| 分页切换 | `JTabbedPane` | `addTab`、`getSelectedIndex` |
+| 折叠面板 | `JSplitPane` | `setDividerLocation` |
+| 显示 HTML | `JEditorPane` | `setContentType("text/html")`、`setPage` |
+| 富文本 | `JTextPane` | `StyledDocument` |
+| 日期输入 | `JSpinner` + `SpinnerDateModel` | `DateEditor` |
+| 格式化输入 | `JFormattedTextField` | `MaskFormatter` |
+| 颜色选择 | `JColorChooser` | `showDialog` |
+| 打印 | `JTable` | `print()` |
+| 托盘 | `TrayIcon` | `SystemTray.add` |
+| 启动画面 | `SplashScreen` | `getSplashScreen` |
+| 剪贴板 | `Toolkit` | `getSystemClipboard` |
+| 拖放 | `DropTarget` | `DropTargetAdapter` |
+| 进度对话框 | `ProgressMonitor` | `setProgress`、`setNote` |
+
+几个常用代码片段：
+
+```java
+// 显示一段 HTML
+JEditorPane pane = new JEditorPane();
+pane.setContentType("text/html");
+pane.setText("<h2>EMS 环境监测</h2><p>温度：26.4℃</p>");
+pane.setEditable(false);
+
+// 颜色选择
+Color color = JColorChooser.showDialog(this, "选择颜色", Color.WHITE);
+
+// 进度对话框
+ProgressMonitor monitor = new ProgressMonitor(this, "正在导出…", "", 0, 100);
+monitor.setProgress(50);
+monitor.setNote("已处理 50%");
+```
+
+---
+
+## 22. 速查表
 
 ### 14.1 建界面
 
