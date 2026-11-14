@@ -1,8 +1,9 @@
 # HTTP 请求详解（网络通信附加篇）
 
-> 本手册是 [网络通信使用手册](网络通信使用手册.html) 的**附加篇**，专门把 HTTP 请求讲透。
+> 本手册是 [网络通信使用手册](网络通信使用手册.html) 的**附加篇**，专门把 HTTP 讲透：
+> 客户端怎么发请求，服务端怎么收请求。
 > 基础的 TCP / UDP 部分（Socket、粘包、多客户端并发）请看网络通信手册的第 3–8 章，这里不再重复。
-> 环境：JDK 17，主体使用 `java.net.http.HttpClient`，同时保留 JDK 8 的 `HttpURLConnection` 写法。
+> 环境：JDK 17，客户端主体用 `java.net.http.HttpClient`，服务端主体用 JDK 自带的 `com.sun.net.httpserver`。
 
 ---
 
@@ -22,7 +23,8 @@
 12. [实战：EmsApiClient](#12-实战emsapiclient)
 13. [常见坑](#13-常见坑)
 14. [HTTP 速查](#14-http-速查)
-15. [附：和网络通信手册的对应关系](#15-附和网络通信手册的对应关系)
+15. [HTTP 服务端怎么写](#15-http-服务端怎么写)
+16. [附：和网络通信手册的对应关系](#16-附和网络通信手册的对应关系)
 
 ---
 
@@ -746,10 +748,522 @@ System.out.println("上报成功：" + result);
 | 判断成功 | `resp.statusCode() / 100 == 2` |
 | 401 怎么查 | 看 Token 是否过期、格式是否 `Bearer ` 开头 |
 | 415 怎么查 | 看 Content-Type 是否与 body 格式匹配 |
+## 15. HTTP 服务端怎么写
+
+前面的章节都是客户端视角：**我发请求，别人回**。这一章反过来：**别人发请求，我来回**。
+
+设备通过 HTTP 上报数据、Swing 客户端通过 HTTP 拉数据，都需要一个 HTTP 服务端。
+
+### 15.1 三种做法
+
+| 做法 | 依赖 | 代码量 | 适合 |
+| --- | --- | --- | --- |
+| JDK 自带 `com.sun.net.httpserver.HttpServer` | 无，JDK 自带 | 少 | 学习、课程项目、内网小工具 |
+| 手写 Socket 解析 HTTP 报文 | 无 | 多且容易出错 | 理解协议原理，不推荐生产 |
+| Spring Boot / Jetty / Netty | 要 Maven 依赖 | 最少 | 正式项目 |
+
+本项目的现状是**纯 javac + jar**、没有 Maven，所以这一章以 JDK 自带的 `HttpServer` 为主，最后再给出 Spring Boot 的对照写法。
+
+### 15.2 最小可运行服务端
+
+```java
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+
+public class MinimalServer {
+    public static void main(String[] args) throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+
+        server.createContext("/api/ping", exchange -> {
+            byte[] body = "{\"status\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+            exchange.sendResponseHeaders(200, body.length);   // 状态码 + 响应体长度
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            }
+            exchange.close();                                 // 一定要关
+        });
+
+        // 默认是单线程串行处理，必须换成线程池
+        server.setExecutor(Executors.newFixedThreadPool(8));
+        server.start();
+        System.out.println("已启动：http://127.0.0.1:8080/api/ping");
+    }
+}
+```
+
+测试：
+
+```bash
+curl.exe "http://127.0.0.1:8080/api/ping"
+# {"status":"ok"}
+```
+
+> 编译时如果报 `找不到 com.sun.net.httpserver`，加参数 `--add-modules jdk.httpserver`。
+
+### 15.3 处理一个请求的四步
+
+每个 handler 拿到的是 `HttpExchange`，它同时代表「请求」和「响应」，要按固定顺序操作：
+
+```java
+private static void handle(HttpExchange exchange) throws IOException {
+    try {
+        String method = exchange.getRequestMethod();          // ① 方法：GET / POST
+        String path = exchange.getRequestURI().getPath();     // ② 路径：/api/ems
+        String query = exchange.getRequestURI().getRawQuery();//    查询串：limit=10
+
+        String body = new String(exchange.getRequestBody().readAllBytes(),
+                StandardCharsets.UTF_8);                      // ③ 读请求体（可能为空）
+
+        byte[] out = "{\"ok\":true}".getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(200, out.length);        // ④ 先发状态码和长度
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(out);                                    //    再写响应体
+        }
+    } finally {
+        exchange.close();                                     // 无论成功失败都要关闭
+    }
+}
+```
+
+四步的顺序不能乱：
+
+| 步骤 | 方法 | 注意 |
+| --- | --- | --- |
+| ① 看方法 | `getRequestMethod()` | 不支持的用 405 |
+| ② 看路径 | `getRequestURI().getPath()` | 路径区分大小写 |
+| ③ 读请求体 | `getRequestBody()` | 只读一次，读完就没了 |
+| ④ 写响应 | `sendResponseHeaders` + `getResponseBody()` | **必须先发头再写体** |
+
+### 15.4 读查询参数与请求体
+
+查询参数（`?limit=10&device=ems-01`）需要自己解析：
+
+```java
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
+private static Map<String, String> parseQuery(String rawQuery) {
+    Map<String, String> params = new HashMap<>();
+    if (rawQuery == null || rawQuery.isEmpty()) {
+        return params;
+    }
+    for (String pair : rawQuery.split("&")) {
+        int eq = pair.indexOf('=');
+        if (eq < 0) {
+            params.put(URLDecoder.decode(pair, StandardCharsets.UTF_8), "");
+        } else {
+            String key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
+            String value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
+            params.put(key, value);
+        }
+    }
+    return params;
+}
+```
+
+读 JSON 请求体：要么引 Gson，要么按第 10 章（网络通信手册）里的 `jsonValue` 简单取值。请求体只能读一次，读完要自己保存。
+
+### 15.5 写响应的统一格式
+
+建议所有接口都返回同一种结构，客户端好处理：
+
+```json
+{"code":0,"msg":"ok","data":{...}}
+```
+
+两个工具方法：
+
+```java
+/** 成功响应：code=0 */
+private static void sendJson(HttpExchange exchange, int status, String json) throws IOException {
+    byte[] body = json.getBytes(StandardCharsets.UTF_8);
+    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+    exchange.sendResponseHeaders(status, body.length);
+    try (OutputStream os = exchange.getResponseBody()) {
+        os.write(body);
+    }
+}
+
+/** 失败响应：统一 {"code":非0,"msg":"..."} */
+private static void sendError(HttpExchange exchange, int status, String message) throws IOException {
+    String safe = message == null ? "" : message.replace("\"", "'");
+    sendJson(exchange, status, "{\"code\":" + status + ",\"msg\":\"" + safe + "\"}");
+}
+```
+
+状态码用法要一致：
+
+| 情况 | 状态码 |
+| --- | --- |
+| 查询成功 | `200` |
+| 新增成功 | `201` |
+| 删除成功、无返回内容 | `204`（或 200 + 空 JSON） |
+| 参数缺失、格式错 | `400` |
+| 没带 Token / Token 错 | `401` |
+| 方法不对（GET 调 POST 接口） | `405` |
+| 路径不存在 | `404` |
+| 服务端异常 | `500` |
+
+### 15.6 完整示例：EmsHttpServer
+
+需求：
+
+- `POST /api/ems`：接收 `{"ali":300.5,"temp":26.4,"humidity":55.0}`，写入 `ems` 表，返回新记录的 id；
+- `GET /api/ems/latest?limit=10`：返回最近 N 条数据（JSON 数组）；
+- `GET /api/ping`：健康检查；
+- 简单 Token 校验：请求头 `Authorization: Bearer ems-token` 不对就返回 401。
+
+```java
+package com.github.rayman717.server;
+
+import com.github.rayman717.entity.DbConfig;
+import com.github.rayman717.util.ConfigManager;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.concurrent.Executors;
+
+/**
+ * EMS 的 HTTP 服务端。
+ * <p>
+ * 设备用 POST 上报数据，界面用 GET 拉数据，统一走 /api 下的接口。
+ */
+public class EmsHttpServer {
+
+    private static final int PORT = 8080;
+    private static final String TOKEN = "ems-token";     // 生产环境应从配置读
+    private static final int MAX_LIMIT = 100;
+
+    public static void main(String[] args) throws IOException {
+        ConfigManager.initConfig();
+
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        server.createContext("/api/", EmsHttpServer::handleApi);   // 统一入口，内部路由
+        server.setExecutor(Executors.newFixedThreadPool(8));       // 不设就是单线程串行
+        server.start();
+        System.out.println("EMS HTTP 服务已启动：http://127.0.0.1:" + PORT + "/api/ping");
+    }
+
+    /** 路由分发 */
+    private static void handleApi(HttpExchange exchange) throws IOException {
+        try {
+            String path = exchange.getRequestURI().getPath();
+            String method = exchange.getRequestMethod();
+
+            if ("/api/ping".equals(path) && "GET".equalsIgnoreCase(method)) {
+                sendJson(exchange, 200, "{\"status\":\"ok\"}");
+                return;
+            }
+            if ("/api/ems".equals(path) && "POST".equalsIgnoreCase(method)) {
+                handleCreate(exchange);
+                return;
+            }
+            if ("/api/ems/latest".equals(path) && "GET".equalsIgnoreCase(method)) {
+                handleLatest(exchange);
+                return;
+            }
+            sendError(exchange, 404, "接口不存在");
+        } catch (NumberFormatException e) {
+            sendError(exchange, 400, "数字格式错误");
+        } catch (Exception e) {
+            sendError(exchange, 500, "服务端错误：" + e.getMessage());
+        } finally {
+            exchange.close();
+        }
+    }
+
+    /** POST /api/ems */
+    private static void handleCreate(HttpExchange exchange) throws Exception {
+        if (!hasValidToken(exchange)) {
+            sendError(exchange, 401, "Token 无效");
+            return;
+        }
+
+        String body = new String(exchange.getRequestBody().readAllBytes(),
+                StandardCharsets.UTF_8);
+        String aliText = jsonValue(body, "ali");
+        String tempText = jsonValue(body, "temp");
+        String humText = jsonValue(body, "humidity");
+        if (aliText == null || tempText == null || humText == null) {
+            sendError(exchange, 400, "缺少 ali / temp / humidity 字段");
+            return;
+        }
+
+        double ali = Double.parseDouble(aliText);
+        double temp = Double.parseDouble(tempText);
+        double humidity = Double.parseDouble(humText);
+
+        int id = insertRecord(ali, temp, humidity);
+        sendJson(exchange, 201, "{\"code\":0,\"id\":" + id + ",\"msg\":\"ok\"}");
+    }
+
+    /** GET /api/ems/latest?limit=10 */
+    private static void handleLatest(HttpExchange exchange) throws Exception {
+        if (!hasValidToken(exchange)) {
+            sendError(exchange, 401, "Token 无效");
+            return;
+        }
+
+        int limit = 10;
+        String rawQuery = exchange.getRequestURI().getRawQuery();
+        if (rawQuery != null) {
+            for (String pair : rawQuery.split("&")) {
+                String[] kv = pair.split("=", 2);
+                if (kv.length == 2 && "limit".equals(kv[0])) {
+                    limit = Math.max(1, Math.min(MAX_LIMIT, Integer.parseInt(kv[1])));
+                }
+            }
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
+        try (Connection con = openConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT id, ALI, Temp, Humidity, `Time` FROM ems ORDER BY id DESC LIMIT ?")) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    if (!first) {
+                        sb.append(',');
+                    }
+                    first = false;
+                    sb.append("{\"id\":").append(rs.getInt("id"))
+                      .append(",\"ali\":").append(rs.getDouble("ALI"))
+                      .append(",\"temp\":").append(rs.getDouble("Temp"))
+                      .append(",\"humidity\":").append(rs.getDouble("Humidity"))
+                      .append(",\"time\":\"").append(rs.getTimestamp("Time")).append("\"}");
+                }
+            }
+        }
+        sb.append(']');
+        sendJson(exchange, 200, sb.toString());
+    }
+
+    /** 写库，返回自增主键 */
+    private static int insertRecord(double ali, double temp, double humidity) throws Exception {
+        String sql = "INSERT INTO ems (ALI, Temp, Humidity) VALUES (?, ?, ?)";
+        try (Connection con = openConnection();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setDouble(1, ali);
+            ps.setDouble(2, temp);
+            ps.setDouble(3, humidity);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : -1;
+            }
+        }
+    }
+
+    private static Connection openConnection() throws Exception {
+        DbConfig config = ConfigManager.getDbConfig();
+        String url = "jdbc:mysql://" + config.ip + ":3306/" + config.dbName
+                + "?useSSL=false&characterEncoding=utf8";
+        return DriverManager.getConnection(url, config.user, config.password);
+    }
+
+    /** 简单 Token 校验：Authorization: Bearer ems-token */
+    private static boolean hasValidToken(HttpExchange exchange) {
+        String auth = exchange.getRequestHeaders().getFirst("Authorization");
+        return auth != null && auth.equals("Bearer " + TOKEN);
+    }
+
+    /** 从平铺 JSON 里取一个 key 的值 */
+    private static String jsonValue(String json, String key) {
+        String pattern = "\"" + key + "\"";
+        int i = json.indexOf(pattern);
+        if (i < 0) {
+            return null;
+        }
+        int colon = json.indexOf(':', i + pattern.length());
+        if (colon < 0) {
+            return null;
+        }
+        int start = colon + 1;
+        while (start < json.length() && Character.isWhitespace(json.charAt(start))) {
+            start++;
+        }
+        int end = start;
+        while (end < json.length() && ",}".indexOf(json.charAt(end)) < 0) {
+            end++;
+        }
+        return json.substring(start, end).trim();
+    }
+
+    private static void sendJson(HttpExchange exchange, int status, String json) throws IOException {
+        byte[] body = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.sendResponseHeaders(status, body.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(body);
+        }
+    }
+
+    private static void sendError(HttpExchange exchange, int status, String message) throws IOException {
+        String safe = message == null ? "" : message.replace("\"", "'");
+        sendJson(exchange, status, "{\"code\":" + status + ",\"msg\":\"" + safe + "\"}");
+    }
+}
+```
+
+测试：
+
+```bash
+# 健康检查
+curl.exe "http://127.0.0.1:8080/api/ping"
+
+# 上报一条
+curl.exe -X POST "http://127.0.0.1:8080/api/ems" ^
+  -H "Authorization: Bearer ems-token" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"ali\":300.5,\"temp\":26.4,\"humidity\":55.0}"
+
+# 查最新 5 条
+curl.exe "http://127.0.0.1:8080/api/ems/latest?limit=5" -H "Authorization: Bearer ems-token"
+```
+
+### 15.7 线程、超时与连接
+
+| 事项 | 说明 |
+| --- | --- |
+| 默认单线程 | `HttpServer` 不设 executor 时是串行处理，一个慢请求会堵住所有请求 |
+| 线程池大小 | 8–16 个足够小项目，取决于数据库能承受多少并发 |
+| 关闭 | `server.stop(0)`；线程池要自己 `shutdown()` |
+| 数据库连接 | 每个请求开一个连接，教学够用；并发高了要换连接池 |
+| 请求大小 | 默认没有严格限制，但别让客户端一次 POST 几百 MB |
+| 慢请求 | 自己控制业务超时（比如 JDBC 查询设 `setQueryTimeout`） |
+
+优雅关闭的骨架：
+
+```java
+Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+    server.stop(0);
+    executor.shutdown();
+    System.out.println("服务已停止");
+}));
+```
+
+### 15.8 HTTPS 服务端
+
+需要 `HttpsServer` + 一个 keystore（证书 + 私钥）：
+
+```bash
+keytool -genkeypair -alias ems -keyalg RSA -keysize 2048 -validity 3650 ^
+        -keystore ems.p12 -storetype PKCS12 -storepass changeit ^
+        -dname "CN=127.0.0.1"
+```
+
+```java
+import com.sun.net.httpserver.HttpsServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+
+KeyStore ks = KeyStore.getInstance("PKCS12");
+try (FileInputStream in = new FileInputStream("ems.p12")) {
+    ks.load(in, "changeit".toCharArray());
+}
+KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+kmf.init(ks, "changeit".toCharArray());
+
+SSLContext ctx = SSLContext.getInstance("TLS");
+ctx.init(kmf.getKeyManagers(), null, null);
+
+HttpsServer https = HttpsServer.create(new InetSocketAddress(8443), 0);
+https.setHttpsConfigurator(new HttpsConfigurator(ctx));
+https.createContext("/api/", EmsHttpServer::handleApi);   // 复用同一个 handler
+https.start();
+```
+
+内网自签证书时，客户端会报 `PKIX path building failed`，处理方式见第 10 章。
+
+### 15.9 生产环境：Spring Boot
+
+JDK 自带的 `HttpServer` 适合理解和跑通流程，正式项目一般用框架，因为它自带路由、参数绑定、校验、日志、监控、连接池。
+
+`pom.xml` 加依赖：
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+```
+
+一个接口只要几行：
+
+```java
+@RestController
+@RequestMapping("/api/ems")
+public class EmsController {
+
+    @PostMapping
+    public Map<String, Object> create(@RequestBody EmsRecord record) {
+        int id = emsService.save(record);          // 业务逻辑
+        return Map.of("code", 0, "id", id);
+    }
+
+    @GetMapping("/latest")
+    public List<EmsRecord> latest(@RequestParam(defaultValue = "10") int limit) {
+        return emsService.latest(limit);
+    }
+}
+```
+
+对照：
+
+| 能力 | JDK `HttpServer` | Spring Boot |
+| --- | --- | --- |
+| 依赖 | 无 | Maven/Gradle |
+| 路由/参数绑定 | 手写 | 注解 |
+| JSON 序列化 | 手写 | 自动 |
+| 校验 | 手写 | `@Valid` |
+| 日志/监控 | 手写 | 自带 |
+| 学习成本 | 低 | 中 |
+
+本项目目前没有 Maven，所以先用第 15.6 节的 `EmsHttpServer` 跑通「设备上报 → 入库 → 界面拉取」的闭环；等以后引入 Spring Boot 再迁移。
+
+### 15.10 常见坑
+
+| 坑 | 现象 | 解决 |
+| --- | --- | --- |
+| 没调 `sendResponseHeaders` | 客户端一直等，超时 | 先发状态码和长度，再写体 |
+| 长度写错 | 响应被截断或一直挂起 | 用 `body.length`，或传 `-1` 走 chunked |
+| 忘了 `exchange.close()` | 连接泄漏、端口耗尽 | `finally` 里关闭 |
+| 没设 executor | 并发请求排队，一个慢请求堵全站 | `setExecutor(线程池)` |
+| 读请求体两次 | 第二次读到空 | 只读一次，先存 String |
+| 405 处理缺失 | 用错方法也返回 200 | 判断方法并返回 405 |
+| 路径大小写 | `/API/ems` 匹配不到 `/api/ems` | 统一小写，或自己忽略大小写 |
+| 中文乱码 | 响应中文变问号 | `Content-Type: application/json; charset=UTF-8` |
+| 端口占用 | `BindException: Address already in use` | 换端口或关掉占用的进程 |
+| 跨域请求失败 | 浏览器报 CORS 错误 | 加 `Access-Control-Allow-Origin` 头 |
+| 异常没捕获 | 客户端收到空响应 | handler 里 try/catch，统一返回 500 |
+| 返回 `null` 消息体 | 客户端解析失败 | 至少返回 `{}` |
+| 用 `com.sun.net.httpserver` 编译报错 | 找不到类 | 加 `--add-modules jdk.httpserver` |
+| Token 写死在代码里 | 换 token 要重新编译 | 从 `config.properties` 读 |
 
 ---
 
-## 15. 附：和网络通信手册的对应关系
+
+## 16. 附：和网络通信手册的对应关系
 
 | 主题 | 看哪本 |
 | --- | --- |
@@ -761,6 +1275,7 @@ System.out.println("上报成功：" + result);
 | **HttpURLConnection / HttpClient 写法** | **本手册 第 7–8 章** |
 | 下载、上传、HTTPS、调试 | 本手册 第 9–11 章 |
 | 可直接复用的 HTTP 客户端 | 本手册 第 12 章 |
+| **HTTP 服务端（接收上报、返回数据）** | **本手册 第 15 章** |
 | 设备上报服务端（TCP 收数据入库） | 网络通信手册 第 12 章 |
 
-一句话：**设备之间用 TCP/UDP，对平台/云服务用 HTTP。**
+一句话：**设备之间用 TCP/UDP，对平台/云服务用 HTTP；自己对外提供接口，用第 15 章的 HTTP 服务端。**
