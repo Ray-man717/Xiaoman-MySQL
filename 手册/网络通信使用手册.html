@@ -443,6 +443,7 @@ public class HttpClientDemo {
       .thenAccept(r -&gt; System.out.println("异步结果：" + r.statusCode()));</code></pre>
 <h3 id="93-两种写法的选择">9.3 两种写法的选择</h3>
 <table><thead><tr><th></th><th><code>HttpURLConnection</code></th><th><code>HttpClient</code></th></tr></thead><tbody><tr><td>JDK 版本</td><td>8 及以上</td><td>11 及以上</td></tr><tr><td>代码量</td><td>多，要手动读流</td><td>少，链式调用</td></tr><tr><td>异步</td><td>要自己开线程</td><td>内置 <code>sendAsync</code></td></tr><tr><td>HTTP/2</td><td>不支持</td><td>支持</td></tr><tr><td>建议</td><td>老项目、要兼容 JDK 8</td><td>新项目首选</td></tr></tbody></table>
+<blockquote><p>想看 HTTP 的完整讲解（报文结构、状态码、请求头、请求体格式、下载上传、HTTPS、调试方法、可直接复用的客户端），见附加篇：<a href="HTTP请求使用手册.html">HTTP 请求详解（网络通信附加篇）</a>。</p></blockquote>
 <hr>
 <h2 id="10-json没有第三方库怎么办">10. JSON：没有第三方库怎么办</h2>
 <p>JDK 没有内置 JSON 解析。三种选择：</p>
