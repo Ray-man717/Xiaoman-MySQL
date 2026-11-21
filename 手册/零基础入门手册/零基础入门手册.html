@@ -436,6 +436,10 @@ public class 文件名 {
     }
 }</code></pre>
 <p>最后一句：<strong>能跑起来的第一行代码，就是最好的开始。</strong></p>
+<hr>
+<h2 id="附代码与注释对照表">附：代码与注释对照表</h2>
+<table><thead><tr><th>你想做什么</th><th>代码</th><th>参数说明</th></tr></thead><tbody><tr><td>打印一行字</td><td><code>System.out.println("文字");</code></td><td>括号里放要打印的内容，文字要加双引号</td></tr><tr><td>定义整数</td><td><code>int age = 13;</code></td><td><code>int</code>：整数类型；<code>age</code>：名字；<code>13</code>：值</td></tr><tr><td>定义小数</td><td><code>double score = 95.5;</code></td><td><code>double</code>：小数类型</td></tr><tr><td>定义文字</td><td><code>String name = "小明";</code></td><td><code>String</code>：文字类型，值必须加双引号</td></tr><tr><td>定义真假</td><td><code>boolean ok = true;</code></td><td>只能放 <code>true</code> 或 <code>false</code></td></tr><tr><td>准备读键盘</td><td><code>Scanner sc = new Scanner(System.in);</code></td><td><code>System.in</code>：表示键盘输入</td></tr><tr><td>读一整行</td><td><code>String line = sc.nextLine();</code></td><td>读到你按回车为止</td></tr><tr><td>读一个整数</td><td><code>int n = sc.nextInt();</code></td><td>输入不是整数会报错</td></tr><tr><td>判断</td><td><code>if (score &gt;= 60) { } else { }</code></td><td><code>&gt;=</code>：大于等于；<code>==</code>：等于（两个等号）</td></tr><tr><td>循环 10 次</td><td><code>for (int i = 1; i &lt;= 10; i++) { }</code></td><td><code>i=1</code>：起点；<code>i&lt;=10</code>：条件；<code>i++</code>：每次加 1</td></tr><tr><td>条件循环</td><td><code>while (i &lt;= 5) { i++; }</code></td><td>条件一直成立就会一直做，记得改 <code>i</code></td></tr><tr><td>定义方法</td><td><code>static int add(int a, int b) { return a + b; }</code></td><td><code>a</code>、<code>b</code>：参数；<code>return</code>：返回结果</td></tr><tr><td>调用方法</td><td><code>int r = add(3, 5);</code></td><td>括号里按顺序传参数</td></tr><tr><td>生成随机数</td><td><code>Random r = new Random(); int x = r.nextInt(100);</code></td><td><code>100</code>：上限，结果是 0~99</td></tr><tr><td>跳出整个循环</td><td><code>break;</code></td><td>立即结束循环</td></tr><tr><td>跳过本次</td><td><code>continue;</code></td><td>跳过这一轮，继续下一轮</td></tr></tbody></table>
+<blockquote><p>说明：「参数说明」一列写的是括号里、等号右边那些东西分别代表什么。</p></blockquote>
 </article>
 <script>
 (function () {

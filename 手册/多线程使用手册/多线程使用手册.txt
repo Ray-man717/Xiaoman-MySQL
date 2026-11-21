@@ -910,3 +910,31 @@ thenApply 是「转换」，thenCompose 是「再返回一个新的 Future」（
   jstack <pid>  |  看线程栈，查死锁和卡住的线程
   jcmd <pid> Thread.print  |  同上
   top / 任务管理器  |  看 CPU 占用（死锁时通常不高）
+
+------------------------------------------------------------------------
+
+附：代码与注释对照表
+------------------------------------------------------------
+
+  代码  |  作用（注释）  |  参数/说明
+  new Thread(() -> { }).start()  |  启动线程  |  任务写在 lambda 里
+  thread.join()  |  等线程结束  |  阻塞当前线程
+  Thread.sleep(1000)  |  睡 1 秒  |  会抛 InterruptedException
+  thread.setDaemon(true)  |  守护线程  |  主线程结束它也结束
+  synchronized (lock) { }  |  加锁  |  lock：锁对象，建议 private final Object
+  private volatile boolean running = true  |  可见性  |  不保证原子性
+  new AtomicInteger(0).incrementAndGet()  |  原子加 1  |  线程安全计数
+  lock.lock() / unlock()  |  显式锁  |  unlock 放 finally
+  lock.tryLock(2, TimeUnit.SECONDS)  |  限时加锁  |  拿不到返回 false
+  queue.put(x) / queue.take()  |  阻塞队列  |  满了/空了会等
+  queue.offer(x)  |  非阻塞放入  |  满了返回 false
+  Executors.newFixedThreadPool(4)  |  固定线程池  |  4：线程数
+  pool.submit(() -> { })  |  提交任务  |  返回 Future
+  future.get()  |  等结果  |  阻塞，可加超时
+  pool.shutdown()  |  关闭线程池  |  等已提交任务跑完
+  CompletableFuture.supplyAsync(() -> v, pool)  |  异步取值  |  
+  .thenApply(f) / .thenAccept(c)  |  串行处理  |  
+  allOf(a, b).join()  |  等全部完成  |  
+  .exceptionally(ex -> 0)  |  异常兜底  |  
+  new CountDownLatch(5) / await() / countDown()  |  等 N 个任务  |  
+  semaphore.acquire() / release()  |  限流  |  最多 N 个同时执行

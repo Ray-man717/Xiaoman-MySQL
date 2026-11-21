@@ -2444,3 +2444,32 @@ view（只碰界面）：
   排序  |  table.setAutoCreateRowSorter(true);
   取选中行  |  table.convertRowIndexToModel(table.getSelectedRow())
   设列宽  |  table.getColumnModel().getColumn(i).setPreferredWidth(120);
+
+------------------------------------------------------------------------
+
+附：代码与注释对照表
+------------------------------------------------------------
+
+  代码  |  作用（注释）  |  参数/说明
+  new JFrame("标题")  |  创建窗口  |  "标题"：窗口标题文字
+  frame.setSize(800, 600)  |  设置大小  |  800 宽、600 高（像素）
+  frame.setLocationRelativeTo(null)  |  窗口居中  |  null 表示相对屏幕
+  frame.setDefaultCloseOperation(EXIT_ON_CLOSE)  |  关闭即退出  |  也可用 DISPOSE_ON_CLOSE
+  frame.add(组件, BorderLayout.CENTER)  |  添加组件  |  第二个参数是位置
+  new JPanel(new GridLayout(2, 2))  |  网格面板  |  2, 2：两行两列
+  new VBox(8)  |  竖排（JavaFX）  |  8：控件间距
+  button.addActionListener(e -> { })  |  按钮点击  |  e：事件对象，可忽略
+  textField.getText().trim()  |  取输入  |  trim() 去掉首尾空格
+  label.setText("文字")  |  改文字  |  
+  new JTable(model)  |  创建表格  |  model：DefaultTableModel
+  model.addRow(new Object[]{...})  |  加一行  |  元素顺序对应列
+  model.setRowCount(0)  |  清空表格  |  
+  table.setAutoCreateRowSorter(true)  |  点击表头排序  |  
+  new JScrollPane(table)  |  包滚动条  |  表格必须包
+  JOptionPane.showMessageDialog(this, "文字")  |  提示框  |  this：父窗口
+  showConfirmDialog(...)  |  确认框  |  返回 YES_OPTION 等
+  getRootPane().setDefaultButton(btn)  |  回车触发按钮  |  
+  new Timer(5000, e -> load())  |  每 5 秒执行  |  5000：毫秒
+  new SwingWorker<T, V>() { ... }.execute()  |  后台任务  |  done() 在界面线程
+  SwingUtilities.invokeLater(() -> { })  |  切回界面线程  |  
+  frame.setVisible(true)  |  显示窗口  |  必须最后调用

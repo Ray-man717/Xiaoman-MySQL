@@ -848,3 +848,31 @@ System.out.println(Path.of("ems_export.csv").toAbsolutePath());
 | 给 Excel 的 CSV | UTF-8 + BOM |
 | 对接国内老系统 | GBK（`Charset.forName("GBK")`） |
 | 二进制/图片 | 不涉及编码，用字节流 |
+
+---
+
+## 附：代码与注释对照表
+
+| 代码 | 作用（注释） | 参数/说明 |
+| --- | --- | --- |
+| `Files.readString(path, UTF_8)` | 一次读成字符串 | 只适合小文件 |
+| `Files.readAllLines(path, UTF_8)` | 读成行列表 | |
+| `Files.readAllBytes(path)` | 读成字节数组 | 二进制用 |
+| `Files.writeString(path, text, UTF_8)` | 覆盖写 | |
+| `Files.writeString(path, text, UTF_8, CREATE, APPEND)` | 追加写 | 不覆盖原内容 |
+| `Files.newBufferedReader(path, UTF_8)` | 逐行读 | 配 `readLine()` |
+| `Files.newBufferedWriter(path, UTF_8)` | 逐行写 | 配 `write`/`newLine` |
+| `Files.lines(path, UTF_8)` | 流式读行 | 用完要关闭 |
+| `Files.createDirectories(dir)` | 建多级目录 | 已存在不报错 |
+| `Files.deleteIfExists(path)` | 删除 | 不存在返回 `false` |
+| `Files.copy(src, dst, REPLACE_EXISTING)` | 复制 | |
+| `Files.move(src, dst, REPLACE_EXISTING)` | 移动/改名 | |
+| `Files.list(dir)` / `Files.walk(dir)` | 遍历目录 | 返回 `Stream`，要关闭 |
+| `Path.of("logs", "app.log")` | 拼路径 | 跨平台 |
+| `Files.size(path)` | 文件大小 | 字节数 |
+| `prop.load(reader)` | 读 properties | 配合 `getProperty` |
+| `prop.store(writer, "注释")` | 写 properties | 整文件覆盖 |
+| `try (BufferedReader r = ...) { }` | 自动关闭 | 异常也会关 |
+| `writer.write('\uFEFF')` | 写 UTF-8 BOM | Excel 打开 CSV 不乱码 |
+| `new String(bytes, UTF_8)` | 字节转字符串 | 必须指定编码 |
+

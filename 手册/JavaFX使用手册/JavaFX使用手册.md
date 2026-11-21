@@ -1411,3 +1411,32 @@ java --module-path "E:\javafx-sdk-17.0.9\lib" --add-modules javafx.controls,java
 ```
 
 一句话：**JavaFX 比 Swing 好看、好用，但要多配一个 JavaFX SDK；配置一次，之后和普通 Java 一样写。**
+
+---
+
+## 附：代码与注释对照表
+
+| 代码 | 作用（注释） | 参数/说明 |
+| --- | --- | --- |
+| `class App extends Application` | 程序入口类 | 重写 `start(Stage)` |
+| `launch(args)` | 启动 | `args`：命令行参数 |
+| `new Scene(root, 800, 600)` | 创建场景 | `root` 根节点；宽高像素 |
+| `stage.setScene(scene)` | 设置场景 | |
+| `stage.show()` | 显示窗口 | |
+| `new VBox(8, a, b)` | 竖排 | `8`：间距；后面是子节点 |
+| `new HBox(8)` | 横排 | |
+| `new BorderPane()` | 上下左右中 | `setTop/setCenter/...` |
+| `GridPane.add(node, 0, 1)` | 加到网格 | `0` 列、`1` 行 |
+| `button.setOnAction(e -> { })` | 按钮点击 | |
+| `field.setPromptText("请输入")` | 占位提示 | |
+| `new TableView<>(items)` | 表格 | `items`：`ObservableList` |
+| `col.setCellValueFactory(...)` | 列绑定字段 | `PropertyValueFactory("id")` |
+| `label.textProperty().bind(field.textProperty())` | 单项绑定 | 一行变另一行跟着变 |
+| `a.bindBidirectional(b)` | 双向绑定 | |
+| `Platform.runLater(() -> { })` | 回界面线程 | 后台更新界面必须用 |
+| `new Task<T>() { call() { } }` | 后台任务 | `setOnSucceeded` 取结果 |
+| `bar.progressProperty().bind(task.progressProperty())` | 进度条绑定 | |
+| `new Timeline(new KeyFrame(Duration.seconds(5), e -> ...))` | 定时 | `5`：秒 |
+| `new Alert(AlertType.INFORMATION, "文字")` | 提示框 | `showAndWait()` 阻塞等待 |
+| `FileChooser.showSaveDialog(stage)` | 保存文件对话框 | 返回 `File` 或 `null` |
+

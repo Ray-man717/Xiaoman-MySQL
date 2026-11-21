@@ -655,3 +655,36 @@ Time 列是 DATETIME，下面是排查数据、做报表最常用的一组写法
   8. 分页一定配 ORDER BY，并带上唯一列；
   9. 大表查询先 EXPLAIN，看有没有 type: ALL；
   10. 改数据前 START TRANSACTION;，确认后 COMMIT;。
+
+------------------------------------------------------------------------
+
+附：代码与注释对照表
+------------------------------------------------------------
+
+  SQL 代码  |  作用（注释）  |  参数/说明
+  SELECT 列 FROM 表;  |  查询指定列  |  列用逗号分隔，* 表示全部
+  SELECT DISTINCT 列 FROM 表;  |  去重  |  只保留不同的值
+  WHERE 列 运算符 值  |  过滤行  |  运算符：=、>、<、>=、!=
+  WHERE a AND b / OR  |  逻辑组合  |  AND 优先级高于 OR，混用加括号
+  WHERE 列 IN (1,2,3)  |  多值匹配  |  等价于多个 OR
+  WHERE 列 BETWEEN 20 AND 30  |  闭区间  |  含两端
+  WHERE 列 LIKE '张%'  |  模糊匹配  |  % 任意多字符，_ 一个字符
+  ORDER BY 列 DESC  |  排序  |  DESC 降序，ASC 升序（默认）
+  LIMIT 10 OFFSET 20  |  分页  |  跳过 20 条，取 10 条
+  COUNT(*)  |  统计行数  |  COUNT(列) 只统计非 NULL
+  SUM(列) / AVG(列)  |  求和 / 平均  |  AVG 忽略 NULL
+  MAX(列) / MIN(列)  |  最大 / 最小  |  
+  GROUP BY 列  |  分组  |  非聚合列必须出现在这里（否则报 1055）
+  HAVING 条件  |  过滤分组  |  可以用聚合函数
+  DATE_FORMAT(列, '%Y-%m-%d')  |  时间格式化  |  %H 小时、%i 分钟、%s 秒
+  DATE_SUB(NOW(), INTERVAL 7 DAY)  |  时间减法  |  7：数量；DAY：单位
+  TIMESTAMPDIFF(HOUR, 开始, 结束)  |  时间差  |  返回相差多少 HOUR
+  A JOIN B ON A.id = B.id  |  内连接  |  只保留匹配上的行
+  A LEFT JOIN B ON ...  |  左连接  |  左表全保留，右表缺失补 NULL
+  (SELECT MAX(列) FROM 表)  |  子查询  |  先用子查询算出值再比较
+  UNION / UNION ALL  |  上下合并  |  UNION 去重，ALL 不去重
+  INSERT INTO 表 (列) VALUES (?)  |  插入  |  ? 是占位符，配 setXxx 用
+  UPDATE 表 SET 列 = ? WHERE id = ?  |  更新  |  不加 WHERE 会改全表
+  DELETE FROM 表 WHERE id = ?  |  删除  |  不加 WHERE 会删全表
+  EXPLAIN SELECT ...  |  看执行计划  |  关注 type、key、rows
+  CREATE INDEX 名 ON 表 (列);  |  建索引  |  名字建议 idx_表_列

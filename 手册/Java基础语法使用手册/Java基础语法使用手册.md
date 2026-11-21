@@ -1254,3 +1254,40 @@ Files.writeString(Path.of("out.txt"), "内容", StandardCharsets.UTF_8);
 2. 第 7–12 章：能写出「一个有字段、方法、构造器、异常处理的类」；
 3. 第 13–16 章：会用 String、集合、Scanner、文件读写；
 4. 第 17 章：能读懂本项目现有代码，并敢动手改。
+
+---
+
+## 附：代码与注释对照表
+
+| 代码 | 作用（注释） | 参数/说明 |
+| --- | --- | --- |
+| `int n = 10;` | 声明整数变量 | `int`：4 字节整数；`n`：变量名；`10`：初始值 |
+| `double d = 3.14;` | 声明小数 | `double`：8 字节浮点 |
+| `String s = "abc";` | 声明字符串 | 值必须用双引号 |
+| `boolean ok = true;` | 声明布尔 | 只有 `true` / `false` |
+| `int i = (int) d;` | 强制类型转换 | 小数转整数会截断，`d=3.9` 得到 `3` |
+| `double x = 7.0 / 2;` | 小数除法 | 至少一边是小数，否则 `7/2=3` |
+| `a % b` | 取余数 | `7 % 2 = 1` |
+| `a == b` / `!s.equals("x")` | 比较 | 基本类型用 `==`，对象用 `equals` |
+| `cond ? a : b` | 三元表达式 | 条件成立取 `a`，否则取 `b` |
+| `for (int i = 0; i < n; i++)` | 计数循环 | `i=0` 起点，`i<n` 条件，`i++` 步长 |
+| `for (String x : list)` | 增强 for | 遍历数组或集合 |
+| `int[] a = new int[5];` | 创建数组 | `5`：长度，下标 0~4 |
+| `a.length` | 数组长度 | 注意不是 `length()` |
+| `Arrays.toString(a)` | 数组转字符串 | 直接打印数组会看到地址 |
+| `static int add(int a, int b)` | 定义方法 | `a`、`b`：参数；`int`：返回值类型 |
+| `static void sayHello()` | 无返回值方法 | `void` 表示不返回 |
+| `new EmsRecord(1, 26.4)` | 创建对象 | 参数对应构造方法 |
+| `class Dog extends Animal` | 继承 | 只能继承一个类 |
+| `@Override` | 重写父类方法 | 方法名、参数、返回值要一致 |
+| `class A implements B` | 实现接口 | 可以实现多个接口 |
+| `private` / `public` | 访问修饰符 | `private` 只能本类用；`public` 到处可用 |
+| `static final int MAX = 100;` | 常量 | 全大写，不能改 |
+| `try { } catch (Exception e) { }` | 异常处理 | `e.getMessage()` 取错误信息 |
+| `try (Connection c = ...) { }` | 自动关闭资源 | 只用于 `AutoCloseable` |
+| `s.substring(1, 3)` | 截取字符串 | 从下标 1（含）到 3（不含） |
+| `s.split(",")` | 按分隔符切分 | 返回 `String[]` |
+| `Integer.parseInt("123")` | 字符串转整数 | 不是数字会抛异常 |
+| `List<String> list = new ArrayList<>();` | 列表 | `add`、`get`、`size`、`remove` |
+| `Map<String, Double> map = new HashMap<>();` | 键值对 | `put`、`get`、`getOrDefault` |
+

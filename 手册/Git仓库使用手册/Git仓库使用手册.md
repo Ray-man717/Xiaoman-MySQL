@@ -550,3 +550,32 @@ git push
 | 建议补进 .gitignore | `.idea/`、`*.iml`（IDE 配置，本机相关） |
 
 常用三条命令记牢即可：`git status` 看状态，`git add` + `git commit` 存版本，`git push` 做同步。
+
+---
+
+## 附：代码与注释对照表
+
+| Git 命令 | 作用（注释） | 参数/说明 |
+| --- | --- | --- |
+| `git status` | 看当前状态 | `-s` 简写输出 |
+| `git add 文件` | 加入暂存区 | `.` 表示全部 |
+| `git add -A` | 加入全部变化 | 包括删除 |
+| `git commit -m "说明"` | 提交 | `-m` 后是提交信息 |
+| `git commit -am "说明"` | 跳过 add 提交已跟踪文件 | 新文件仍需 `add` |
+| `git push` | 推送到远程 | 首次用 `-u origin master` |
+| `git pull` | 拉取并合并 | `--rebase` 变基拉取 |
+| `git fetch` | 只下载不合并 | 比 `pull` 安全 |
+| `git log --oneline` | 看历史 | `-5` 只看 5 条 |
+| `git diff` | 看未暂存改动 | `--cached` 看已暂存 |
+| `git restore 文件` | 丢弃工作区改动 | 老写法 `checkout -- 文件` |
+| `git restore --staged 文件` | 取消暂存 | 老写法 `reset HEAD 文件` |
+| `git reset --soft HEAD~1` | 撤销提交、改动留着 | `HEAD~1` 表示上一个提交 |
+| `git reset --hard 提交号` | 彻底回退 | 会丢改动，慎用 |
+| `git revert 提交号` | 反向提交 | 用于已推送的提交 |
+| `git branch` | 看分支 | `-a` 含远程，`-d` 删除 |
+| `git switch -c 分支名` | 新建并切换 | 老写法 `checkout -b` |
+| `git merge 分支名` | 合并分支 | 冲突时手工解决后 `add` + `commit` |
+| `git remote -v` | 看远程地址 | `set-url` 改地址 |
+| `git mv 旧 新` | 重命名并保留历史 | 不要用系统重命名 |
+| `git check-ignore -v 文件` | 查是否被忽略 | 显示是哪条规则 |
+

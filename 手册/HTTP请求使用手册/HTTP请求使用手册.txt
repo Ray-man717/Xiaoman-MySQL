@@ -1205,3 +1205,32 @@ pom.xml 加依赖：
   设备上报服务端（TCP 收数据入库）  |  网络通信手册 第 12 章
 
 一句话：设备之间用 TCP/UDP，对平台/云服务用 HTTP；自己对外提供接口，用第 15 章的 HTTP 服务端。
+
+------------------------------------------------------------------------
+
+附：代码与注释对照表
+------------------------------------------------------------
+
+  代码  |  作用（注释）  |  参数/说明
+  HttpRequest.newBuilder(URI.create(url))  |  创建请求  |  url：完整地址
+  .uri(URI.create("http://..."))  |  设置地址  |  含主机、端口、路径、查询
+  .timeout(Duration.ofSeconds(5))  |  请求超时  |  5 秒
+  .header("Content-Type", "application/json")  |  请求头  |  值必须和 body 格式一致
+  .header("Authorization", "Bearer " + token)  |  鉴权  |  Bearer  后面有空格
+  .GET() / .POST(...) / .PUT(...) / .DELETE()  |  请求方法  |  
+  BodyPublishers.ofString(json, UTF_8)  |  请求体  |  字符串转字节
+  BodyPublishers.ofFile(path)  |  上传文件  |  
+  BodyPublishers.noBody()  |  无请求体  |  GET 常用
+  BodyHandlers.ofString(UTF_8)  |  响应转字符串  |  
+  BodyHandlers.ofFile(path)  |  响应存文件  |  目标不能已存在
+  client.send(req, handler)  |  同步发送  |  阻塞等结果
+  client.sendAsync(req, handler)  |  异步发送  |  返回 CompletableFuture
+  resp.statusCode()  |  取状态码  |  200/201/400/401/500…
+  resp.body()  |  取响应体  |  
+  resp.headers().firstValue("Content-Type")  |  取响应头  |  返回 Optional
+  HttpServer.create(new InetSocketAddress(8080), 0)  |  创建 HTTP 服务端  |  8080：端口；0：backlog
+  server.createContext("/api/", handler)  |  注册路由  |  前缀匹配
+  exchange.sendResponseHeaders(200, len)  |  发状态码  |  len：响应体字节数
+  exchange.getResponseBody()  |  取响应输出流  |  写完要关闭
+  exchange.getRequestBody().readAllBytes()  |  读请求体  |  只能读一次
+  server.setExecutor(Executors.newFixedThreadPool(8))  |  线程池  |  不设就是单线程
