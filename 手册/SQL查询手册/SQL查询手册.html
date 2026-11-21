@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SQL 查询手册（MySQL · EMS 项目版）</title>
+<title>SQL 查询手册（MySQL）</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="sql-查询手册mysql--ems-项目版">SQL 查询手册（MySQL · EMS 项目版）</h1>
-<blockquote><p>配套本项目的 <code>EMS</code> 数据库（环境监测：光照 <code>ALI</code>、温度 <code>Temp</code>、湿度 <code>Humidity</code>、时间 <code>Time</code>），语句以 MySQL 5.7 为基准（驱动 <code>mysql-connector-java-5.1.49</code>），标注 <code>8.0+</code> 的写法在低版本不可用。</p></blockquote>
+<h1 id="sql-查询手册mysql">SQL 查询手册（MySQL）</h1>
+<blockquote><p>示例数据库是一张环境监测表（光照 <code>ALI</code>、温度 <code>Temp</code>、湿度 <code>Humidity</code>、时间 <code>Time</code>），语句以 MySQL 5.7 为基准（驱动 <code>mysql-connector-java-5.1.49</code>），标注 <code>8.0+</code> 的写法在低版本不可用。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-连接与基础命令">连接与基础命令</a></li><li><a href="#2-select-的执行顺序">SELECT 的执行顺序</a></li><li><a href="#3-查询字段与计算列">查询字段与计算列</a></li><li><a href="#4-where-条件过滤">WHERE 条件过滤</a></li><li><a href="#5-排序与分页">排序与分页</a></li><li><a href="#6-聚合函数与分组">聚合函数与分组</a></li><li><a href="#7-时间与日期查询">时间与日期查询</a></li><li><a href="#8-多表连接-join">多表连接 JOIN</a></li><li><a href="#9-子查询与-union">子查询与 UNION</a></li><li><a href="#10-case-when-与空值处理">CASE WHEN 与空值处理</a></li><li><a href="#11-本项目实战查询">本项目实战查询</a></li><li><a href="#12-修改数据insert--update--delete">修改数据（INSERT / UPDATE / DELETE）</a></li><li><a href="#13-索引与执行计划">索引与执行计划</a></li><li><a href="#14-常见报错速查">常见报错速查</a></li></ol>

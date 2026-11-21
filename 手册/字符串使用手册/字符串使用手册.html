@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>字符串使用手册（Java · EMS 项目版）</title>
+<title>字符串使用手册（Java）</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="字符串使用手册java--ems-项目版">字符串使用手册（Java · EMS 项目版）</h1>
-<blockquote><p>字符串是 Java 里用得最多的类型：姓名、SQL、JSON、CSV、日志、路径，全是字符串。这一本把 <code>String</code> 从「怎么创建」讲到「怎么不出乱码、不踩性能坑、不被正则坑」，最后用 EMS 项目里的真实场景收尾。</p></blockquote>
+<h1 id="字符串使用手册java">字符串使用手册（Java）</h1>
+<blockquote><p>字符串是 Java 里用得最多的类型：姓名、SQL、JSON、CSV、日志、路径，全是字符串。这一本把 <code>String</code> 从「怎么创建」讲到「怎么不出乱码、不踩性能坑、不被正则坑」，最后用几个真实场景收尾。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-string-到底是什么">String 到底是什么</a></li><li><a href="#2-创建字符串与常量池">创建字符串与常量池</a></li><li><a href="#3-字符串为什么不可变">字符串为什么不可变</a></li><li><a href="#4-长度判空与判空白">长度、判空与判空白</a></li><li><a href="#5-比较-还是-equals">比较：== 还是 equals</a></li><li><a href="#6-查找与定位">查找与定位</a></li><li><a href="#7-截取替换大小写">截取、替换、大小写</a></li><li><a href="#8-去空格trim-与-strip">去空格：trim 与 strip</a></li><li><a href="#9-切分与拼接">切分与拼接</a></li><li><a href="#10-格式化输出">格式化输出</a></li><li><a href="#11-数字与字符串互转">数字与字符串互转</a></li><li><a href="#12-正则表达式入门">正则表达式入门</a></li><li><a href="#13-编码与乱码">编码与乱码</a></li><li><a href="#14-性能-与-stringbuilder">性能：+ 与 StringBuilder</a></li><li><a href="#15-中文emoji-与-unicode">中文、emoji 与 Unicode</a></li><li><a href="#16-实战ems-里的字符串处理">实战：EMS 里的字符串处理</a></li><li><a href="#17-常见坑">常见坑</a></li><li><a href="#18-速查表">速查表</a></li></ol>

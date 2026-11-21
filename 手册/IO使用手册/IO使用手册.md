@@ -1,6 +1,6 @@
-# Java I/O 使用手册（EMS 项目版）
+# Java I/O 使用手册
 
-> 面向本项目：`EMS` 环境监测系统（MySQL + JDBC + Swing + 网络上报），
+> 适用场景：配置读取、日志、CSV 导出、大文件处理，
 > 讲清「配置怎么读」「日志怎么写」「数据怎么导出成 CSV」「大文件怎么不撑爆内存」。
 > 环境：JDK 17，`java.io` 与 `java.nio.file` 都是 JDK 自带。
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>网络通信使用手册（Java · EMS 数据上报与接收）</title>
+<title>网络通信使用手册（Java）</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="网络通信使用手册java--ems-数据上报与接收">网络通信使用手册（Java · EMS 数据上报与接收）</h1>
-<blockquote><p>面向本项目：<code>EMS</code> 环境监测系统（MySQL + JDBC + Swing 界面），讲清「采集设备怎么把数据送进 Java 程序」，从最简单的 TCP 一问一答，到完整的设备上报服务端。环境：JDK 17，<code>java.net</code> 与 <code>java.net.http</code> 都是 JDK 自带，不需要额外依赖。</p></blockquote>
+<h1 id="网络通信使用手册java">网络通信使用手册（Java）</h1>
+<blockquote><p>讲清「采集设备怎么把数据送进 Java 程序」，从最简单的 TCP 一问一答，到完整的设备上报服务端。环境：JDK 17，<code>java.net</code> 与 <code>java.net.http</code> 都是 JDK 自带，不需要额外依赖。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-先选对通信方式tcp--udp--http">先选对通信方式：TCP / UDP / HTTP</a></li><li><a href="#2-地址与端口">地址与端口</a></li><li><a href="#3-最简单的-tcp-客户端">最简单的 TCP 客户端</a></li><li><a href="#4-最简单的-tcp-服务端">最简单的 TCP 服务端</a></li><li><a href="#5-收发数据与编码">收发数据与编码</a></li><li><a href="#6-粘包与拆包必须懂">粘包与拆包（必须懂）</a></li><li><a href="#7-多客户端并发">多客户端并发</a></li><li><a href="#8-udp-通信">UDP 通信</a></li><li><a href="#9-http-通信">HTTP 通信</a></li><li><a href="#10-json没有第三方库怎么办">JSON：没有第三方库怎么办</a></li><li><a href="#11-网络数据库界面怎么串起来">网络、数据库、界面怎么串起来</a></li><li><a href="#12-实战ems-设备数据上报系统">实战：EMS 设备数据上报系统</a></li><li><a href="#13-常见问题与报错">常见问题与报错</a></li><li><a href="#14-速查表">速查表</a></li></ol>

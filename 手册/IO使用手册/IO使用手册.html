@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Java I/O 使用手册（EMS 项目版）</title>
+<title>Java I/O 使用手册</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="java-io-使用手册ems-项目版">Java I/O 使用手册（EMS 项目版）</h1>
-<blockquote><p>面向本项目：<code>EMS</code> 环境监测系统（MySQL + JDBC + Swing + 网络上报），讲清「配置怎么读」「日志怎么写」「数据怎么导出成 CSV」「大文件怎么不撑爆内存」。环境：JDK 17，<code>java.io</code> 与 <code>java.nio.file</code> 都是 JDK 自带。</p></blockquote>
+<h1 id="java-io-使用手册">Java I/O 使用手册</h1>
+<blockquote><p>适用场景：配置读取、日志、CSV 导出、大文件处理，讲清「配置怎么读」「日志怎么写」「数据怎么导出成 CSV」「大文件怎么不撑爆内存」。环境：JDK 17，<code>java.io</code> 与 <code>java.nio.file</code> 都是 JDK 自带。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-先分清字节流与字符流">先分清：字节流与字符流</a></li><li><a href="#2-file-与-path">File 与 Path</a></li><li><a href="#3-读文件">读文件</a></li><li><a href="#4-写文件">写文件</a></li><li><a href="#5-try-with-resources-与关闭">try-with-resources 与关闭</a></li><li><a href="#6-编码与乱码">编码与乱码</a></li><li><a href="#7-files-工具类速查">Files 工具类速查</a></li><li><a href="#8-大文件处理">大文件处理</a></li><li><a href="#9-属性文件-properties">属性文件 Properties</a></li><li><a href="#10-csv-导出与导入">CSV 导出与导入</a></li><li><a href="#11-二进制与对象序列化">二进制与对象序列化</a></li><li><a href="#12-标准输入输出与重定向">标准输入输出与重定向</a></li><li><a href="#13-随机读写">随机读写</a></li><li><a href="#14-网络-io">网络 I/O</a></li><li><a href="#15-实战ems-数据导出与配置读写">实战：EMS 数据导出与配置读写</a></li><li><a href="#16-常见坑">常见坑</a></li><li><a href="#17-速查表">速查表</a></li></ol>

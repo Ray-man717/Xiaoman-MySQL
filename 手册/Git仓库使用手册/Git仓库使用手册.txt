@@ -1,4 +1,4 @@
-﻿Git 仓库使用手册（E:\UP\MySQL 项目版）
+﻿Git 仓库使用手册
 ============================================================
 
   本仓库：远程 origin = git@github.com:Ray-man717/Xiaoman-MySQL.git（SSH 方式），默认分支 master。

@@ -1,7 +1,7 @@
-﻿Swing 使用手册（Java 桌面界面 · EMS 项目版）
+﻿Swing 使用手册（Java 桌面界面）
 ============================================================
 
-  面向本项目：EMS 环境监测（MySQL + JDBC + com.github.rayman717 包结构），
+  讲清 Java 桌面界面的基本用法，
   从「弹出一个空窗口」讲到「能查数据、能刷新、能插入记录的监控界面」。
   环境：JDK 17（misc.xml 里 languageLevel=JDK_17），Swing 属于 JDK 自带的 javax.swing，不需要额外依赖。
 

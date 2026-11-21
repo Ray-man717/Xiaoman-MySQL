@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Java 多线程使用手册（EMS 项目版）</title>
+<title>Java 多线程使用手册</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="java-多线程使用手册ems-项目版">Java 多线程使用手册（EMS 项目版）</h1>
-<blockquote><p>面向本项目：<code>EMS</code> 环境监测系统（MySQL + JDBC + Swing + TCP 服务端），讲清「多台设备同时上报怎么处理」「界面为什么不能卡」「锁该怎么加」这些实际问题。环境：JDK 17，<code>java.util.concurrent</code> 全部内置。</p></blockquote>
+<h1 id="java-多线程使用手册">Java 多线程使用手册</h1>
+<blockquote><p>讲清并发编程里最常见的几个问题，讲清「多台设备同时上报怎么处理」「界面为什么不能卡」「锁该怎么加」这些实际问题。环境：JDK 17，<code>java.util.concurrent</code> 全部内置。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-什么时候需要多线程">什么时候需要多线程</a></li><li><a href="#2-创建线程的四种方式">创建线程的四种方式</a></li><li><a href="#3-线程的常用操作">线程的常用操作</a></li><li><a href="#4-线程安全问题">线程安全问题</a></li><li><a href="#5-synchronized-与-volatile">synchronized 与 volatile</a></li><li><a href="#6-原子类">原子类</a></li><li><a href="#7-lock-与条件变量">Lock 与条件变量</a></li><li><a href="#8-waitnotify-与生产者消费者">wait/notify 与生产者消费者</a></li><li><a href="#9-并发集合与阻塞队列">并发集合与阻塞队列</a></li><li><a href="#10-线程池">线程池</a></li><li><a href="#11-completablefuture">CompletableFuture</a></li><li><a href="#12-线程协作工具">线程协作工具</a></li><li><a href="#13-死锁">死锁</a></li><li><a href="#14-实战ems-数据接收的并发处理">实战：EMS 数据接收的并发处理</a></li><li><a href="#15-常见坑">常见坑</a></li><li><a href="#16-速查表">速查表</a></li></ol>

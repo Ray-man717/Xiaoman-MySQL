@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Swing 使用手册（Java 桌面界面 · EMS 项目版）</title>
+<title>Swing 使用手册（Java 桌面界面）</title>
 <script>
   try {
     document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
@@ -118,8 +118,8 @@
 <body>
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
-<h1 id="swing-使用手册java-桌面界面--ems-项目版">Swing 使用手册（Java 桌面界面 · EMS 项目版）</h1>
-<blockquote><p>面向本项目：<code>EMS</code> 环境监测（MySQL + JDBC + <code>com.github.rayman717</code> 包结构），从「弹出一个空窗口」讲到「能查数据、能刷新、能插入记录的监控界面」。环境：JDK 17（<code>misc.xml</code> 里 languageLevel=JDK_17），Swing 属于 JDK 自带的 <code>javax.swing</code>，不需要额外依赖。</p></blockquote>
+<h1 id="swing-使用手册java-桌面界面">Swing 使用手册（Java 桌面界面）</h1>
+<blockquote><p>讲清 Java 桌面界面的基本用法，从「弹出一个空窗口」讲到「能查数据、能刷新、能插入记录的监控界面」。环境：JDK 17（<code>misc.xml</code> 里 languageLevel=JDK_17），Swing 属于 JDK 自带的 <code>javax.swing</code>，不需要额外依赖。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-先懂三件事组件容器edt">先懂三件事：组件、容器、EDT</a></li><li><a href="#2-第一个窗口">第一个窗口</a></li><li><a href="#3-布局管理器">布局管理器</a></li><li><a href="#4-常用组件">常用组件</a></li><li><a href="#5-事件处理">事件处理</a></li><li><a href="#6-对话框与文件选择">对话框与文件选择</a></li><li><a href="#7-表格-jtable">表格 JTable</a></li><li><a href="#8-菜单工具栏与右键菜单">菜单、工具栏与右键菜单</a></li><li><a href="#9-外观字体与图标">外观、字体与图标</a></li><li><a href="#10-多线程别让界面卡死">多线程：别让界面卡死</a></li><li><a href="#11-编译运行与打包">编译、运行与打包</a></li><li><a href="#12-实战ems-数据监控窗口">实战：EMS 数据监控窗口</a></li><li><a href="#13-常见错误与坑">常见错误与坑</a></li><li><a href="#14-表格进阶">表格进阶</a></li><li><a href="#15-树与列表进阶">树与列表进阶</a></li><li><a href="#16-输入框与文档模型">输入框与文档模型</a></li><li><a href="#17-自定义绘制与动画">自定义绘制与动画</a></li><li><a href="#18-窗口进阶">窗口进阶</a></li><li><a href="#19-应用结构与-mvc">应用结构与 MVC</a></li><li><a href="#20-调试与性能">调试与性能</a></li><li><a href="#21-组件速查补充">组件速查补充</a></li><li><a href="#22-速查表">速查表</a></li></ol>

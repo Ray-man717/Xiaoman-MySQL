@@ -1,4 +1,4 @@
-# Git 仓库使用手册（E:\UP\MySQL 项目版）
+# Git 仓库使用手册
 
 > 本仓库：远程 `origin` = `git@github.com:Ray-man717/Xiaoman-MySQL.git`（SSH 方式），默认分支 `master`。
 > 本机 Git 版本 2.53，命令以新版 `switch` / `restore` 写法为主，同时给出老版本兼容写法。
