@@ -153,7 +153,7 @@ Hello.java    →    javac    →    Hello.class    →    java    →    屏幕
 <ol><li>在 <code>D 盘</code> 新建文件夹 <code>code</code>；</li><li>用记事本（或 VS Code）新建文件，<strong>文件名必须叫 <code>Hello.java</code></strong>；</li><li>把下面内容一字不差地抄进去：</li></ol>
 <pre class="language-java"><code>public class Hello {
     public static void main(String[] args) {
-        System.out.println("你好，我是学弟");
+        System.out.println("你好，Java");
     }
 }</code></pre>
 <h3 id="33-运行">3.3 运行</h3>
@@ -162,11 +162,11 @@ Hello.java    →    javac    →    Hello.class    →    java    →    屏幕
 javac Hello.java
 java Hello</code></pre>
 <p>屏幕上出现：</p>
-<pre class="language-text"><code>你好，我是学弟</code></pre>
+<pre class="language-text"><code>你好，Java</code></pre>
 <p><strong>恭喜，你已经写出第一个程序了。</strong></p>
 <h3 id="34-三条最容易踩的规则">3.4 三条最容易踩的规则</h3>
 <table><thead><tr><th>规则</th><th>说明</th></tr></thead><tbody><tr><td>文件名必须是 <code>Hello.java</code></td><td>因为代码里写的是 <code>class Hello</code>，两个名字必须一样</td></tr><tr><td>每句后面要有分号 <code>;</code></td><td>中文分号不行，必须是英文的 <code>;</code></td></tr><tr><td>运行时写 <code>Hello</code>，不加 <code>.java</code></td><td><code>java Hello</code> 不是 <code>java Hello.java</code></td></tr></tbody></table>
-<p>改一改：把「你好，我是学弟」改成你自己的名字，重新 <code>javac</code> + <code>java</code> 看看。</p>
+<p>改一改：把「你好，Java」改成你自己的名字，重新 <code>javac</code> + <code>java</code> 看看。</p>
 <h3 id="35-更省事的办法用-eclipse推荐初学者">3.5 更省事的办法：用 Eclipse（推荐初学者）</h3>
 <p>如果觉得「记事本 + 黑色窗口」太麻烦，可以用 <strong>Eclipse</strong>——一个专门写 Java 的软件，装一次以后，写代码、运行都在一个窗口里点鼠标就行。</p>
 <h4 id="下载和打开">下载和打开</h4>
@@ -180,10 +180,10 @@ java Hello</code></pre>
 }</code></pre>
 <h4 id="写代码运行">写代码、运行</h4>
 <p>在 <code>main</code> 的两个大括号中间，写这一行：</p>
-<pre class="language-java"><code>System.out.println("你好，我是学弟");</code></pre>
+<pre class="language-java"><code>System.out.println("你好，Java");</code></pre>
 <p>按 <code>Ctrl + S</code> 保存，然后点顶上绿色的三角形 ▶（或右键文件 → <strong>Run As → Java Application</strong>）。</p>
 <p>下方的 <strong>Console</strong> 窗口会显示：</p>
-<pre class="language-text"><code>你好，我是学弟</code></pre>
+<pre class="language-text"><code>你好，Java</code></pre>
 <p><strong>Eclipse 里不用手动敲 <code>javac</code>，点一下 ▶ 就编译加运行了。</strong></p>
 <h4 id="eclipse-的常见问题">Eclipse 的常见问题</h4>
 <table><thead><tr><th>问题</th><th>解决</th></tr></thead><tbody><tr><td>中文打印出来是乱码</td><td><strong>Window → Preferences → General → Workspace → Text file encoding</strong>，选 <code>UTF-8</code></td></tr><tr><td>左边看不到项目</td><td>右键项目 → <strong>Refresh</strong></td></tr><tr><td>点了 ▶ 没反应</td><td>确认代码已保存（<code>Ctrl + S</code>），窗口标题没有 <code>*</code></td></tr><tr><td>想换个文件夹存代码</td><td><strong>File → Switch Workspace</strong></td></tr><tr><td>找不到 <code>src</code> 文件夹</td><td>项目没建对，重新 File → New → Java Project</td></tr></tbody></table>
@@ -200,13 +200,13 @@ java Hello</code></pre>
 <ol><li>左边找到 <code>src</code> 文件夹，右键 → <strong>New → Java Class</strong>；</li><li>名字填 <code>Hello</code>，回车；</li><li>在里面输入：</li></ol>
 <pre class="language-java"><code>public class Hello {
     public static void main(String[] args) {
-        System.out.println("你好，我是学弟");
+        System.out.println("你好，Java");
     }
 }</code></pre>
 <p>也可以偷懒，让 IDEA 帮你写：</p>
 <ul><li>输入 <code>psvm</code> 按 <strong>Tab</strong>，自动生成 <code>public static void main(String[] args) { }</code></li><li>输入 <code>sout</code> 按 <strong>Tab</strong>，自动生成 <code>System.out.println();</code></li></ul>
 <ol><li>点 <code>Hello</code> 左边的绿色三角形 ▶，选 <strong>Run 'Hello.main()'</strong>；</li><li>下方 <strong>Run</strong> 窗口出现：</li></ol>
-<pre class="language-text"><code>你好，我是学弟</code></pre>
+<pre class="language-text"><code>你好，Java</code></pre>
 <h4 id="常用快捷键">常用快捷键</h4>
 <table><thead><tr><th>快捷键</th><th>作用</th></tr></thead><tbody><tr><td><code>Ctrl + S</code></td><td>保存</td></tr><tr><td><code>psvm</code> + <code>Tab</code></td><td>生成 main 方法</td></tr><tr><td><code>sout</code> + <code>Tab</code></td><td>生成打印语句</td></tr><tr><td><code>Ctrl + /</code></td><td>注释 / 取消注释</td></tr><tr><td><code>Ctrl + D</code></td><td>复制当前行</td></tr><tr><td><code>Shift + F6</code></td><td>重命名</td></tr><tr><td><code>Ctrl + Alt + L</code></td><td>自动排版代码</td></tr><tr><td><code>Ctrl + Shift + F10</code></td><td>运行</td></tr></tbody></table>
 <h4 id="idea-的常见问题">IDEA 的常见问题</h4>
