@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java 基础语法使用手册（EMS 项目版）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="java-基础语法使用手册ems-项目版">Java 基础语法使用手册（EMS 项目版）</h1>
+<blockquote><p>从「Hello World」讲到「能看懂本项目里的 <code>DbConfig</code>、<code>SqlUtil</code>、<code>SwingJFrame</code>」。每个语法点都配可运行的小例子，最后有和本项目代码的对照、常见错误与速查表。环境：JDK 17，<code>javac</code> 编译、<code>java</code> 运行，或 IntelliJ IDEA 里直接 Run。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-运行环境与第一个程序">运行环境与第一个程序</a></li><li><a href="#2-变量数据类型与类型转换">变量、数据类型与类型转换</a></li><li><a href="#3-运算符">运算符</a></li><li><a href="#4-流程控制">流程控制</a></li><li><a href="#5-数组">数组</a></li><li><a href="#6-方法">方法</a></li><li><a href="#7-类与对象">类与对象</a></li><li><a href="#8-继承与重写">继承与重写</a></li><li><a href="#9-多态抽象类与接口">多态、抽象类与接口</a></li><li><a href="#10-staticfinal-与常量">static、final 与常量</a></li><li><a href="#11-包访问修饰符与-import">包、访问修饰符与 import</a></li><li><a href="#12-异常处理">异常处理</a></li><li><a href="#13-常用类">常用类</a></li><li><a href="#14-集合入门">集合入门</a></li><li><a href="#15-枚举与注解">枚举与注解</a></li><li><a href="#16-输入输出基础">输入输出基础</a></li><li><a href="#17-和本项目代码对照">和本项目代码对照</a></li><li><a href="#18-常见错误与速查表">常见错误与速查表</a></li></ol>
+<hr>
+<h2 id="1-运行环境与第一个程序">1. 运行环境与第一个程序</h2>
+<h3 id="11-jdkjrejvm">1.1 JDK、JRE、JVM</h3>
+<table><thead><tr><th>名称</th><th>作用</th></tr></thead><tbody><tr><td>JDK</td><td>Java 开发工具包，包含 <code>javac</code> 编译器和 JRE</td></tr><tr><td>JRE</td><td>Java 运行时环境，只能运行不能编译</td></tr><tr><td>JVM</td><td>虚拟机，执行 <code>.class</code> 字节码</td></tr></tbody></table>
+<p>写代码要 <strong>JDK</strong>，只运行程序有 JRE 就够。</p>
+<pre class="language-bash"><code>javac -version      # 查看编译器版本
+java -version       # 查看运行时版本</code></pre>
+<h3 id="12-第一个程序">1.2 第一个程序</h3>
+<pre class="language-java"><code>public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello EMS");
+    }
+}</code></pre>
+<p>保存为 <code>Hello.java</code>，文件名必须和 public 类名一致。</p>
+<pre class="language-bash"><code>javac Hello.java      # 生成 Hello.class
+java Hello            # 运行（不带 .class）</code></pre>
+<h3 id="13-程序结构">1.3 程序结构</h3>
+<pre class="language-java"><code>package com.github.rayman717;        // ① 包声明（可选，但项目里必须有）
+
+import java.util.Scanner;            // ② 导入其他包的类
+
+public class Demo {                  // ③ 类：Java 代码的基本单位
+
+    private int count = 0;           // ④ 成员变量
+
+    public static void main(String[] args) {   // ⑤ 入口方法
+        System.out.println("开始");            // ⑥ 语句
+    }
+
+    public void sayHello() {         // ⑦ 方法
+        System.out.println("hello");
+    }
+}</code></pre>
+<p>记住四件事：</p>
+<ul><li>一个 <code>.java</code> 文件最多一个 <code>public</code> 类，文件名与它同名；</li><li>入口是 <code>public static void main(String[] args)</code>，一个字母都不能错；</li><li>每条语句以 <code>;</code> 结尾；</li><li>代码块用 <code>{}</code> 包起来。</li></ul>
+<hr>
+<h2 id="2-变量数据类型与类型转换">2. 变量、数据类型与类型转换</h2>
+<h3 id="21-八种基本类型">2.1 八种基本类型</h3>
+<table><thead><tr><th>类型</th><th>字节</th><th>范围 / 说明</th><th>例子</th></tr></thead><tbody><tr><td><code>byte</code></td><td>1</td><td>-128 ~ 127</td><td><code>byte b = 100;</code></td></tr><tr><td><code>short</code></td><td>2</td><td>-32768 ~ 32767</td><td><code>short s = 1000;</code></td></tr><tr><td><code>int</code></td><td>4</td><td>±21 亿</td><td><code>int n = 42;</code></td></tr><tr><td><code>long</code></td><td>8</td><td>很大，字面量加 <code>L</code></td><td><code>long t = 1000L;</code></td></tr><tr><td><code>float</code></td><td>4</td><td>小数，字面量加 <code>f</code></td><td><code>float f = 1.5f;</code></td></tr><tr><td><code>double</code></td><td>8</td><td>小数，默认类型</td><td><code>double d = 26.4;</code></td></tr><tr><td><code>char</code></td><td>2</td><td>单个字符，单引号</td><td><code>char c = 'A';</code></td></tr><tr><td><code>boolean</code></td><td>1</td><td><code>true</code> / <code>false</code></td><td><code>boolean ok = true;</code></td></tr></tbody></table>
+<p>变量声明与赋值：</p>
+<pre class="language-java"><code>int count = 0;                  // 声明 + 初始化
+double temp = 26.4;
+String name = "ems-01";         // String 是引用类型，不是基本类型
+
+count = 5;                      // 重新赋值</code></pre>
+<p><code>String</code> 不属于八种基本类型，但用起来像：</p>
+<pre class="language-java"><code>String a = "hello";
+String b = "world";
+String c = a + " " + b;         // 字符串拼接</code></pre>
+<h3 id="22-类型转换">2.2 类型转换</h3>
+<p><strong>小转大：自动</strong></p>
+<pre class="language-java"><code>int i = 100;
+long l = i;          // int → long，自动
+double d = i;        // int → double，自动</code></pre>
+<p><strong>大转小：强制，可能丢精度</strong></p>
+<pre class="language-java"><code>double d = 26.9;
+int i = (int) d;               // 26，小数部分直接截断
+byte b = (byte) 300;           // 溢出，变成 44</code></pre>
+<p><strong>字符串与数字互转</strong></p>
+<pre class="language-java"><code>int n = Integer.parseInt("123");
+double v = Double.parseDouble("26.4");
+
+String s1 = String.valueOf(42);
+String s2 = 42 + "";           // 也能转，但推荐 valueOf</code></pre>
+<p><code>parseInt("abc")</code> 会抛 <code>NumberFormatException</code>，要 try/catch 或先校验。</p>
+<h3 id="23-局部变量-vs-成员变量">2.3 局部变量 vs 成员变量</h3>
+<pre class="language-java"><code>public class Demo {
+    private int count = 0;      // 成员变量（字段），有默认值 0
+    private String name;        // 默认 null
+
+    public void test() {
+        int local = 10;         // 局部变量，必须先赋值再用
+        System.out.println(local);
+    }
+}</code></pre>
+<hr>
+<h2 id="3-运算符">3. 运算符</h2>
+<h3 id="31-算术">3.1 算术</h3>
+<pre class="language-java"><code>int a = 7, b = 2;
+System.out.println(a + b);     // 9
+System.out.println(a - b);     // 5
+System.out.println(a * b);     // 14
+System.out.println(a / b);     // 3（整数除法，小数被丢掉）
+System.out.println(a % b);     // 1（取余）
+
+double x = 7.0 / 2;            // 3.5，要小数就至少有一个是小数</code></pre>
+<p><strong>整数除法的坑</strong>：<code>7 / 2</code> 是 <code>3</code>，不是 <code>3.5</code>。想要小数写 <code>7.0 / 2</code> 或 <code>(double) 7 / 2</code>。</p>
+<h3 id="32-自增自减">3.2 自增自减</h3>
+<pre class="language-java"><code>int i = 5;
+i++;                // 6
+i--;                // 5
+
+int j = i++;        // j = 5，i = 6（先用后加）
+int k = ++i;        // i = 7，k = 7（先加后用）</code></pre>
+<h3 id="33-比较与逻辑">3.3 比较与逻辑</h3>
+<pre class="language-java"><code>int a = 5;
+System.out.println(a &gt; 3);        // true
+System.out.println(a &gt;= 3);       // true
+System.out.println(a == 5);       // true，注意是两个等号
+System.out.println(a != 3);       // true
+
+boolean ok = a &gt; 3 &amp;&amp; a &lt; 10;     // 与
+boolean any = a &gt; 10 || a &lt; 10;   // 或
+boolean not = !ok;                // 非</code></pre>
+<p><strong>字符串比较要用 <code>equals</code></strong>：</p>
+<pre class="language-java"><code>String s = "abc";
+System.out.println(s == "abc");        // 可能为 false（比较的是引用）
+System.out.println(s.equals("abc"));   // true，正确写法</code></pre>
+<h3 id="34-三元运算符">3.4 三元运算符</h3>
+<pre class="language-java"><code>int score = 85;
+String level = score &gt;= 60 ? "及格" : "不及格";</code></pre>
+<h3 id="35-位运算了解即可">3.5 位运算（了解即可）</h3>
+<pre class="language-java"><code>int a = 5;          // 0101
+int b = 3;          // 0011
+a &amp; b;              // 0001 = 1，与
+a | b;              // 0111 = 7，或
+a ^ b;              // 0110 = 6，异或
+a &lt;&lt; 1;             // 1010 = 10，左移一位等于乘 2
+a &gt;&gt; 1;             // 0010 = 2，右移一位等于除 2</code></pre>
+<hr>
+<h2 id="4-流程控制">4. 流程控制</h2>
+<h3 id="41-if--else">4.1 if / else</h3>
+<pre class="language-java"><code>double temp = 26.4;
+
+if (temp &gt; 30) {
+    System.out.println("高温");
+} else if (temp &gt; 20) {
+    System.out.println("舒适");
+} else {
+    System.out.println("偏冷");
+}</code></pre>
+<h3 id="42-switch">4.2 switch</h3>
+<pre class="language-java"><code>int day = 3;
+switch (day) {
+    case 1:
+        System.out.println("周一");
+        break;
+    case 2:
+        System.out.println("周二");
+        break;
+    default:
+        System.out.println("其他");
+        break;
+}
+
+// JDK 14+ 的箭头写法，自动 break
+String text = switch (day) {
+    case 1, 2, 3, 4, 5 -&gt; "工作日";
+    case 6, 7 -&gt; "周末";
+    default -&gt; "未知";
+};</code></pre>
+<p>忘记 <code>break</code> 会「贯穿」到下一个 case，是常见 bug。</p>
+<h3 id="43-for-循环">4.3 for 循环</h3>
+<pre class="language-java"><code>for (int i = 0; i &lt; 5; i++) {
+    System.out.println(i);          // 0 1 2 3 4
+}</code></pre>
+<p><code>for-each</code> 遍历数组或集合：</p>
+<pre class="language-java"><code>int[] nums = {1, 2, 3};
+for (int n : nums) {
+    System.out.println(n);
+}
+
+List&lt;String&gt; names = List.of("A", "B");
+for (String name : names) {
+    System.out.println(name);
+}</code></pre>
+<h3 id="44-while--do-while">4.4 while / do-while</h3>
+<pre class="language-java"><code>int i = 0;
+while (i &lt; 5) {
+    System.out.println(i);
+    i++;
+}
+
+int j = 0;
+do {
+    System.out.println("至少执行一次");
+    j++;
+} while (j &lt; 0);</code></pre>
+<h3 id="45-break--continue">4.5 break / continue</h3>
+<pre class="language-java"><code>for (int i = 0; i &lt; 10; i++) {
+    if (i == 3) {
+        continue;          // 跳过本次，继续下一次
+    }
+    if (i == 7) {
+        break;             // 结束整个循环
+    }
+    System.out.println(i);
+}</code></pre>
+<hr>
+<h2 id="5-数组">5. 数组</h2>
+<h3 id="51-声明与初始化">5.1 声明与初始化</h3>
+<pre class="language-java"><code>int[] nums = {1, 2, 3, 4};          // 字面量
+int[] a = new int[5];               // 默认全是 0
+String[] names = new String[3];     // 默认全是 null
+
+int[] b = new int[]{10, 20, 30};</code></pre>
+<h3 id="52-访问与遍历">5.2 访问与遍历</h3>
+<pre class="language-java"><code>int[] nums = {10, 20, 30};
+
+System.out.println(nums[0]);        // 10
+System.out.println(nums.length);    // 3，注意是 length 不是 length()
+
+for (int i = 0; i &lt; nums.length; i++) {
+    System.out.println(nums[i]);
+}
+
+for (int n : nums) {
+    System.out.println(n);
+}</code></pre>
+<p>下标从 <code>0</code> 开始，越界会抛 <code>ArrayIndexOutOfBoundsException</code>。</p>
+<h3 id="53-二维数组">5.3 二维数组</h3>
+<pre class="language-java"><code>int[][] grid = new int[2][3];
+grid[0][1] = 5;
+
+int[][] matrix = {
+        {1, 2, 3},
+        {4, 5, 6}
+};
+
+for (int[] row : matrix) {
+    for (int v : row) {
+        System.out.print(v + " ");
+    }
+    System.out.println();
+}</code></pre>
+<h3 id="54-常用操作">5.4 常用操作</h3>
+<pre class="language-java"><code>int[] nums = {3, 1, 2};
+Arrays.sort(nums);                       // 排序：1 2 3
+int[] copy = Arrays.copyOf(nums, 5);     // 复制（不足补 0）
+String s = Arrays.toString(nums);        // "[1, 2, 3]"
+
+// 最大值
+int max = nums[0];
+for (int n : nums) {
+    if (n &gt; max) {
+        max = n;
+    }
+}</code></pre>
+<p><code>Arrays.toString(nums)</code> 不能省——直接打印数组是 <code>[I@1b6d3586</code> 这种地址。</p>
+<hr>
+<h2 id="6-方法">6. 方法</h2>
+<h3 id="61-定义与调用">6.1 定义与调用</h3>
+<pre class="language-java"><code>public class Demo {
+
+    public static void main(String[] args) {
+        int sum = add(3, 5);
+        System.out.println(sum);          // 8
+
+        sayHello("EMS");
+    }
+
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    static void sayHello(String name) {
+        System.out.println("你好，" + name);
+    }
+}</code></pre>
+<table><thead><tr><th>关键字</th><th>含义</th></tr></thead><tbody><tr><td><code>static</code></td><td>静态方法，不用 new 对象就能调</td></tr><tr><td><code>void</code></td><td>没有返回值</td></tr><tr><td><code>return</code></td><td>返回值，或提前结束方法</td></tr></tbody></table>
+<h3 id="62-参数传递">6.2 参数传递</h3>
+<p>Java 只有「值传递」：</p>
+<ul><li>基本类型传的是值的副本，方法里改了不影响外面；</li><li>引用类型传的是引用的副本，方法里改对象内容会影响外面。</li></ul>
+<pre class="language-java"><code>static void change(int n) {
+    n = 100;            // 不影响外面
+}
+
+static void fill(int[] arr) {
+    arr[0] = 100;       // 影响外面，因为改的是数组内容
+}</code></pre>
+<h3 id="63-方法重载">6.3 方法重载</h3>
+<p>同名方法，参数列表不同（个数、类型、顺序）：</p>
+<pre class="language-java"><code>static int add(int a, int b) { return a + b; }
+static double add(double a, double b) { return a + b; }
+static int add(int a, int b, int c) { return a + b + c; }</code></pre>
+<p>返回值不同不算重载。</p>
+<h3 id="64-可变参数">6.4 可变参数</h3>
+<pre class="language-java"><code>static int sum(int... nums) {
+    int total = 0;
+    for (int n : nums) {
+        total += n;
+    }
+    return total;
+}
+
+sum(1, 2);          // 3
+sum(1, 2, 3, 4);    // 10</code></pre>
+<h3 id="65-递归">6.5 递归</h3>
+<pre class="language-java"><code>static int factorial(int n) {
+    if (n &lt;= 1) {
+        return 1;               // 终止条件
+    }
+    return n * factorial(n - 1);
+}</code></pre>
+<p>递归一定要有终止条件，否则栈溢出（<code>StackOverflowError</code>）。</p>
+<hr>
+<h2 id="7-类与对象">7. 类与对象</h2>
+<h3 id="71-定义类">7.1 定义类</h3>
+<pre class="language-java"><code>public class EmsRecord {
+    private int id;              // 字段（成员变量）
+    private double temp;
+    private String time;
+
+    public EmsRecord() {         // 无参构造
+    }
+
+    public EmsRecord(int id, double temp, String time) {   // 全参构造
+        this.id = id;            // this 区分字段和参数
+        this.temp = temp;
+        this.time = time;
+    }
+
+    public int getId() {         // getter
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public double getTemp() {
+        return temp;
+    }
+
+    public void setTemp(double temp) {
+        this.temp = temp;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
+    }
+}</code></pre>
+<h3 id="72-创建与使用对象">7.2 创建与使用对象</h3>
+<pre class="language-java"><code>EmsRecord r = new EmsRecord(1, 26.4, "2026-01-01 08:00:00");
+System.out.println(r.getTemp());
+
+EmsRecord r2 = new EmsRecord();
+r2.setId(2);
+r2.setTemp(27.1);</code></pre>
+<p><code>new</code> 做的事：分配内存 → 调构造方法 → 返回引用。</p>
+<h3 id="73-封装">7.3 封装</h3>
+<ul><li>字段用 <code>private</code>；</li><li>通过 <code>getter/setter</code> 访问；</li><li>好处：可以在 setter 里做校验。</li></ul>
+<pre class="language-java"><code>public void setTemp(double temp) {
+    if (temp &lt; -100 || temp &gt; 200) {
+        throw new IllegalArgumentException("温度超出合理范围：" + temp);
+    }
+    this.temp = temp;
+}</code></pre>
+<h3 id="74-对象与引用">7.4 对象与引用</h3>
+<pre class="language-java"><code>EmsRecord a = new EmsRecord(1, 26.4, "08:00");
+EmsRecord b = a;              // b 和 a 指向同一个对象
+b.setTemp(30.0);              // a 的 temp 也变了
+
+System.out.println(a == b);               // true，比较引用
+System.out.println(a.equals(b));          // 默认也是比较引用，除非重写</code></pre>
+<hr>
+<h2 id="8-继承与重写">8. 继承与重写</h2>
+<h3 id="81-extends">8.1 extends</h3>
+<pre class="language-java"><code>public class Animal {
+    protected String name;
+
+    public void speak() {
+        System.out.println("动物叫");
+    }
+}
+
+public class Dog extends Animal {
+    @Override
+    public void speak() {
+        System.out.println("汪汪");
+    }
+}</code></pre>
+<pre class="language-java"><code>Animal a = new Dog();
+a.speak();          // 汪汪（多态：看实际对象类型）</code></pre>
+<h3 id="82-super">8.2 super</h3>
+<pre class="language-java"><code>public class Puppy extends Dog {
+    @Override
+    public void speak() {
+        super.speak();              // 调用父类方法
+        System.out.println("嘤嘤");
+    }
+}</code></pre>
+<h3 id="83-构造方法链">8.3 构造方法链</h3>
+<pre class="language-java"><code>public class Animal {
+    protected String name;
+
+    public Animal(String name) {
+        this.name = name;
+    }
+}
+
+public class Dog extends Animal {
+    public Dog(String name) {
+        super(name);                // 必须在第一行
+    }
+}</code></pre>
+<p>子类构造必须先调父类构造（不写 <code>super(...)</code> 就自动调父类无参构造）。</p>
+<h3 id="84-重写override要求">8.4 重写（Override）要求</h3>
+<ul><li>方法名、参数、返回值一致；</li><li>访问权限不能变小；</li><li>用 <code>@Override</code> 注解，写错会编译报错。</li></ul>
+<h3 id="85-final">8.5 final</h3>
+<pre class="language-java"><code>final class A { }             // 不能被继承
+final void method() { }       // 不能被重写
+final int x = 10;             // 不能改值</code></pre>
+<hr>
+<h2 id="9-多态抽象类与接口">9. 多态、抽象类与接口</h2>
+<h3 id="91-多态">9.1 多态</h3>
+<p>同一段代码，对不同对象产生不同行为：</p>
+<pre class="language-java"><code>public interface DataSource {
+    List&lt;String&gt; load();
+}
+
+public class FileSource implements DataSource { ... }
+public class DbSource implements DataSource { ... }
+
+public void print(DataSource source) {
+    for (String line : source.load()) {
+        System.out.println(line);
+    }
+}
+
+print(new FileSource());       // 读文件
+print(new DbSource());         // 读数据库</code></pre>
+<h3 id="92-抽象类">9.2 抽象类</h3>
+<pre class="language-java"><code>public abstract class Shape {
+    public abstract double area();     // 没有方法体
+
+    public void print() {
+        System.out.println("面积：" + area());
+    }
+}
+
+public class Circle extends Shape {
+    private final double r;
+
+    public Circle(double r) {
+        this.r = r;
+    }
+
+    @Override
+    public double area() {
+        return Math.PI * r * r;
+    }
+}</code></pre>
+<p>抽象类可以包含抽象方法和普通方法；不能直接 <code>new</code>。</p>
+<h3 id="93-接口">9.3 接口</h3>
+<pre class="language-java"><code>public interface Repository&lt;T&gt; {
+    List&lt;T&gt; findAll();
+
+    default int count() {
+        return findAll().size();       // 默认实现（JDK 8+）
+    }
+}
+
+public class EmsRepository implements Repository&lt;EmsRecord&gt; {
+    @Override
+    public List&lt;EmsRecord&gt; findAll() {
+        return new ArrayList&lt;&gt;();
+    }
+}</code></pre>
+<p>一个类只能继承一个类，但可以实现多个接口。</p>
+<h3 id="94-面向接口编程">9.4 面向接口编程</h3>
+<pre class="language-java"><code>// 不好：依赖具体实现
+EmsDao dao = new EmsDao();
+
+// 好：依赖接口，方便替换和测试
+Repository&lt;EmsRecord&gt; repo = new EmsRepository();</code></pre>
+<hr>
+<h2 id="10-staticfinal-与常量">10. static、final 与常量</h2>
+<h3 id="101-static">10.1 static</h3>
+<pre class="language-java"><code>public class ConfigManager {
+    private static Properties prop = new Properties();   // 静态字段：全类共享
+
+    public static DbConfig getDbConfig() {               // 静态方法：不用 new
+        // ...
+    }
+}</code></pre>
+<ul><li>静态成员属于类，不属于对象；</li><li>静态方法里不能直接用 <code>this</code>，也不能访问非静态成员；</li><li>工具类（<code>SqlUtil</code>、<code>LogUtil</code>）常用静态方法。</li></ul>
+<h3 id="102-final">10.2 final</h3>
+<pre class="language-java"><code>final int MAX = 100;                       // 常量：不能改
+static final double PI = 3.14159;          // 静态常量</code></pre>
+<h3 id="103-常量类">10.3 常量类</h3>
+<pre class="language-java"><code>public final class EmsConstants {
+    public static final int SERVER_PORT = 8888;
+    public static final double TEMP_ALARM = 30.0;
+
+    private EmsConstants() {
+    }
+}</code></pre>
+<h3 id="104-静态初始化块">10.4 静态初始化块</h3>
+<pre class="language-java"><code>public class DbUtil {
+    private static final String URL;
+
+    static {
+        URL = "jdbc:mysql://127.0.0.1:3306/EMS";
+    }
+}</code></pre>
+<hr>
+<h2 id="11-包访问修饰符与-import">11. 包、访问修饰符与 import</h2>
+<h3 id="111-包">11.1 包</h3>
+<pre class="language-java"><code>package com.github.rayman717.util;</code></pre>
+<ul><li>包名全小写；</li><li>通常按「域名倒置 + 模块」；</li><li>一个类的完整名字是「包名.类名」，如 <code>com.github.rayman717.util.SqlUtil</code>。</li></ul>
+<h3 id="112-四种访问修饰符">11.2 四种访问修饰符</h3>
+<table><thead><tr><th>修饰符</th><th>同一个类</th><th>同一个包</th><th>子类</th><th>任何地方</th></tr></thead><tbody><tr><td><code>private</code></td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr><tr><td>默认（不写）</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr><tr><td><code>protected</code></td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr><tr><td><code>public</code></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr></tbody></table>
+<h3 id="113-import">11.3 import</h3>
+<pre class="language-java"><code>import java.util.List;              // 单个类
+import java.util.*;                 // 整个包（不推荐，容易冲突）</code></pre>
+<p><code>java.lang</code> 下的类（<code>String</code>、<code>System</code>、<code>Math</code>）不用导入。</p>
+<hr>
+<h2 id="12-异常处理">12. 异常处理</h2>
+<h3 id="121-try-catch-finally">12.1 try-catch-finally</h3>
+<pre class="language-java"><code>try {
+    int n = Integer.parseInt("abc");
+    System.out.println(n);
+} catch (NumberFormatException e) {
+    System.out.println("不是数字：" + e.getMessage());
+} finally {
+    System.out.println("无论成败都执行");       // 释放资源、收尾
+}</code></pre>
+<h3 id="122-多个-catch">12.2 多个 catch</h3>
+<pre class="language-java"><code>try {
+    // ...
+} catch (NumberFormatException e) {
+    // 数字格式错
+} catch (NullPointerException e) {
+    // 空指针
+} catch (Exception e) {
+    // 兜底：所有异常
+}</code></pre>
+<p>顺序：子类异常在前，父类在后（否则后面的永远不执行，编译报错）。</p>
+<h3 id="123-throw-与-throws">12.3 throw 与 throws</h3>
+<pre class="language-java"><code>// 抛异常
+public void setTemp(double temp) {
+    if (temp &gt; 200) {
+        throw new IllegalArgumentException("温度不合法：" + temp);
+    }
+}
+
+// 声明可能抛异常，交给调用方处理
+public static DbConfig load() throws IOException {
+    // ...
+}</code></pre>
+<h3 id="124-受检异常-vs-运行时异常">12.4 受检异常 vs 运行时异常</h3>
+<table><thead><tr><th>类型</th><th>举例</th><th>处理</th></tr></thead><tbody><tr><td>受检异常（Exception 的子类）</td><td><code>IOException</code>、<code>SQLException</code></td><td>必须 try/catch 或 throws</td></tr><tr><td>运行时异常（RuntimeException）</td><td><code>NullPointerException</code>、<code>NumberFormatException</code></td><td>不强制，但应该避免</td></tr></tbody></table>
+<h3 id="125-自定义异常">12.5 自定义异常</h3>
+<pre class="language-java"><code>public class DbException extends RuntimeException {
+    public DbException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}</code></pre>
+<h3 id="126-try-with-resources">12.6 try-with-resources</h3>
+<pre class="language-java"><code>try (Connection con = DriverManager.getConnection(url, user, pwd);
+     Statement st = con.createStatement()) {
+    // 用完自动关闭，异常也会关
+}</code></pre>
+<p>凡是实现了 <code>AutoCloseable</code> 的资源（流、连接、<code>Scanner</code>）都应该这样写。</p>
+<hr>
+<h2 id="13-常用类">13. 常用类</h2>
+<h3 id="131-string">13.1 String</h3>
+<pre class="language-java"><code>String s = "EMS";
+
+s.length();                  // 3
+s.isEmpty();                 // false
+s.equals("EMS");             // true
+s.equalsIgnoreCase("ems");   // true
+s.contains("MS");            // true
+s.startsWith("E");           // true
+s.substring(1);              // "MS"
+s.substring(0, 2);           // "EM"
+s.indexOf("M");              // 1
+s.replace("E", "e");         // "eMS"
+s.trim();                    // 去首尾空格
+s.split(",");                // 按逗号切分
+s.toUpperCase();             // "EMS"
+s.charAt(0);                 // 'E'</code></pre>
+<p>String 不可变，每次修改都会产生新对象。</p>
+<h3 id="132-stringbuilder">13.2 StringBuilder</h3>
+<pre class="language-java"><code>StringBuilder sb = new StringBuilder();
+sb.append("温度：");
+sb.append(26.4);
+sb.append("℃");
+String result = sb.toString();</code></pre>
+<p>循环里拼接字符串用 <code>StringBuilder</code>，不要用 <code>+</code>（性能差）。</p>
+<h3 id="133-包装类">13.3 包装类</h3>
+<pre class="language-java"><code>Integer a = 100;              // 自动装箱
+int b = a;                    // 自动拆箱
+
+Integer x = Integer.valueOf("123");
+int y = Integer.parseInt("123");</code></pre>
+<p>注意 <code>Integer</code> 缓存 -128~127，<code>Integer(1000) == Integer(1000)</code> 是 <code>false</code>，比较值用 <code>equals</code>。</p>
+<h3 id="134-math">13.4 Math</h3>
+<pre class="language-java"><code>Math.abs(-5);          // 5
+Math.max(3, 7);        // 7
+Math.min(3, 7);        // 3
+Math.pow(2, 3);        // 8.0
+Math.sqrt(16);         // 4.0
+Math.round(2.6);       // 3
+Math.random();         // 0~1 的随机数</code></pre>
+<h3 id="135-日期时间jdk-8">13.5 日期时间（JDK 8+）</h3>
+<pre class="language-java"><code>import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+LocalDate today = LocalDate.now();
+LocalDateTime now = LocalDateTime.now();
+
+now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+LocalDate.parse("2026-01-01");
+now.plusDays(7);
+now.minusHours(2);</code></pre>
+<h3 id="136-bigdecimal精确小数">13.6 BigDecimal（精确小数）</h3>
+<pre class="language-java"><code>BigDecimal a = new BigDecimal("0.1");
+BigDecimal b = new BigDecimal("0.2");
+System.out.println(a.add(b));          // 0.3，不是 0.30000000000000004
+
+// 用字符串构造，不要用 double 构造</code></pre>
+<p>涉及金额等精确计算时用 <code>BigDecimal</code>，<code>double</code> 有精度误差。</p>
+<h3 id="137-random">13.7 Random</h3>
+<pre class="language-java"><code>Random random = new Random();
+int n = random.nextInt(100);           // 0~99
+double d = random.nextDouble();        // 0~1</code></pre>
+<hr>
+<h2 id="14-集合入门">14. 集合入门</h2>
+<h3 id="141-list有序可重复">14.1 List（有序、可重复）</h3>
+<pre class="language-java"><code>import java.util.ArrayList;
+import java.util.List;
+
+List&lt;String&gt; names = new ArrayList&lt;&gt;();
+names.add("A");
+names.add("B");
+names.add("A");            // 允许重复
+
+names.size();              // 3
+names.get(0);              // "A"
+names.contains("B");       // true
+names.remove("A");         // 删第一个 "A"
+names.isEmpty();           // false
+
+for (String name : names) {
+    System.out.println(name);
+}</code></pre>
+<p><code>List.of(...)</code> 创建不可变列表，不能 add。</p>
+<h3 id="142-set无序不重复">14.2 Set（无序、不重复）</h3>
+<pre class="language-java"><code>import java.util.HashSet;
+import java.util.Set;
+
+Set&lt;String&gt; devices = new HashSet&lt;&gt;();
+devices.add("ems-01");
+devices.add("ems-01");     // 重复，不会加进去
+System.out.println(devices.size());   // 1</code></pre>
+<h3 id="143-map键值对">14.3 Map（键值对）</h3>
+<pre class="language-java"><code>import java.util.HashMap;
+import java.util.Map;
+
+Map&lt;String, Double&gt; lastTemp = new HashMap&lt;&gt;();
+lastTemp.put("ems-01", 26.4);
+lastTemp.put("ems-02", 27.1);
+
+lastTemp.get("ems-01");                 // 26.4
+lastTemp.containsKey("ems-03");         // false
+lastTemp.getOrDefault("ems-03", 0.0);   // 0.0
+lastTemp.remove("ems-02");
+
+for (Map.Entry&lt;String, Double&gt; entry : lastTemp.entrySet()) {
+    System.out.println(entry.getKey() + " = " + entry.getValue());
+}</code></pre>
+<h3 id="144-泛型">14.4 泛型</h3>
+<pre class="language-java"><code>List&lt;String&gt; names = new ArrayList&lt;&gt;();     // 只能放 String
+Map&lt;String, Integer&gt; counts = new HashMap&lt;&gt;();
+
+List&lt;EmsRecord&gt; records = new ArrayList&lt;&gt;();  // 放自定义对象</code></pre>
+<p>泛型让编译期就能发现类型错误。</p>
+<h3 id="145-遍历与删除">14.5 遍历与删除</h3>
+<pre class="language-java"><code>// 遍历删除要用 Iterator，不能直接 for-each remove
+Iterator&lt;String&gt; it = names.iterator();
+while (it.hasNext()) {
+    if (it.next().startsWith("A")) {
+        it.remove();
+    }
+}</code></pre>
+<hr>
+<h2 id="15-枚举与注解">15. 枚举与注解</h2>
+<h3 id="151-枚举">15.1 枚举</h3>
+<pre class="language-java"><code>public enum DeviceStatus {
+    ONLINE, OFFLINE, UNKNOWN;
+
+    public boolean isOnline() {
+        return this == ONLINE;
+    }
+}
+
+DeviceStatus s = DeviceStatus.ONLINE;
+if (s == DeviceStatus.ONLINE) {
+    System.out.println("在线");
+}
+
+// 带字段的枚举
+public enum Level {
+    LOW(10), MID(50), HIGH(100);
+
+    private final int value;
+
+    Level(int value) {
+        this.value = value;
+    }
+
+    public int getValue() {
+        return value;
+    }
+}</code></pre>
+<h3 id="152-注解">15.2 注解</h3>
+<pre class="language-java"><code>@Override            // 重写父类方法，写错会报错
+@Deprecated          // 标记已过时
+@SuppressWarnings("unchecked")   // 抑制警告
+@FunctionalInterface // 函数式接口
+
+// 自定义注解
+public @interface Author {
+    String value();
+}</code></pre>
+<hr>
+<h2 id="16-输入输出基础">16. 输入输出基础</h2>
+<h3 id="161-控制台输出">16.1 控制台输出</h3>
+<pre class="language-java"><code>System.out.println("换行输出");
+System.out.print("不换行");
+System.out.printf("温度：%.1f℃，湿度：%d%%%n", 26.4, 55);
+System.err.println("错误信息");</code></pre>
+<h3 id="162-scanner-读键盘">16.2 Scanner 读键盘</h3>
+<pre class="language-java"><code>import java.util.Scanner;
+
+Scanner sc = new Scanner(System.in);
+
+System.out.print("请输入温度：");
+double temp = sc.nextDouble();
+
+System.out.print("请输入名称：");
+String name = sc.next();
+
+String line = sc.nextLine();      // 读一整行（注意和 next 混用的换行问题）</code></pre>
+<h3 id="163-常见输入问题">16.3 常见输入问题</h3>
+<table><thead><tr><th>问题</th><th>原因</th><th>解决</th></tr></thead><tbody><tr><td><code>nextInt()</code> 后 <code>nextLine()</code> 读到空行</td><td>残留了回车</td><td>再调一次 <code>nextLine()</code> 吃掉</td></tr><tr><td>输入非数字抛 <code>InputMismatchException</code></td><td>没校验</td><td><code>hasNextDouble()</code> 先判断</td></tr></tbody></table>
+<h3 id="164-文件读写详见io-使用手册">16.4 文件读写（详见《IO 使用手册》）</h3>
+<pre class="language-java"><code>Files.readString(Path.of("config.properties"), StandardCharsets.UTF_8);
+Files.writeString(Path.of("out.txt"), "内容", StandardCharsets.UTF_8);</code></pre>
+<hr>
+<h2 id="17-和本项目代码对照">17. 和本项目代码对照</h2>
+<table><thead><tr><th>项目代码</th><th>用到的语法</th><th>在哪一节</th></tr></thead><tbody><tr><td><code>Hello.java</code> 的 <code>public static void main</code></td><td>入口方法</td><td>第 1 章</td></tr><tr><td><code>DbConfig</code> 的字段与构造方法</td><td>类、构造器、封装</td><td>第 7 章</td></tr><tr><td><code>DbConfig</code> 的 getter/setter</td><td>封装</td><td>第 7 章</td></tr><tr><td><code>SqlUtil.getConnection</code></td><td>方法、<code>Class.forName</code>、<code>try/catch</code></td><td>第 6、12 章</td></tr><tr><td><code>SqlUtil.CreateTable</code> 里的字符串拼接</td><td>String</td><td>第 13 章</td></tr><tr><td><code>ConfigManager</code> 的 <code>static</code> 字段与方法</td><td>static</td><td>第 10 章</td></tr><tr><td><code>ConfigManager.getDbConfig</code> 返回 <code>DbConfig</code></td><td>类与对象</td><td>第 7 章</td></tr><tr><td><code>LogUtil.info/error</code></td><td>静态方法</td><td>第 10 章</td></tr><tr><td><code>SwingJFrame extends JFrame</code></td><td>继承</td><td>第 8 章</td></tr><tr><td><code>MyDialog extends JDialog</code></td><td>继承、构造里 <code>super(...)</code></td><td>第 8 章</td></tr><tr><td><code>new ActionListener() { ... }</code></td><td>匿名内部类、接口</td><td>第 9 章</td></tr><tr><td>数据库查询的 <code>while (rs.next())</code></td><td>while、方法调用</td><td>第 4 章</td></tr><tr><td><code>catch (SQLException e)</code></td><td>异常处理</td><td>第 12 章</td></tr><tr><td><code>List&lt;EmsRecord&gt;</code></td><td>集合与泛型</td><td>第 14 章</td></tr></tbody></table>
+<p>看项目代码时的建议顺序：先看 <code>DbConfig</code>（类），再看 <code>ConfigManager</code>（static 与文件），然后 <code>SqlUtil</code>（方法、异常、JDBC），最后 <code>SwingJFrame</code>（继承、接口、事件）。</p>
+<hr>
+<h2 id="18-常见错误与速查表">18. 常见错误与速查表</h2>
+<h3 id="181-编译期错误">18.1 编译期错误</h3>
+<table><thead><tr><th>报错</th><th>原因</th><th>解决</th></tr></thead><tbody><tr><td><code>class X is public, should be declared in a file named X.java</code></td><td>文件名与类名不一致</td><td>改文件名</td></tr><tr><td><code>';' expected</code></td><td>少分号</td><td>补上</td></tr><tr><td><code>cannot find symbol</code></td><td>变量没声明、类没导入、拼写错</td><td>检查 import 和拼写</td></tr><tr><td><code>incompatible types</code></td><td>类型不匹配</td><td>强制转换或改类型</td></tr><tr><td><code>missing return statement</code></td><td>有返回值的方法没有 return</td><td>补 return</td></tr><tr><td><code>non-static variable cannot be referenced</code></td><td>静态方法里用了非静态成员</td><td>改成实例方法或加 static</td></tr><tr><td><code>unreachable statement</code></td><td>return 后面还有代码</td><td>删掉或调整</td></tr></tbody></table>
+<h3 id="182-运行期异常">18.2 运行期异常</h3>
+<table><thead><tr><th>异常</th><th>常见原因</th></tr></thead><tbody><tr><td><code>NullPointerException</code></td><td>对象没 new、方法返回 null 没判断</td></tr><tr><td><code>ArrayIndexOutOfBoundsException</code></td><td>下标越界（<code>&lt;=</code> 写成 <code>&lt;</code>）</td></tr><tr><td><code>NumberFormatException</code></td><td><code>parseInt("abc")</code></td></tr><tr><td><code>ArithmeticException: / by zero</code></td><td>整数除以 0</td></tr><tr><td><code>ClassCastException</code></td><td>类型强转错误</td></tr><tr><td><code>ConcurrentModificationException</code></td><td>遍历时修改集合</td></tr><tr><td><code>StackOverflowError</code></td><td>递归没有终止条件</td></tr><tr><td><code>ClassNotFoundException</code></td><td>类路径缺 jar</td></tr></tbody></table>
+<h3 id="183-语法速查">18.3 语法速查</h3>
+<table><thead><tr><th>想做什么</th><th>写法</th></tr></thead><tbody><tr><td>声明变量</td><td><code>int n = 0;</code></td></tr><tr><td>字符串拼接</td><td><code>"a" + b</code> 或 <code>StringBuilder</code></td></tr><tr><td>判断相等</td><td><code>a == b</code>（基本类型）/ <code>a.equals(b)</code>（对象）</td></tr><tr><td>循环</td><td><code>for (int i = 0; i &lt; n; i++)</code></td></tr><tr><td>增强 for</td><td><code>for (String s : list)</code></td></tr><tr><td>定义方法</td><td><code>public int add(int a, int b) { return a + b; }</code></td></tr><tr><td>创建对象</td><td><code>EmsRecord r = new EmsRecord();</code></td></tr><tr><td>继承</td><td><code>class Dog extends Animal</code></td></tr><tr><td>实现接口</td><td><code>class A implements B</code></td></tr><tr><td>捕获异常</td><td><code>try { } catch (Exception e) { }</code></td></tr><tr><td>关闭资源</td><td><code>try (Connection c = ...) { }</code></td></tr><tr><td>泛型列表</td><td><code>List&lt;EmsRecord&gt; list = new ArrayList&lt;&gt;();</code></td></tr><tr><td>键值对</td><td><code>Map&lt;String, Double&gt; map = new HashMap&lt;&gt;();</code></td></tr><tr><td>常量</td><td><code>public static final int PORT = 8888;</code></td></tr></tbody></table>
+<h3 id="184-学习路线建议">18.4 学习路线建议</h3>
+<ol><li>第 1–6 章：能写出「输入三个数、求平均、打印」这类程序；</li><li>第 7–12 章：能写出「一个有字段、方法、构造器、异常处理的类」；</li><li>第 13–16 章：会用 String、集合、Scanner、文件读写；</li><li>第 17 章：能读懂本项目现有代码，并敢动手改。</li></ol>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

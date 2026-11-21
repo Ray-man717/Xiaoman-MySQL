@@ -119,7 +119,7 @@
 <button id="theme-toggle" type="button">☀ 浅色模式</button>
 <article>
 <h1 id="http-请求详解网络通信附加篇">HTTP 请求详解（网络通信附加篇）</h1>
-<blockquote><p>本手册是 <a href="网络通信使用手册.html">网络通信使用手册</a> 的<strong>附加篇</strong>，专门把 HTTP 讲透：客户端怎么发请求，服务端怎么收请求。基础的 TCP / UDP 部分（Socket、粘包、多客户端并发）请看网络通信手册的第 3–8 章，这里不再重复。环境：JDK 17，客户端主体用 <code>java.net.http.HttpClient</code>，服务端主体用 JDK 自带的 <code>com.sun.net.httpserver</code>。</p></blockquote>
+<blockquote><p>本手册是 <a href="../网络通信使用手册/网络通信使用手册.html">网络通信使用手册</a> 的<strong>附加篇</strong>，专门把 HTTP 讲透：客户端怎么发请求，服务端怎么收请求。基础的 TCP / UDP 部分（Socket、粘包、多客户端并发）请看网络通信手册的第 3–8 章，这里不再重复。环境：JDK 17，客户端主体用 <code>java.net.http.HttpClient</code>，服务端主体用 JDK 自带的 <code>com.sun.net.httpserver</code>。</p></blockquote>
 <hr>
 <h2 id="目录">目录</h2>
 <ol><li><a href="#1-一次请求的完整过程">一次请求的完整过程</a></li><li><a href="#2-url-的组成">URL 的组成</a></li><li><a href="#3-请求方法">请求方法</a></li><li><a href="#4-状态码">状态码</a></li><li><a href="#5-请求头与响应头">请求头与响应头</a></li><li><a href="#6-请求体格式">请求体格式</a></li><li><a href="#7-httpurlconnection-完整写法">HttpURLConnection 完整写法</a></li><li><a href="#8-httpclient-完整写法推荐">HttpClient 完整写法（推荐）</a></li><li><a href="#9-下载文件与上传">下载文件与上传</a></li><li><a href="#10-https-与证书">HTTPS 与证书</a></li><li><a href="#11-调试-http">调试 HTTP</a></li><li><a href="#12-实战emsapiclient">实战：EmsApiClient</a></li><li><a href="#13-常见坑">常见坑</a></li><li><a href="#14-http-速查">HTTP 速查</a></li><li><a href="#15-http-服务端怎么写">HTTP 服务端怎么写</a></li><li><a href="#16-附和网络通信手册的对应关系">附：和网络通信手册的对应关系</a></li></ol>
