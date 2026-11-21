@@ -190,6 +190,30 @@ java Hello</code></pre>
 <h4 id="两种方式怎么选">两种方式怎么选</h4>
 <table><thead><tr><th></th><th>记事本 + 命令行</th><th>Eclipse</th></tr></thead><tbody><tr><td>要装什么</td><td>只装 JDK</td><td>JDK + Eclipse</td></tr><tr><td>写代码</td><td>没有提示，全靠自己</td><td>有自动补全、报错提示</td></tr><tr><td>运行</td><td>敲 <code>javac</code>、<code>java</code></td><td>点一下 ▶</td></tr><tr><td>适合</td><td>想搞懂程序到底怎么跑</td><td>想快点做出东西</td></tr></tbody></table>
 <p><strong>建议</strong>：先用记事本跑通一次（知道 <code>.java</code> 怎么变成能运行的程序），之后日常用 Eclipse，省下的时间用来想逻辑。</p>
+<h3 id="36-用-intellij-idea另一个热门工具">3.6 用 IntelliJ IDEA（另一个热门工具）</h3>
+<p>IDEA 是现在最常见的 Java 开发工具，有免费版（Community）。它比 Eclipse 更「聪明」：自动补全、报错标红、一键运行。</p>
+<h4 id="下载和安装">下载和安装</h4>
+<ol><li>打开 &lt;https://www.jetbrains.com/idea/download/&gt;；</li><li>找 <strong>IntelliJ IDEA Community Edition</strong>（免费版），下载 Windows 版；</li><li>双击安装，一路「下一步」；</li><li>打开后点 <strong>New Project</strong>。</li></ol>
+<h4 id="第一次建项目">第一次建项目</h4>
+<ol><li>左边选 <strong>Java</strong>；</li><li><strong>Name</strong> 填 <code>HelloProject</code>；</li><li><strong>JDK</strong> 选 <code>17</code>（列表里没有就点 <strong>Add SDK → Download JDK</strong>，选 17）；</li><li>点 <strong>Create</strong>。</li></ol>
+<h4 id="写第一个程序">写第一个程序</h4>
+<ol><li>左边找到 <code>src</code> 文件夹，右键 → <strong>New → Java Class</strong>；</li><li>名字填 <code>Hello</code>，回车；</li><li>在里面输入：</li></ol>
+<pre class="language-java"><code>public class Hello {
+    public static void main(String[] args) {
+        System.out.println("你好，我是学弟");
+    }
+}</code></pre>
+<p>也可以偷懒，让 IDEA 帮你写：</p>
+<ul><li>输入 <code>psvm</code> 按 <strong>Tab</strong>，自动生成 <code>public static void main(String[] args) { }</code></li><li>输入 <code>sout</code> 按 <strong>Tab</strong>，自动生成 <code>System.out.println();</code></li></ul>
+<ol><li>点 <code>Hello</code> 左边的绿色三角形 ▶，选 <strong>Run 'Hello.main()'</strong>；</li><li>下方 <strong>Run</strong> 窗口出现：</li></ol>
+<pre class="language-text"><code>你好，我是学弟</code></pre>
+<h4 id="常用快捷键">常用快捷键</h4>
+<table><thead><tr><th>快捷键</th><th>作用</th></tr></thead><tbody><tr><td><code>Ctrl + S</code></td><td>保存</td></tr><tr><td><code>psvm</code> + <code>Tab</code></td><td>生成 main 方法</td></tr><tr><td><code>sout</code> + <code>Tab</code></td><td>生成打印语句</td></tr><tr><td><code>Ctrl + /</code></td><td>注释 / 取消注释</td></tr><tr><td><code>Ctrl + D</code></td><td>复制当前行</td></tr><tr><td><code>Shift + F6</code></td><td>重命名</td></tr><tr><td><code>Ctrl + Alt + L</code></td><td>自动排版代码</td></tr><tr><td><code>Ctrl + Shift + F10</code></td><td>运行</td></tr></tbody></table>
+<h4 id="idea-的常见问题">IDEA 的常见问题</h4>
+<table><thead><tr><th>问题</th><th>解决</th></tr></thead><tbody><tr><td>打开时提示没有 JDK</td><td><strong>File → Project Structure → SDK</strong> 里选 17</td></tr><tr><td>中文打印出来乱码</td><td><strong>File → Settings → Editor → File Encodings</strong>，全部选 <code>UTF-8</code></td></tr><tr><td>代码没保存</td><td>按 <code>Ctrl + S</code>；标题栏有 <code>*</code> 就是没保存</td></tr><tr><td>找不到 Run 按钮</td><td>确认那个类里有 <code>main</code> 方法</td></tr><tr><td>项目存哪了</td><td>默认在「用户目录 / IdeaProjects」</td></tr><tr><td>界面全是英文</td><td>装中文插件：Settings → Plugins 搜 Chinese</td></tr></tbody></table>
+<h4 id="三种工具怎么选">三种工具怎么选</h4>
+<table><thead><tr><th></th><th>记事本 + 命令行</th><th>Eclipse</th><th>IntelliJ IDEA</th></tr></thead><tbody><tr><td>要装什么</td><td>只装 JDK</td><td>JDK + Eclipse</td><td>JDK + IDEA</td></tr><tr><td>上手难度</td><td>简单但麻烦</td><td>中等</td><td>简单（功能多）</td></tr><tr><td>自动补全</td><td>没有</td><td>有</td><td>有，更智能</td></tr><tr><td>报错提示</td><td>看命令行</td><td>有</td><td>直接标红</td></tr><tr><td>适合</td><td>想搞懂原理</td><td>学校机房常见</td><td>想写得快</td></tr></tbody></table>
+<p><strong>建议</strong>：先用记事本跑通一次，之后用 IDEA 或 Eclipse 都行，哪个顺手用哪个。</p>
 <hr>
 <h2 id="4-变量给数据起个名字">4. 变量：给数据起个名字</h2>
 <p><strong>变量就是一个盒子，里面放数据，盒子上贴个名字。</strong></p>
