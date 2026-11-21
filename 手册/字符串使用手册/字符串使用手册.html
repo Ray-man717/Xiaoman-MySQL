@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>字符串使用手册（Java · EMS 项目版）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="字符串使用手册java--ems-项目版">字符串使用手册（Java · EMS 项目版）</h1>
+<blockquote><p>字符串是 Java 里用得最多的类型：姓名、SQL、JSON、CSV、日志、路径，全是字符串。这一本把 <code>String</code> 从「怎么创建」讲到「怎么不出乱码、不踩性能坑、不被正则坑」，最后用 EMS 项目里的真实场景收尾。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-string-到底是什么">String 到底是什么</a></li><li><a href="#2-创建字符串与常量池">创建字符串与常量池</a></li><li><a href="#3-字符串为什么不可变">字符串为什么不可变</a></li><li><a href="#4-长度判空与判空白">长度、判空与判空白</a></li><li><a href="#5-比较-还是-equals">比较：== 还是 equals</a></li><li><a href="#6-查找与定位">查找与定位</a></li><li><a href="#7-截取替换大小写">截取、替换、大小写</a></li><li><a href="#8-去空格trim-与-strip">去空格：trim 与 strip</a></li><li><a href="#9-切分与拼接">切分与拼接</a></li><li><a href="#10-格式化输出">格式化输出</a></li><li><a href="#11-数字与字符串互转">数字与字符串互转</a></li><li><a href="#12-正则表达式入门">正则表达式入门</a></li><li><a href="#13-编码与乱码">编码与乱码</a></li><li><a href="#14-性能-与-stringbuilder">性能：+ 与 StringBuilder</a></li><li><a href="#15-中文emoji-与-unicode">中文、emoji 与 Unicode</a></li><li><a href="#16-实战ems-里的字符串处理">实战：EMS 里的字符串处理</a></li><li><a href="#17-常见坑">常见坑</a></li><li><a href="#18-速查表">速查表</a></li></ol>
+<hr>
+<h2 id="1-string-到底是什么">1. String 到底是什么</h2>
+<p><code>String</code> 是<strong>字符序列</strong>，但它不是基本类型，是一个<strong>类</strong>（<code>java.lang.String</code>）。</p>
+<pre class="language-java"><code>String s = "EMS";</code></pre>
+<p>三个重要事实：</p>
+<table><thead><tr><th>事实</th><th>说明</th></tr></thead><tbody><tr><td>不可变</td><td>一旦创建，内容永远不能改，所有「修改」都是产生新对象</td></tr><tr><td>有常量池</td><td>字面量 <code>"EMS"</code> 会被缓存复用，相同字面量指向同一个对象</td></tr><tr><td><code>String</code> 是 <code>final</code> 类</td><td>不能被继承，保证不可变性</td></tr></tbody></table>
+<p><code>String</code> 在 JDK 9 之后内部是 <code>byte[]</code> + 编码标记（以前是 <code>char[]</code>），这是为了省内存，对使用者透明。</p>
+<hr>
+<h2 id="2-创建字符串与常量池">2. 创建字符串与常量池</h2>
+<p>两种写法，行为不同：</p>
+<pre class="language-java"><code>String a = "EMS";              // 字面量：先查常量池，有就复用
+String b = "EMS";              // 复用同一个对象
+String c = new String("EMS");  // new：一定创建新对象（在堆里）
+
+System.out.println(a == b);    // true，同一个对象
+System.out.println(a == c);    // false，c 是新对象
+System.out.println(a.equals(c)); // true，内容相同</code></pre>
+<p>常量池（字符串池）的规则：</p>
+<table><thead><tr><th>写法</th><th>是否进池</th><th>例子</th></tr></thead><tbody><tr><td>字面量</td><td>进</td><td><code>"abc"</code></td></tr><tr><td>字面量拼接的编译期常量</td><td>进</td><td><code>"ab" + "c"</code> 编译时合成 <code>"abc"</code></td></tr><tr><td><code>new String(...)</code></td><td>不进池（除非 <code>intern()</code>）</td><td><code>new String("abc")</code></td></tr><tr><td>变量拼接、方法返回</td><td>不进池</td><td><code>s1 + s2</code></td></tr></tbody></table>
+<p><code>intern()</code> 手动入池：</p>
+<pre class="language-java"><code>String x = new String("EMS").intern();
+System.out.println(x == "EMS");   // true</code></pre>
+<p><strong>结论</strong>：日常比较内容一律用 <code>equals</code>，不要依赖 <code>==</code>，哪怕它有时候「碰巧」是 true。</p>
+<hr>
+<h2 id="3-字符串为什么不可变">3. 字符串为什么不可变</h2>
+<pre class="language-java"><code>String s = "hello";
+s = s + " world";</code></pre>
+<p>第二行<strong>没有改</strong> <code>"hello"</code>，而是新建了一个 <code>"hello world"</code>，<code>s</code> 指向新对象。</p>
+<p>不可变带来的好处：</p>
+<table><thead><tr><th>好处</th><th>说明</th></tr></thead><tbody><tr><td>安全</td><td>作为参数传给别人，不会被偷偷改掉</td></tr><tr><td>可共享</td><td>常量池复用，省内存</td></tr><tr><td>线程安全</td><td>多线程读同一个字符串不会出问题</td></tr><tr><td>可做 Map 的键</td><td>内容不变，哈希值不变，键不会「丢」</td></tr></tbody></table>
+<p>代价：<strong>频繁修改会产生大量临时对象</strong>，所以循环里拼接要用 <code>StringBuilder</code>（第 14 章）。</p>
+<hr>
+<h2 id="4-长度判空与判空白">4. 长度、判空与判空白</h2>
+<pre class="language-java"><code>String s = "EMS";
+
+s.length();        // 3，字符个数
+s.isEmpty();       // false，长度是否为 0
+s.isBlank();       // false，是否为空或全是空白（JDK 11+）
+
+"".isEmpty();      // true
+"   ".isBlank();   // true（全是空格）
+"   ".isEmpty();   // false（长度是 3）</code></pre>
+<p>判空的正确写法：</p>
+<pre class="language-java"><code>// 错：null 会抛 NullPointerException
+if (s.isEmpty()) { }
+
+// 对：先判 null
+if (s == null || s.isEmpty()) { }
+
+// 或者用工具
+if (s == null || s.isBlank()) { }</code></pre>
+<p><code>length()</code> 返回的是 <code>char</code> 的数量，中文一般是一个 <code>char</code>，但 emoji 是<strong>两个</strong> <code>char</code>（第 15 章）。</p>
+<hr>
+<h2 id="5-比较-还是-equals">5. 比较：== 还是 equals</h2>
+<table><thead><tr><th>写法</th><th>比较什么</th><th>用不用</th></tr></thead><tbody><tr><td><code>a == b</code></td><td>是否指向同一个对象</td><td>不用来比较内容</td></tr><tr><td><code>a.equals(b)</code></td><td>内容是否相同（区分大小写）</td><td>用</td></tr><tr><td><code>a.equalsIgnoreCase(b)</code></td><td>内容是否相同（忽略大小写）</td><td>用</td></tr><tr><td><code>a.compareTo(b)</code></td><td>字典序，返回正/负/0</td><td>排序用</td></tr><tr><td><code>a.compareToIgnoreCase(b)</code></td><td>忽略大小写的字典序</td><td>排序用</td></tr></tbody></table>
+<pre class="language-java"><code>String a = "EMS";
+String b = new String("EMS");
+
+a == b;                    // false
+a.equals(b);               // true
+"ems".equalsIgnoreCase(a); // true
+
+a.compareTo("ABC");        // 正数（E 在 A 后面）
+"a".compareTo("b");        // -1</code></pre>
+<p><strong>最安全的写法</strong>：把常量放前面，避免空指针：</p>
+<pre class="language-java"><code>if ("EMS".equals(name)) { }      // name 为 null 也不报错
+if (name.equals("EMS")) { }      // name 为 null 会 NPE</code></pre>
+<p><code>equals</code> 是区分大小写的；<code>equalsIgnoreCase</code> 不区分；<code>compareTo</code> 返回差值，不要拿它当布尔用。</p>
+<hr>
+<h2 id="6-查找与定位">6. 查找与定位</h2>
+<pre class="language-java"><code>String s = "EMS-2026-01-01";
+
+s.indexOf("2026");        // 4，第一次出现的位置
+s.lastIndexOf("-");       // 12，最后一次出现
+s.indexOf("x");           // -1，没找到
+s.contains("2026");       // true，是否包含
+s.startsWith("EMS");      // true
+s.endsWith("01-01");      // true
+s.charAt(0);              // 'E'，下标越界抛异常</code></pre>
+<p>要点：</p>
+<ul><li><code>indexOf</code> 找不到返回 <strong>-1</strong>，不是 0，也不是抛异常；</li><li><code>charAt</code> 下标从 0 开始，越界抛 <code>StringIndexOutOfBoundsException</code>；</li><li>判断「包含」用 <code>contains</code>，比 <code>indexOf(...) &gt;= 0</code> 更清楚。</li></ul>
+<hr>
+<h2 id="7-截取替换大小写">7. 截取、替换、大小写</h2>
+<pre class="language-java"><code>String s = "EMS-2026-01-01";
+
+s.substring(4);           // "2026-01-01"，从下标 4 到结尾
+s.substring(0, 3);        // "EMS"，含头不含尾（0、1、2）
+
+s.replace("-", "/");      // "EMS/2026/01/01"，替换全部
+s.replaceAll("-", "/");   // 同上，但参数是正则
+s.replaceFirst("-", "/"); // 只替换第一个
+
+s.toUpperCase();          // "EMS-2026-01-01"
+s.toLowerCase();          // "ems-2026-01-01"
+
+s.repeat(3);              // 重复 3 次（JDK 11+）
+s.concat(" 结束");         // 拼接，等价于 +</code></pre>
+<p>三个替换方法的区别：</p>
+<table><thead><tr><th>方法</th><th>参数</th><th>说明</th></tr></thead><tbody><tr><td><code>replace(CharSequence, CharSequence)</code></td><td>普通字符串</td><td>不解析正则，最安全</td></tr><tr><td><code>replaceAll(regex, replacement)</code></td><td>正则</td><td>替换串里的 <code>$</code> 和 <code>\</code> 要转义</td></tr><tr><td><code>replaceFirst(regex, replacement)</code></td><td>正则</td><td>只替换第一个</td></tr></tbody></table>
+<p><code>substring(begin, end)</code> 含头不含尾，<code>substring(begin)</code> 到结尾；越界会抛异常。</p>
+<hr>
+<h2 id="8-去空格trim-与-strip">8. 去空格：trim 与 strip</h2>
+<pre class="language-java"><code>String s = "  EMS  ";
+
+s.trim();          // "EMS"，去掉首尾 &lt;= U+0020 的字符
+s.strip();         // "EMS"，去掉所有 Unicode 空白（JDK 11+）
+s.stripLeading();  // 只去开头
+s.stripTrailing(); // 只去结尾</code></pre>
+<p><code>trim</code> 和 <code>strip</code> 的区别：</p>
+<table><thead><tr><th></th><th><code>trim()</code></th><th><code>strip()</code></th></tr></thead><tbody><tr><td>范围</td><td>只处理 ASCII 空格</td><td>处理所有 Unicode 空白（含全角空格）</td></tr><tr><td>场景</td><td>英文输入</td><td>中文、全角空格</td></tr></tbody></table>
+<p><strong>坑</strong>：全角空格 <code>　</code>（U+3000）<code>trim()</code> 去不掉，要用 <code>strip()</code>。</p>
+<p>输入内容处理建议：</p>
+<pre class="language-java"><code>String input = "  25.5  ";
+double v = Double.parseDouble(input.strip());</code></pre>
+<hr>
+<h2 id="9-切分与拼接">9. 切分与拼接</h2>
+<h3 id="91-split">9.1 split</h3>
+<pre class="language-java"><code>String line = "300.5,26.4,55.0";
+String[] parts = line.split(",");
+// ["300.5", "26.4", "55.0"]
+
+"a,,b".split(",");        // ["a", "", "b"]
+"a,b,,".split(",");       // ["a", "b"]  ← 末尾空串被丢弃！
+"a,b,,".split(",", -1);   // ["a", "b", "", ""]  ← 保留空串</code></pre>
+<p>三个必须知道的点：</p>
+<ol><li><strong>参数是正则表达式</strong>：<code>split(".")</code> 会得到空数组，因为 <code>.</code> 匹配任意字符，要写 <code>split("\\.")</code>；</li><li><strong>末尾空串默认丢弃</strong>：需要保留时传第二个参数 <code>-1</code>；</li><li>切分后每个元素自己 <code>trim()</code>，因为用户输入常带空格。</li></ol>
+<pre class="language-java"><code>String line = "300.5, 26.4, 55.0";
+double temp = Double.parseDouble(line.split(",")[1].trim());</code></pre>
+<h3 id="92-join">9.2 join</h3>
+<pre class="language-java"><code>List&lt;String&gt; list = List.of("A", "B", "C");
+String joined = String.join(",", list);       // "A,B,C"
+
+String[] arr = {"x", "y"};
+String joined2 = String.join(" | ", arr);     // "x | y"</code></pre>
+<p><code>String.join</code> 比循环拼接简洁，也没有多余逗号的问题。</p>
+<hr>
+<h2 id="10-格式化输出">10. 格式化输出</h2>
+<pre class="language-java"><code>double temp = 26.456;
+String s = String.format("温度：%.1f℃，湿度：%d%%", temp, 55);
+System.out.printf("%s = %.2f%n", "平均温度", 26.4);</code></pre>
+<p>常用占位符：</p>
+<table><thead><tr><th>占位符</th><th>含义</th><th>例子</th></tr></thead><tbody><tr><td><code>%s</code></td><td>字符串</td><td><code>String.format("%s", obj)</code></td></tr><tr><td><code>%d</code></td><td>整数</td><td><code>String.format("%d", 42)</code></td></tr><tr><td><code>%f</code></td><td>小数（默认 6 位）</td><td><code>String.format("%f", 3.14)</code></td></tr><tr><td><code>%.2f</code></td><td>保留 2 位小数</td><td><code>26.46</code></td></tr><tr><td><code>%5d</code></td><td>宽度 5，右对齐</td><td><code>"   42"</code></td></tr><tr><td><code>%-5d</code></td><td>宽度 5，左对齐</td><td><code>"42   "</code></td></tr><tr><td><code>%05d</code></td><td>补零</td><td><code>"00042"</code></td></tr><tr><td><code>%x</code></td><td>十六进制</td><td><code>"2a"</code></td></tr><tr><td><code>%%</code></td><td>百分号本身</td><td><code>"%"</code></td></tr><tr><td><code>%n</code></td><td>换行</td><td>跨平台换行</td></tr></tbody></table>
+<p>注意：<code>%f</code> 的精度会四舍五入；<code>String.format</code> 返回新字符串，<code>printf</code> 直接打印。</p>
+<hr>
+<h2 id="11-数字与字符串互转">11. 数字与字符串互转</h2>
+<pre class="language-java"><code>// 字符串 → 数字
+int n = Integer.parseInt("123");
+long l = Long.parseLong("123456789");
+double d = Double.parseDouble("26.4");
+boolean b = Boolean.parseBoolean("true");
+
+// 数字 → 字符串
+String s1 = String.valueOf(42);
+String s2 = Integer.toString(42);
+String s3 = 42 + "";              // 也能用，但不推荐
+
+// BigDecimal（精确小数）
+BigDecimal big = new BigDecimal("0.1");
+String s4 = big.toPlainString();  // 不用科学计数法</code></pre>
+<p><strong>坑</strong>：</p>
+<ul><li><code>parseInt("abc")</code> 抛 <code>NumberFormatException</code>，转之前要校验或 try/catch；</li><li><code>parseInt(" 12 ")</code> 也会抛异常，先 <code>trim()</code>；</li><li><code>String.valueOf(null)</code> 返回 <code>"null"</code> 字符串，不是 null（如果传的是 <code>Object</code>）；</li><li>大整数超过 <code>int</code> 范围（约 21 亿）要用 <code>long</code>。</li></ul>
+<pre class="language-java"><code>// 安全转换
+public static int toInt(String text, int defaultValue) {
+    if (text == null || text.isBlank()) {
+        return defaultValue;
+    }
+    try {
+        return Integer.parseInt(text.trim());
+    } catch (NumberFormatException e) {
+        return defaultValue;
+    }
+}</code></pre>
+<hr>
+<h2 id="12-正则表达式入门">12. 正则表达式入门</h2>
+<p>字符串的 <code>matches</code>、<code>split</code>、<code>replaceAll</code> 都用正则。</p>
+<pre class="language-java"><code>"13800138000".matches("1\\d{10}");      // true，手机号
+"EMS-01".matches("[A-Z]+-\\d+");        // true
+"abc123".replaceAll("\\d", "#");        // "abc###"
+"a1b2c3".replaceAll("[0-9]", "");       // "abc"</code></pre>
+<p>常用元字符：</p>
+<table><thead><tr><th>符号</th><th>含义</th></tr></thead><tbody><tr><td><code>.</code></td><td>任意一个字符</td></tr><tr><td><code>\d</code></td><td>数字（Java 里写 <code>\\d</code>）</td></tr><tr><td><code>\w</code></td><td>字母、数字、下划线</td></tr><tr><td><code>\s</code></td><td>空白</td></tr><tr><td><code>*</code> <code>+</code> <code>?</code></td><td>0 次以上 / 1 次以上 / 0 或 1 次</td></tr><tr><td><code>{n}</code> <code>{n,m}</code></td><td>恰好 n 次 / n 到 m 次</td></tr><tr><td><code>[]</code></td><td>字符集合，<code>[abc]</code>、<code>[0-9]</code></td></tr><tr><td><code>^</code> <code>$</code></td><td>开头 / 结尾</td></tr><tr><td><code>()</code></td><td>分组</td></tr><tr><td><code>\\</code></td><td>转义（Java 字符串里也转义）</td></tr></tbody></table>
+<p>两个坑：</p>
+<ol><li><strong>Java 里反斜杠要写两次</strong>：正则 <code>\d</code> 在 Java 字符串里写 <code>"\\d"</code>；</li><li><strong>用户输入要当普通文本</strong>：把用户输入拼进正则前用 <code>Pattern.quote(text)</code>，否则输入 <code>.*</code> 会匹配一切。</li></ol>
+<pre class="language-java"><code>String keyword = userInput;
+boolean hit = text.matches(".*" + Pattern.quote(keyword) + ".*");</code></pre>
+<p>需要「找出一段并取分组」时用 <code>Pattern</code> + <code>Matcher</code>：</p>
+<pre class="language-java"><code>Pattern p = Pattern.compile("(\\d+)\\.(\\d+)");
+Matcher m = p.matcher("温度 26.45");
+if (m.find()) {
+    String whole = m.group(0);    // "26.45"
+    String a = m.group(1);        // "26"
+    String b = m.group(2);        // "45"
+}</code></pre>
+<hr>
+<h2 id="13-编码与乱码">13. 编码与乱码</h2>
+<p>字符串本身是 Unicode，<strong>乱码只发生在「转成字节」和「字节转回字符串」时编码不一致</strong>。</p>
+<pre class="language-java"><code>String s = "温度";
+
+// 字符串 → 字节
+byte[] utf8 = s.getBytes(StandardCharsets.UTF_8);
+byte[] gbk = s.getBytes(Charset.forName("GBK"));
+
+// 字节 → 字符串（编码必须与上面一致）
+String back1 = new String(utf8, StandardCharsets.UTF_8);   // 正常
+String back2 = new String(utf8, Charset.forName("GBK"));   // 乱码</code></pre>
+<p>乱码的三种典型：</p>
+<table><thead><tr><th>现象</th><th>原因</th></tr></thead><tbody><tr><td><code>æ¸©åº¦</code></td><td>UTF-8 字节用 ISO-8859-1 解读</td></tr><tr><td><code>锟斤拷</code></td><td>编码反复转换，信息已丢失，救不回来</td></tr><tr><td><code>???</code></td><td>目标编码不支持中文（如 ASCII）</td></tr></tbody></table>
+<p>规则：</p>
+<ul><li>读写文件、网络传输、数据库连接，<strong>一律显式指定 UTF-8</strong>；</li><li><code>new String(bytes)</code> 不带编码会用平台默认编码，换台机器就乱；</li><li>已经乱码的字符串，如果知道原编码，可以「用错误编码还原成字节，再用正确编码解码」，但前提是信息没丢失。</li></ul>
+<pre class="language-java"><code>// 补救：ISO-8859-1 误读的 UTF-8 字符串
+byte[] raw = mojibake.getBytes(StandardCharsets.ISO_8859_1);
+String fixed = new String(raw, StandardCharsets.UTF_8);</code></pre>
+<hr>
+<h2 id="14-性能-与-stringbuilder">14. 性能：+ 与 StringBuilder</h2>
+<pre class="language-java"><code>// 循环里用 + 拼字符串：每次都创建新对象，1000 次就是 1000 个中间对象
+String result = "";
+for (int i = 0; i &lt; 1000; i++) {
+    result += i + ",";
+}
+
+// 正确做法：StringBuilder
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i &lt; 1000; i++) {
+    sb.append(i).append(',');
+}
+String result2 = sb.toString();</code></pre>
+<p>对比：</p>
+<table><thead><tr><th>方式</th><th>适用</th><th>线程安全</th></tr></thead><tbody><tr><td><code>+</code></td><td>少量、固定的拼接（编译器会自动优化成 <code>StringBuilder</code>）</td><td>与线程无关</td></tr><tr><td><code>StringBuilder</code></td><td>循环、大量拼接</td><td>否</td></tr><tr><td><code>StringBuffer</code></td><td>多线程共享（很少用）</td><td>是</td></tr><tr><td><code>String.join</code></td><td>集合/数组用分隔符连接</td><td>是</td></tr></tbody></table>
+<p><code>StringBuilder</code> 常用方法：</p>
+<pre class="language-java"><code>StringBuilder sb = new StringBuilder();
+sb.append("温度：");
+sb.append(26.4);
+sb.append('℃');
+sb.insert(0, "[");
+sb.reverse();
+sb.length();
+sb.setLength(0);          // 清空，复用对象
+String s = sb.toString();</code></pre>
+<p>一个循环里 <code>+=</code> 几百次，肉眼不容易看出卡；<code>+=</code> 几万次，程序明显变慢。</p>
+<hr>
+<h2 id="15-中文emoji-与-unicode">15. 中文、emoji 与 Unicode</h2>
+<pre class="language-java"><code>String s = "温度";
+s.length();        // 2（两个中文，各 1 个 char）
+
+String emoji = "😀";
+emoji.length();              // 2！emoji 是代理对，占两个 char
+emoji.codePointCount(0, emoji.length());   // 1，真正的「字符」数</code></pre>
+<table><thead><tr><th>概念</th><th>说明</th></tr></thead><tbody><tr><td><code>char</code></td><td>16 位，UTF-16 的一个单元</td></tr><tr><td>code point</td><td>真正的 Unicode 字符编号</td></tr><tr><td>代理对</td><td>超过 U+FFFF 的字符用两个 char 表示</td></tr><tr><td>字素（grapheme）</td><td>人眼看到的一个字符，可能由多个 code point 组成</td></tr></tbody></table>
+<p>处理建议：</p>
+<ul><li>判断「字符数」用 <code>codePointCount</code>，不要用 <code>length</code>；</li><li>截断用户输入（比如限 20 字）时，用 <code>codePoints</code> 或第三方库，直接 <code>substring</code> 可能切坏 emoji；</li><li>数据库列长度按字符算，emoji 可能占 2 个字符位置，注意字段长度。</li></ul>
+<pre class="language-java"><code>String input = "你好😀";
+int chars = input.length();                                   // 4
+int codePoints = input.codePointCount(0, input.length());     // 3</code></pre>
+<hr>
+<h2 id="16-实战ems-里的字符串处理">16. 实战：EMS 里的字符串处理</h2>
+<h3 id="161-解析设备上报的一行数据">16.1 解析设备上报的一行数据</h3>
+<p>协议：<code>光照,温度,湿度</code>，如 <code>300.5,26.4,55.0</code>。</p>
+<pre class="language-java"><code>public static double[] parseLine(String line) {
+    if (line == null || line.isBlank()) {
+        throw new IllegalArgumentException("空数据");
+    }
+    String[] parts = line.split(",");
+    if (parts.length != 3) {
+        throw new IllegalArgumentException("格式应为 光照,温度,湿度：" + line);
+    }
+    double[] values = new double[3];
+    for (int i = 0; i &lt; 3; i++) {
+        values[i] = Double.parseDouble(parts[i].trim());
+    }
+    return values;
+}</code></pre>
+<p>要点：判空、判断段数、每个字段 <code>trim</code>、数字转换抛异常由调用方处理。</p>
+<h3 id="162-拼-csv-行带转义">16.2 拼 CSV 行（带转义）</h3>
+<pre class="language-java"><code>public static String toCsvRow(String... cells) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i &lt; cells.length; i++) {
+        if (i &gt; 0) {
+            sb.append(',');
+        }
+        String cell = cells[i] == null ? "" : cells[i];
+        if (cell.contains(",") || cell.contains("\"") || cell.contains("\n")) {
+            sb.append('"').append(cell.replace("\"", "\"\"")).append('"');
+        } else {
+            sb.append(cell);
+        }
+    }
+    return sb.toString();
+}</code></pre>
+<h3 id="163-格式化日志">16.3 格式化日志</h3>
+<pre class="language-java"><code>String log = String.format("%s  设备=%s  温度=%.1f℃",
+        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+        deviceId, temp);
+LogUtil.info(log);</code></pre>
+<h3 id="164-拼-sql-的正确姿势">16.4 拼 SQL 的正确姿势</h3>
+<pre class="language-java"><code>// 错误：字符串拼接，有 SQL 注入风险，还容易拼错引号
+String sql = "SELECT * FROM ems WHERE device = '" + device + "'";
+
+// 正确：用 PreparedStatement 占位符
+String sql2 = "SELECT * FROM ems WHERE device = ?";
+try (PreparedStatement ps = con.prepareStatement(sql2)) {
+    ps.setString(1, device);
+}</code></pre>
+<p><strong>规则：SQL 永远不要拼字符串</strong>，哪怕参数是自己算出来的。</p>
+<h3 id="165-拼接-json-响应">16.5 拼接 JSON 响应</h3>
+<pre class="language-java"><code>// 简单场景（数据里没有引号）
+String json = String.format("{\"code\":0,\"temp\":%.1f}", temp);
+
+// 有用户输入时，引号和反斜杠要转义
+private static String escapeJson(String s) {
+    return s.replace("\\", "\\\\").replace("\"", "\\\"");
+}</code></pre>
+<p>复杂 JSON 请用 Gson，手拼容易漏转义。</p>
+<hr>
+<h2 id="17-常见坑">17. 常见坑</h2>
+<table><thead><tr><th>坑</th><th>现象</th><th>正确做法</th></tr></thead><tbody><tr><td><code>==</code> 比较内容</td><td>有时候 true 有时候 false</td><td>用 <code>equals</code></td></tr><tr><td><code>equals</code> 前半部分为 null</td><td><code>NullPointerException</code></td><td><code>"常量".equals(变量)</code></td></tr><tr><td><code>split(".")</code></td><td>返回空数组</td><td><code>split("\\.")</code></td></tr><tr><td><code>split</code> 末尾空串丢失</td><td>少了几列</td><td><code>split(",", -1)</code></td></tr><tr><td><code>substring(a, b)</code> 边界</td><td>越界异常</td><td>含头不含尾，先判长度</td></tr><tr><td><code>indexOf</code> 结果判断</td><td><code>if (indexOf(x))</code> 编译不过</td><td>判断 <code>&gt;= 0</code></td></tr><tr><td><code>trim</code> 去不掉全角空格</td><td>全角空格还在</td><td>用 <code>strip()</code></td></tr><tr><td>循环里 <code>+=</code></td><td>数据量一大就慢</td><td>用 <code>StringBuilder</code></td></tr><tr><td><code>parseInt</code> 不处理异常</td><td>输入非法直接崩</td><td>try/catch 或先校验</td></tr><tr><td><code>new String(bytes)</code></td><td>换机器乱码</td><td>指定 <code>StandardCharsets.UTF_8</code></td></tr><tr><td>正则拼用户输入</td><td>用户输入 <code>.*</code> 匹配一切</td><td><code>Pattern.quote(...)</code></td></tr><tr><td><code>replaceAll</code> 替换串含 <code>$</code></td><td>报错或结果不对</td><td>用 <code>Matcher.quoteReplacement</code></td></tr><tr><td><code>String.valueOf(null)</code></td><td>得到 <code>"null"</code></td><td>先判空</td></tr><tr><td>用字符串拼 SQL</td><td>注入风险</td><td><code>PreparedStatement</code></td></tr><tr><td>emoji 截断</td><td>半个 emoji 或乱码</td><td>用 <code>codePointCount</code> 处理</td></tr></tbody></table>
+<hr>
+<h2 id="18-速查表">18. 速查表</h2>
+<h3 id="181-判空与查找">18.1 判空与查找</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>是否为空</td><td><code>s.isEmpty()</code> / `s == null</td><td></td><td>s.isEmpty()`</td></tr><tr><td>是否全是空白</td><td><code>s.isBlank()</code></td></tr><tr><td>是否包含</td><td><code>s.contains("x")</code></td></tr><tr><td>位置</td><td><code>s.indexOf("x")</code>（没有返回 -1）</td></tr><tr><td>开头/结尾</td><td><code>s.startsWith("x")</code> / <code>s.endsWith("x")</code></td></tr><tr><td>取某个字符</td><td><code>s.charAt(0)</code></td></tr></tbody></table>
+<h3 id="182-截取替换转换">18.2 截取、替换、转换</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>截取</td><td><code>s.substring(1, 3)</code>（1 含 3 不含）</td></tr><tr><td>替换（普通）</td><td><code>s.replace("a", "b")</code></td></tr><tr><td>替换（正则）</td><td><code>s.replaceAll("\\d", "#")</code></td></tr><tr><td>去空格</td><td><code>s.trim()</code> / <code>s.strip()</code></td></tr><tr><td>大小写</td><td><code>s.toUpperCase()</code> / <code>s.toLowerCase()</code></td></tr><tr><td>切分</td><td><code>s.split(",")</code></td></tr><tr><td>拼接</td><td><code>String.join(",", list)</code></td></tr></tbody></table>
+<h3 id="183-转换与格式化">18.3 转换与格式化</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>字符串转整数</td><td><code>Integer.parseInt("123")</code></td></tr><tr><td>字符串转小数</td><td><code>Double.parseDouble("1.5")</code></td></tr><tr><td>数字转字符串</td><td><code>String.valueOf(42)</code></td></tr><tr><td>格式化</td><td><code>String.format("%.2f", 26.456)</code></td></tr><tr><td>字符数组</td><td><code>s.toCharArray()</code></td></tr><tr><td>字节</td><td><code>s.getBytes(StandardCharsets.UTF_8)</code></td></tr><tr><td>字节转回</td><td><code>new String(bytes, StandardCharsets.UTF_8)</code></td></tr></tbody></table>
+<h3 id="184-性能与-unicode">18.4 性能与 Unicode</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>大量拼接</td><td><code>new StringBuilder().append(...)</code></td></tr><tr><td>真正的字符数</td><td><code>s.codePointCount(0, s.length())</code></td></tr><tr><td>防正则注入</td><td><code>Pattern.quote(text)</code></td></tr><tr><td>替换串转义</td><td><code>Matcher.quoteReplacement(text)</code></td></tr></tbody></table>
+<hr>
+<h2 id="附代码与注释对照表">附：代码与注释对照表</h2>
+<table><thead><tr><th>代码</th><th>作用（注释）</th><th>参数/说明</th></tr></thead><tbody><tr><td><strong>一、创建与比较</strong></td><td></td><td></td></tr><tr><td><code>String s = "EMS";</code></td><td>字面量</td><td>进常量池，可复用</td></tr><tr><td><code>new String("EMS")</code></td><td>新建对象</td><td>不进池，<code>==</code> 不相等</td></tr><tr><td><code>new String(bytes, UTF_8)</code></td><td>字节转字符串</td><td>必须指定编码</td></tr><tr><td><code>s.intern()</code></td><td>手动入池</td><td>返回池中对象</td></tr><tr><td><code>s.length()</code></td><td>字符数</td><td><code>char</code> 个数，emoji 算 2</td></tr><tr><td><code>s.isEmpty()</code></td><td>是否为空</td><td>长度 0</td></tr><tr><td><code>s.isBlank()</code></td><td>是否空白</td><td>空格也算（JDK 11+）</td></tr><tr><td><code>s.equals(t)</code></td><td>内容相等</td><td>区分大小写</td></tr><tr><td><code>s.equalsIgnoreCase(t)</code></td><td>忽略大小写相等</td><td></td></tr><tr><td><code>s.compareTo(t)</code></td><td>字典序</td><td>负数/0/正数</td></tr><tr><td><code>"常量".equals(s)</code></td><td>防空指针的写法</td><td><code>s</code> 为 null 安全</td></tr><tr><td><strong>二、查找与截取</strong></td><td></td><td></td></tr><tr><td><code>s.indexOf("x")</code></td><td>首次位置</td><td>没有返回 -1</td></tr><tr><td><code>s.lastIndexOf("x")</code></td><td>最后位置</td><td></td></tr><tr><td><code>s.contains("x")</code></td><td>是否包含</td><td></td></tr><tr><td><code>s.startsWith("x")</code></td><td>是否以 x 开头</td><td></td></tr><tr><td><code>s.endsWith("x")</code></td><td>是否以 x 结尾</td><td></td></tr><tr><td><code>s.charAt(i)</code></td><td>取第 i 个字符</td><td>越界抛异常</td></tr><tr><td><code>s.substring(1)</code></td><td>从下标 1 到结尾</td><td></td></tr><tr><td><code>s.substring(1, 3)</code></td><td>截取</td><td>1 含、3 不含</td></tr><tr><td><strong>三、修改与转换</strong></td><td></td><td></td></tr><tr><td><code>s.replace("a", "b")</code></td><td>普通替换</td><td>不解析正则</td></tr><tr><td><code>s.replaceAll("\\d", "#")</code></td><td>正则替换</td><td>替换串 <code>$</code> 要转义</td></tr><tr><td><code>s.replaceFirst("a", "b")</code></td><td>只替换第一个</td><td>正则</td></tr><tr><td><code>s.toUpperCase()</code></td><td>转大写</td><td></td></tr><tr><td><code>s.trim()</code></td><td>去首尾 ASCII 空格</td><td>全角空格去不掉</td></tr><tr><td><code>s.strip()</code></td><td>去首尾 Unicode 空白</td><td>JDK 11+</td></tr><tr><td><code>s.repeat(3)</code></td><td>重复 3 次</td><td>JDK 11+</td></tr><tr><td><code>s.concat("x")</code></td><td>拼接</td><td>等价于 <code>+</code></td></tr><tr><td><strong>四、切分与拼接</strong></td><td></td><td></td></tr><tr><td><code>s.split(",")</code></td><td>按逗号切</td><td>参数是正则</td></tr><tr><td><code>s.split(",", -1)</code></td><td>保留末尾空串</td><td></td></tr><tr><td><code>s.split("\\.")</code></td><td>按点切分</td><td>点要转义</td></tr><tr><td><code>String.join(",", list)</code></td><td>用逗号连接</td><td>集合/数组</td></tr><tr><td><code>sb.append(x)</code></td><td>追加</td><td><code>StringBuilder</code></td></tr><tr><td><code>sb.setLength(0)</code></td><td>清空复用</td><td></td></tr><tr><td><strong>五、格式化与转换</strong></td><td></td><td></td></tr><tr><td><code>String.format("%.2f", x)</code></td><td>保留 2 位小数</td><td>返回新字符串</td></tr><tr><td><code>System.out.printf("%s=%d%n", a, b)</code></td><td>打印</td><td><code>%n</code> 换行</td></tr><tr><td><code>Integer.parseInt("123")</code></td><td>字符串转 int</td><td>非数字抛异常</td></tr><tr><td><code>Double.parseDouble("1.5")</code></td><td>转 double</td><td></td></tr><tr><td><code>String.valueOf(42)</code></td><td>转字符串</td><td></td></tr><tr><td><code>new BigDecimal("0.1")</code></td><td>精确小数</td><td>用字符串构造</td></tr><tr><td><code>s.toCharArray()</code></td><td>转字符数组</td><td></td></tr><tr><td><code>s.getBytes(UTF_8)</code></td><td>转字节</td><td>指定编码</td></tr><tr><td><strong>六、正则</strong></td><td></td><td></td></tr><tr><td><code>s.matches("\\d+")</code></td><td>全串匹配</td><td>返回值 boolean</td></tr><tr><td><code>Pattern.compile("(\\d+)")</code></td><td>编译正则</td><td>复用更快</td></tr><tr><td><code>matcher.find()</code></td><td>找下一个</td><td>返回 boolean</td></tr><tr><td><code>matcher.group(1)</code></td><td>取分组</td><td>从 1 开始</td></tr><tr><td><code>Pattern.quote(text)</code></td><td>转义用户输入</td><td>防注入</td></tr><tr><td><code>Matcher.quoteReplacement(s)</code></td><td>转义替换串</td><td>替换含 <code>$</code> 时用</td></tr></tbody></table>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
