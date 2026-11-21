@@ -242,6 +242,100 @@ body.write(fileBytes);
 body.write(tail.getBytes(StandardCharsets.UTF_8));</code></pre>
 <p>实际项目里上传文件建议用 OkHttp、Apache HttpClient 这类库，它们把 multipart 封装好了；JDK 自带的需要自己拼。</p>
 <p><strong>空体</strong>：GET、DELETE 一般没有请求体，Java 里用 <code>BodyPublishers.noBody()</code>。</p>
+<p><strong>用 Gson 处理 JSON（推荐）</strong>：手拼 JSON 容易漏转义，正式一点的项目用 Gson。</p>
+<h4 id="加依赖">加依赖</h4>
+<p>下载 <code>gson-2.10.1.jar</code>（约 280KB），放到项目根目录，编译运行都加上：</p>
+<pre class="language-bash"><code>javac -encoding UTF-8 -cp "gson-2.10.1.jar" -d out ...
+java -cp "out;gson-2.10.1.jar" 主类</code></pre>
+<p>用 Maven 的话：</p>
+<pre class="language-xml"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.google.code.gson&lt;/groupId&gt;
+    &lt;artifactId&gt;gson&lt;/artifactId&gt;
+    &lt;version&gt;2.10.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+<h4 id="对象--json">对象 ↔ JSON</h4>
+<pre class="language-java"><code>public class EmsRecord {
+    private int id;
+    private double temp;
+    private String time;
+    // getter / setter 省略
+}
+
+Gson gson = new Gson();
+
+EmsRecord record = new EmsRecord(1, 26.4, "2026-01-01 08:00:00");
+
+String json = gson.toJson(record);                          // 对象 → JSON
+// {"id":1,"temp":26.4,"time":"2026-01-01 08:00:00"}
+
+EmsRecord back = gson.fromJson(json, EmsRecord.class);      // JSON → 对象
+System.out.println(back.getTemp());</code></pre>
+<p><code>Gson</code> 实例是线程安全的，可以反复用，不用每次都 <code>new</code>。</p>
+<h4 id="集合与泛型">集合与泛型</h4>
+<pre class="language-java"><code>import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+
+Type listType = new TypeToken&lt;List&lt;EmsRecord&gt;&gt;() { }.getType();
+List&lt;EmsRecord&gt; list = gson.fromJson(json, listType);
+
+String arrayJson = gson.toJson(list);</code></pre>
+<p>必须用 <code>new TypeToken&lt;List&lt;X&gt;&gt;() { }.getType()</code> 这种匿名子类写法，直接写 <code>List&lt;EmsRecord&gt;.class</code> 是不行的（泛型会被擦除）。</p>
+<h4 id="字段名和-json-不一样">字段名和 JSON 不一样</h4>
+<pre class="language-java"><code>import com.google.gson.annotations.SerializedName;
+
+public class ApiResp {
+    @SerializedName("temp_c")
+    private double tempC;
+
+    @SerializedName("humidity")
+    private double humidity;
+}</code></pre>
+<p>JSON 里叫 <code>temp_c</code>，Java 里叫 <code>tempC</code>，用 <code>@SerializedName</code> 对应起来。</p>
+<h4 id="常用配置">常用配置</h4>
+<pre class="language-java"><code>Gson gson = new GsonBuilder()
+        .setPrettyPrinting()                     // 输出带缩进，调试好看
+        .serializeNulls()                        // 保留 null 字段
+        .setDateFormat("yyyy-MM-dd HH:mm:ss")    // 日期格式
+        .create();</code></pre>
+<p>默认 Gson 会<strong>省略 null 字段</strong>，所以 <code>serializeNulls()</code> 不是默认行为。</p>
+<h4 id="解析不确定结构的-json">解析不确定结构的 JSON</h4>
+<p>不建实体类，直接按字段取：</p>
+<pre class="language-java"><code>import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+int code = obj.get("code").getAsInt();
+String msg = obj.get("msg").getAsString();
+
+JsonArray data = obj.getAsJsonArray("data");
+for (JsonElement e : data) {
+    EmsRecord r = gson.fromJson(e, EmsRecord.class);
+}</code></pre>
+<p>注意：<code>getAsInt()</code>、<code>getAsDouble()</code> 才有类型，直接 <code>get()</code> 拿到的是 <code>JsonElement</code>。</p>
+<h4 id="忽略字段">忽略字段</h4>
+<pre class="language-java"><code>// 方式一：transient，JVM 序列化和 Gson 都不处理
+transient private String password;
+
+// 方式二：只处理标了 @Expose 的字段
+import com.google.gson.annotations.Expose;
+
+@Expose private int id;
+@Expose private double temp;
+private String internalField;         // 没有 @Expose，会被忽略
+
+Gson gson = new GsonBuilder()
+        .excludeFieldsWithoutExposeAnnotation()
+        .create();</code></pre>
+<h4 id="常见坑">常见坑</h4>
+<table><thead><tr><th>坑</th><th>现象</th><th>解决</th></tr></thead><tbody><tr><td>JSON 字段名和类不一致</td><td>字段是 0 或 null</td><td><code>@SerializedName("实际名字")</code></td></tr><tr><td>泛型集合解析成 <code>LinkedTreeMap</code></td><td>强转 <code>ClassCastException</code></td><td>用 <code>TypeToken</code></td></tr><tr><td>数字默认当 double</td><td>取 int 要转换</td><td><code>getAsInt()</code> / <code>getAsDouble()</code></td></tr><tr><td>内部类不是 static</td><td>反序列化失败</td><td>改成 <code>static class</code></td></tr><tr><td>日期格式不对</td><td>解析报错</td><td><code>setDateFormat(...)</code></td></tr><tr><td>null 字段丢失</td><td>转回对象为 null</td><td><code>serializeNulls()</code></td></tr><tr><td>没有无参构造</td><td>一般能创建（Gson 用 Unsafe）</td><td>最好留个无参构造</td></tr><tr><td>字段是 final</td><td>可能反序列化失败</td><td>去掉 final 或写构造器</td></tr></tbody></table>
+<h4 id="和-httpclient-配合">和 HttpClient 配合</h4>
+<pre class="language-java"><code>HttpResponse&lt;String&gt; resp = client.send(request,
+        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+
+ApiResp data = gson.fromJson(resp.body(), ApiResp.class);</code></pre>
+<hr>
 <h2 id="7-httpurlconnection-完整写法">7. HttpURLConnection 完整写法</h2>
 <p>JDK 8 就有的老写法，兼容性最好，但代码偏啰嗦。</p>
 <pre class="language-java"><code>import java.io.BufferedReader;

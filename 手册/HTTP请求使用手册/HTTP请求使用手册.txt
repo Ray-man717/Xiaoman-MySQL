@@ -270,6 +270,137 @@ multipart 文件上传（手工构造，了解结构即可）：
 
 空体：GET、DELETE 一般没有请求体，Java 里用 BodyPublishers.noBody()。
 
+用 Gson 处理 JSON（推荐）：手拼 JSON 容易漏转义，正式一点的项目用 Gson。
+
+加依赖
+
+下载 gson-2.10.1.jar（约 280KB），放到项目根目录，编译运行都加上：
+
+    javac -encoding UTF-8 -cp "gson-2.10.1.jar" -d out ...
+    java -cp "out;gson-2.10.1.jar" 主类
+
+用 Maven 的话：
+
+    <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.10.1</version>
+    </dependency>
+
+对象 ↔ JSON
+
+    public class EmsRecord {
+        private int id;
+        private double temp;
+        private String time;
+        // getter / setter 省略
+    }
+    
+    Gson gson = new Gson();
+    
+    EmsRecord record = new EmsRecord(1, 26.4, "2026-01-01 08:00:00");
+    
+    String json = gson.toJson(record);                          // 对象 → JSON
+    // {"id":1,"temp":26.4,"time":"2026-01-01 08:00:00"}
+    
+    EmsRecord back = gson.fromJson(json, EmsRecord.class);      // JSON → 对象
+    System.out.println(back.getTemp());
+
+Gson 实例是线程安全的，可以反复用，不用每次都 new。
+
+集合与泛型
+
+    import com.google.gson.reflect.TypeToken;
+    import java.lang.reflect.Type;
+    
+    Type listType = new TypeToken<List<EmsRecord>>() { }.getType();
+    List<EmsRecord> list = gson.fromJson(json, listType);
+    
+    String arrayJson = gson.toJson(list);
+
+必须用 new TypeToken<List<X>>() { }.getType() 这种匿名子类写法，直接写 List<EmsRecord>.class 是不行的（泛型会被擦除）。
+
+字段名和 JSON 不一样
+
+    import com.google.gson.annotations.SerializedName;
+    
+    public class ApiResp {
+        @SerializedName("temp_c")
+        private double tempC;
+    
+        @SerializedName("humidity")
+        private double humidity;
+    }
+
+JSON 里叫 temp_c，Java 里叫 tempC，用 @SerializedName 对应起来。
+
+常用配置
+
+    Gson gson = new GsonBuilder()
+            .setPrettyPrinting()                     // 输出带缩进，调试好看
+            .serializeNulls()                        // 保留 null 字段
+            .setDateFormat("yyyy-MM-dd HH:mm:ss")    // 日期格式
+            .create();
+
+默认 Gson 会省略 null 字段，所以 serializeNulls() 不是默认行为。
+
+解析不确定结构的 JSON
+
+不建实体类，直接按字段取：
+
+    import com.google.gson.JsonArray;
+    import com.google.gson.JsonElement;
+    import com.google.gson.JsonObject;
+    import com.google.gson.JsonParser;
+    
+    JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+    int code = obj.get("code").getAsInt();
+    String msg = obj.get("msg").getAsString();
+    
+    JsonArray data = obj.getAsJsonArray("data");
+    for (JsonElement e : data) {
+        EmsRecord r = gson.fromJson(e, EmsRecord.class);
+    }
+
+注意：getAsInt()、getAsDouble() 才有类型，直接 get() 拿到的是 JsonElement。
+
+忽略字段
+
+    // 方式一：transient，JVM 序列化和 Gson 都不处理
+    transient private String password;
+    
+    // 方式二：只处理标了 @Expose 的字段
+    import com.google.gson.annotations.Expose;
+    
+    @Expose private int id;
+    @Expose private double temp;
+    private String internalField;         // 没有 @Expose，会被忽略
+    
+    Gson gson = new GsonBuilder()
+            .excludeFieldsWithoutExposeAnnotation()
+            .create();
+
+常见坑
+
+  坑  |  现象  |  解决
+  JSON 字段名和类不一致  |  字段是 0 或 null  |  @SerializedName("实际名字")
+  泛型集合解析成 LinkedTreeMap  |  强转 ClassCastException  |  用 TypeToken
+  数字默认当 double  |  取 int 要转换  |  getAsInt() / getAsDouble()
+  内部类不是 static  |  反序列化失败  |  改成 static class
+  日期格式不对  |  解析报错  |  setDateFormat(...)
+  null 字段丢失  |  转回对象为 null  |  serializeNulls()
+  没有无参构造  |  一般能创建（Gson 用 Unsafe）  |  最好留个无参构造
+  字段是 final  |  可能反序列化失败  |  去掉 final 或写构造器
+
+和 HttpClient 配合
+
+    HttpResponse<String> resp = client.send(request,
+            HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    
+    ApiResp data = gson.fromJson(resp.body(), ApiResp.class);
+
+------------------------------------------------------------------------
+
 7. HttpURLConnection 完整写法
 ------------------------------------------------------------
 
