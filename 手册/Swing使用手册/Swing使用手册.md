@@ -2553,26 +2553,80 @@ monitor.setNote("已处理 50%");
 
 | 代码 | 作用（注释） | 参数/说明 |
 | --- | --- | --- |
+| **一、窗口** | | |
 | `new JFrame("标题")` | 创建窗口 | `"标题"`：窗口标题文字 |
-| `frame.setSize(800, 600)` | 设置大小 | `800` 宽、`600` 高（像素） |
-| `frame.setLocationRelativeTo(null)` | 窗口居中 | `null` 表示相对屏幕 |
-| `frame.setDefaultCloseOperation(EXIT_ON_CLOSE)` | 关闭即退出 | 也可用 `DISPOSE_ON_CLOSE` |
-| `frame.add(组件, BorderLayout.CENTER)` | 添加组件 | 第二个参数是位置 |
-| `new JPanel(new GridLayout(2, 2))` | 网格面板 | `2, 2`：两行两列 |
-| `new VBox(8)` | 竖排（JavaFX） | `8`：控件间距 |
-| `button.addActionListener(e -> { })` | 按钮点击 | `e`：事件对象，可忽略 |
-| `textField.getText().trim()` | 取输入 | `trim()` 去掉首尾空格 |
-| `label.setText("文字")` | 改文字 | |
-| `new JTable(model)` | 创建表格 | `model`：`DefaultTableModel` |
-| `model.addRow(new Object[]{...})` | 加一行 | 元素顺序对应列 |
-| `model.setRowCount(0)` | 清空表格 | |
+| `setSize(800, 600)` | 设置大小 | `800` 宽、`600` 高（像素） |
+| `setLocationRelativeTo(null)` | 窗口居中 | `null`：相对屏幕 |
+| `setMinimumSize(new Dimension(600, 400))` | 最小尺寸 | |
+| `setDefaultCloseOperation(EXIT_ON_CLOSE)` | 关闭即退出 | 还有 `DISPOSE_ON_CLOSE`、`HIDE_ON_CLOSE` |
+| `setVisible(true)` | 显示窗口 | 必须最后调用 |
+| `dispose()` | 关闭并释放 | |
+| `pack()` | 按内容调整大小 | 对话框常用 |
+| **二、布局** | | |
+| `setLayout(new BorderLayout())` | 东南西北中 | 第二参数是间距 |
+| `add(组件, BorderLayout.NORTH)` | 加到某区 | 同区重复会覆盖 |
+| `new FlowLayout(FlowLayout.LEFT, 10, 8)` | 流式布局 | 对齐方式、水平间距、垂直间距 |
+| `new GridLayout(3, 2, 8, 8)` | 网格 | 行、列、水平间距、垂直间距 |
+| `new GridBagLayout()` + `GridBagConstraints` | 灵活布局 | `gridx`/`gridy` 位置、`fill` 填充、`weightx` 权重 |
+| `new BoxLayout(panel, BoxLayout.Y_AXIS)` | 单方向排列 | `X_AXIS` 横排 |
+| `Box.createVerticalStrut(10)` | 固定空隙 | |
+| `Box.createVerticalGlue()` | 弹簧 | 把上面组件顶上去 |
+| `setLayout(null)` + `setBounds(x, y, w, h)` | 绝对布局 | 不推荐 |
+| **三、组件** | | |
+| `new JLabel("文字")` | 标签 | `setHorizontalAlignment` 对齐 |
+| `new JButton("文字")` | 按钮 | `setEnabled` 禁用 |
+| `new JTextField(10)` | 单行输入 | `10`：列宽（字符数） |
+| `new JPasswordField(10)` | 密码框 | `getPassword()` 返回 `char[]` |
+| `new JTextArea(8, 30)` | 多行文本 | 行数、列数；配 `JScrollPane` |
+| `new JCheckBox("文字")` | 勾选框 | `isSelected()` |
+| `new JRadioButton("文字")` + `ButtonGroup` | 单选 | 同组互斥 |
+| `new JComboBox<>(items)` | 下拉框 | `getSelectedItem()` |
+| `new JList<>(model)` | 列表 | `DefaultListModel` |
+| `new JProgressBar(0, 100)` | 进度条 | `setValue`、`setStringPainted` |
+| `new JSpinner(new SpinnerNumberModel(25, -20, 60, 0.5))` | 数字调节 | 初值、最小、最大、步长 |
+| `new JSlider(0, 100, 40)` | 滑块 | `getValue()` |
+| `new JScrollPane(组件)` | 滚动面板 | 表格/列表必包 |
+| `new JTabbedPane()` | 分页 | `addTab("标题", panel)` |
+| `new JSplitPane(HORIZONTAL_SPLIT, a, b)` | 分栏 | `setDividerLocation(200)` |
+| `new JToolBar()` | 工具栏 | `setFloatable(false)` |
+| **四、事件** | | |
+| `btn.addActionListener(e -> { })` | 按钮点击 | `e`：事件对象 |
+| `check.addItemListener(e -> { })` | 勾选变化 | |
+| `slider.addChangeListener(e -> { })` | 值变化 | |
+| `field.getDocument().addDocumentListener(...)` | 文字变化 | 三个方法要实现 |
+| `table.getSelectionModel().addListSelectionListener(...)` | 选中行变化 | |
+| `setDefaultButton(btn)` | 回车触发 | 在 JFrame/JDialog 里 |
+| `setMnemonic('Y')` | Alt 快捷键 | |
+| `setAccelerator(KeyStroke.getKeyStroke("control S"))` | 菜单快捷键 | |
+| `frame.addWindowListener(new WindowAdapter() { })` | 窗口事件 | 关闭前确认 |
+| **五、对话框** | | |
+| `JOptionPane.showMessageDialog(this, "文字")` | 提示 | `this`：父窗口 |
+| `showConfirmDialog(this, "确定？", "标题", YES_NO_OPTION)` | 确认 | 返回 `YES_OPTION` |
+| `showInputDialog(this, "请输入")` | 输入 | 返回 `String`，取消返回 `null` |
+| `showOptionDialog(...)` | 自定义按钮 | |
+| `new JFileChooser().showOpenDialog(this)` | 选文件 | 返回 `APPROVE_OPTION` |
+| `new FileNameExtensionFilter("CSV", "csv")` | 文件过滤器 | |
+| **六、表格** | | |
+| `new DefaultTableModel(列名数组, 0)` | 表格模型 | `0`：初始行数 |
+| `new JTable(model)` | 创建表格 | |
+| `model.addRow(new Object[]{...})` | 加一行 | 顺序对应列 |
+| `model.removeRow(i)` | 删一行 | |
+| `model.setRowCount(0)` | 清空 | |
+| `model.getValueAt(r, c)` | 取值 | |
+| `model.setValueAt(v, r, c)` | 改值 | |
 | `table.setAutoCreateRowSorter(true)` | 点击表头排序 | |
-| `new JScrollPane(table)` | 包滚动条 | 表格必须包 |
-| `JOptionPane.showMessageDialog(this, "文字")` | 提示框 | `this`：父窗口 |
-| `showConfirmDialog(...)` | 确认框 | 返回 `YES_OPTION` 等 |
-| `getRootPane().setDefaultButton(btn)` | 回车触发按钮 | |
-| `new Timer(5000, e -> load())` | 每 5 秒执行 | `5000`：毫秒 |
-| `new SwingWorker<T, V>() { ... }.execute()` | 后台任务 | `done()` 在界面线程 |
-| `SwingUtilities.invokeLater(() -> { })` | 切回界面线程 | |
-| `frame.setVisible(true)` | 显示窗口 | 必须最后调用 |
+| `table.convertRowIndexToModel(viewRow)` | 视图行转模型行 | 排序后必须转换 |
+| `table.getSelectedRow()` | 选中行 | 没选返回 -1 |
+| `table.setRowHeight(24)` | 行高 | |
+| `getColumnModel().getColumn(i).setPreferredWidth(120)` | 列宽 | |
+| `new DefaultTableCellRenderer()` | 单元格渲染器 | `setHorizontalAlignment` 居中 |
+| `new DefaultCellEditor(combo)` | 单元格编辑器 | 下拉编辑 |
+| `TableRowSorter` + `RowFilter.regexFilter(...)` | 过滤 | 搜索框用 |
+| **七、外观与打包** | | |
+| `UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())` | 系统外观 | 必须在创建窗口前 |
+| `UIManager.put("Label.font", new Font("微软雅黑", PLAIN, 14))` | 全局字体 | 中文显示 |
+| `setIconImage(new ImageIcon("app.png").getImage())` | 窗口图标 | |
+| `new ImageIcon(getClass().getResource("/icons/app.png"))` | 资源图标 | 打包后可用 |
+| `java -cp "out;驱动.jar" 主类` | 运行 | Windows 分号 |
+| `jar --create --file app.jar --main-class 主类 -C out .` | 打 jar | |
 

@@ -1261,33 +1261,120 @@ Files.writeString(Path.of("out.txt"), "内容", StandardCharsets.UTF_8);
 
 | 代码 | 作用（注释） | 参数/说明 |
 | --- | --- | --- |
-| `int n = 10;` | 声明整数变量 | `int`：4 字节整数；`n`：变量名；`10`：初始值 |
-| `double d = 3.14;` | 声明小数 | `double`：8 字节浮点 |
-| `String s = "abc";` | 声明字符串 | 值必须用双引号 |
-| `boolean ok = true;` | 声明布尔 | 只有 `true` / `false` |
-| `int i = (int) d;` | 强制类型转换 | 小数转整数会截断，`d=3.9` 得到 `3` |
-| `double x = 7.0 / 2;` | 小数除法 | 至少一边是小数，否则 `7/2=3` |
-| `a % b` | 取余数 | `7 % 2 = 1` |
-| `a == b` / `!s.equals("x")` | 比较 | 基本类型用 `==`，对象用 `equals` |
-| `cond ? a : b` | 三元表达式 | 条件成立取 `a`，否则取 `b` |
-| `for (int i = 0; i < n; i++)` | 计数循环 | `i=0` 起点，`i<n` 条件，`i++` 步长 |
-| `for (String x : list)` | 增强 for | 遍历数组或集合 |
-| `int[] a = new int[5];` | 创建数组 | `5`：长度，下标 0~4 |
-| `a.length` | 数组长度 | 注意不是 `length()` |
-| `Arrays.toString(a)` | 数组转字符串 | 直接打印数组会看到地址 |
-| `static int add(int a, int b)` | 定义方法 | `a`、`b`：参数；`int`：返回值类型 |
-| `static void sayHello()` | 无返回值方法 | `void` 表示不返回 |
-| `new EmsRecord(1, 26.4)` | 创建对象 | 参数对应构造方法 |
-| `class Dog extends Animal` | 继承 | 只能继承一个类 |
-| `@Override` | 重写父类方法 | 方法名、参数、返回值要一致 |
-| `class A implements B` | 实现接口 | 可以实现多个接口 |
-| `private` / `public` | 访问修饰符 | `private` 只能本类用；`public` 到处可用 |
-| `static final int MAX = 100;` | 常量 | 全大写，不能改 |
-| `try { } catch (Exception e) { }` | 异常处理 | `e.getMessage()` 取错误信息 |
-| `try (Connection c = ...) { }` | 自动关闭资源 | 只用于 `AutoCloseable` |
-| `s.substring(1, 3)` | 截取字符串 | 从下标 1（含）到 3（不含） |
-| `s.split(",")` | 按分隔符切分 | 返回 `String[]` |
-| `Integer.parseInt("123")` | 字符串转整数 | 不是数字会抛异常 |
-| `List<String> list = new ArrayList<>();` | 列表 | `add`、`get`、`size`、`remove` |
-| `Map<String, Double> map = new HashMap<>();` | 键值对 | `put`、`get`、`getOrDefault` |
+| **一、基本类型与变量** | | |
+| `byte b = 100;` | 1 字节整数 | 范围 -128 ~ 127 |
+| `short s = 1000;` | 2 字节整数 | 范围 -32768 ~ 32767 |
+| `int n = 42;` | 4 字节整数 | 默认整数类型 |
+| `long l = 1000L;` | 8 字节整数 | 字面量加 `L` |
+| `float f = 1.5f;` | 4 字节小数 | 字面量加 `f` |
+| `double d = 26.4;` | 8 字节小数 | 默认小数类型 |
+| `char c = 'A';` | 单个字符 | 单引号，长度 1 |
+| `boolean ok = true;` | 布尔 | 只有 `true` / `false` |
+| `String s = "abc";` | 字符串 | 双引号，引用类型 |
+| `int i = (int) d;` | 强制类型转换 | 大转小，小数被截断 |
+| `double x = 7.0 / 2;` | 小数除法 | 至少一边是小数 |
+| `Integer.parseInt("123")` | 字符串转整数 | 不是数字抛异常 |
+| `String.valueOf(42)` | 任意类型转字符串 | |
+| **二、运算符** | | |
+| `a + b` `a - b` `a * b` `a / b` `a % b` | 算术 | `%` 取余；整数除法丢小数 |
+| `i++` / `++i` | 自增 | 后用/先用 |
+| `a += 1` | 复合赋值 | 等价 `a = a + 1` |
+| `a > b` `a <= b` `a == b` `a != b` | 比较 | 对象比较用 `equals` |
+| `a && b` `a \|\| b` `!a` | 逻辑与/或/非 | 短路求值 |
+| `cond ? a : b` | 三元运算 | 条件真取 a |
+| `a & b` `a \| b` `a ^ b` | 位运算 | 按位与/或/异或 |
+| `a << 1` / `a >> 1` | 移位 | 左移等于乘 2 |
+| **三、流程控制** | | |
+| `if (cond) { } else if (cond) { } else { }` | 分支 | 条件必须 `boolean` |
+| `switch (x) { case 1: break; default: }` | 多分支 | 别忘 `break` |
+| `switch (x) { case 1, 2 -> "工作日"; }` | JDK 14+ 箭头 | 自动 break |
+| `for (int i = 0; i < n; i++) { }` | 计数循环 | 初始化/条件/步长 |
+| `for (String s : list) { }` | 增强 for | 遍历数组/集合 |
+| `while (cond) { }` | 条件循环 | 条件先判断 |
+| `do { } while (cond);` | 至少执行一次 | 条件后判断 |
+| `break;` / `continue;` | 跳出 / 跳过 | |
+| **四、数组** | | |
+| `int[] a = new int[5];` | 创建数组 | 默认值 0 |
+| `int[] b = {1, 2, 3};` | 字面量初始化 | |
+| `a.length` | 长度 | 不是 `length()` |
+| `a[0]` | 取元素 | 下标从 0，越界抛异常 |
+| `Arrays.sort(a)` | 排序 | 升序 |
+| `Arrays.copyOf(a, 10)` | 复制 | 不足补 0 |
+| `Arrays.toString(a)` | 转字符串 | 打印用 |
+| **五、方法** | | |
+| `static int add(int a, int b) { return a + b; }` | 定义方法 | 参数、返回类型 |
+| `static void say() { }` | 无返回值 | `void` |
+| `static int sum(int... nums)` | 可变参数 | `nums` 是数组 |
+| `add(1, 2)` | 调用 | 按顺序传参 |
+| `return;` | 提前结束方法 | `void` 方法可用 |
+| **六、类与对象** | | |
+| `public class EmsRecord { }` | 定义类 | 文件名与 public 类同名 |
+| `private int id;` | 字段 | `private` 封装 |
+| `public EmsRecord() { }` | 无参构造 | 名字与类名相同 |
+| `public EmsRecord(int id) { this.id = id; }` | 全参构造 | `this` 区分字段与参数 |
+| `new EmsRecord(1)` | 创建对象 | `new` + 构造参数 |
+| `r.getId()` / `r.setId(2)` | getter / setter | 访问私有字段 |
+| `r.toString()` | 转字符串 | 可重写 |
+| `r.equals(other)` | 比较内容 | 可重写 |
+| **七、继承与接口** | | |
+| `class Dog extends Animal` | 继承 | 只能继承一个 |
+| `@Override` | 重写注解 | 写错会编译报错 |
+| `super.method()` | 调父类方法 | |
+| `super(name)` | 调父类构造 | 必须第一行 |
+| `final class A { }` | 不可继承 | |
+| `abstract class Shape { abstract double area(); }` | 抽象类 | 不能 new |
+| `class A implements B` | 实现接口 | 可实现多个 |
+| `interface B { default void f() { } }` | 接口默认方法 | JDK 8+ |
+| **八、static、final、包** | | |
+| `static int count;` | 静态字段 | 全类共享 |
+| `static void util() { }` | 静态方法 | 不能访问实例成员 |
+| `static final int MAX = 100;` | 常量 | 全大写下划线 |
+| `package com.x.util;` | 包声明 | 全小写 |
+| `import java.util.List;` | 导入类 | |
+| `private` / `public` / `protected` | 访问修饰符 | 控制可见范围 |
+| **九、异常** | | |
+| `try { } catch (Exception e) { }` | 捕获 | `e.getMessage()` 取信息 |
+| `try { } finally { }` | 一定执行 | 释放资源 |
+| `throw new IllegalArgumentException("x")` | 抛异常 | |
+| `void f() throws IOException { }` | 声明异常 | 交给调用方 |
+| `class MyException extends RuntimeException` | 自定义异常 | |
+| `try (Connection c = ...) { }` | 自动关闭 | `AutoCloseable` |
+| **十、常用类** | | |
+| `s.length()` | 字符串长度 | |
+| `s.equals("x")` | 比较内容 | 不用 `==` |
+| `s.contains("x")` | 是否包含 | |
+| `s.startsWith("x")` | 是否以 x 开头 | |
+| `s.substring(1, 3)` | 截取 | 1 含、3 不含 |
+| `s.indexOf("x")` | 位置 | 没有返回 -1 |
+| `s.replace("a", "b")` | 替换 | |
+| `s.trim()` | 去首尾空格 | |
+| `s.split(",")` | 切分 | 返回数组 |
+| `s.toUpperCase()` | 转大写 | |
+| `new StringBuilder().append(x).toString()` | 拼接 | 循环里用它 |
+| `Math.max(a, b)` / `Math.abs(x)` / `Math.round(x)` | 数学 | |
+| `LocalDateTime.now()` | 当前时间 | JDK 8+ |
+| `DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")` | 格式化 | |
+| `new BigDecimal("0.1").add(new BigDecimal("0.2"))` | 精确计算 | 用字符串构造 |
+| `new Random().nextInt(100)` | 随机数 | 0~99 |
+| **十一、集合** | | |
+| `List<String> list = new ArrayList<>();` | 列表 | 有序可重复 |
+| `list.add("x")` | 添加 | |
+| `list.get(0)` | 取 | 下标从 0 |
+| `list.size()` | 长度 | |
+| `list.contains("x")` | 是否包含 | |
+| `Set<String> set = new HashSet<>();` | 集合 | 不重复 |
+| `Map<String, Double> map = new HashMap<>();` | 键值对 | |
+| `map.put("a", 1.0)` | 放 | 同键覆盖 |
+| `map.get("a")` | 取 | 没有返回 null |
+| `map.getOrDefault("a", 0.0)` | 取或默认 | |
+| `map.containsKey("a")` | 是否含键 | |
+| `for (Map.Entry<String, Double> e : map.entrySet())` | 遍历 Map | `e.getKey()`、`e.getValue()` |
+| `Iterator<String> it = list.iterator()` | 迭代器 | 遍历时删除用它 |
+| `List.of("a", "b")` | 不可变列表 | 不能 add |
+| **十二、枚举与注解** | | |
+| `enum Status { ONLINE, OFFLINE }` | 枚举 | 值全大写 |
+| `Status.ONLINE` | 用枚举 | 用 `==` 比较 |
+| `@Override` | 重写 | |
+| `@Deprecated` | 已过时 | |
+| `@SuppressWarnings("unchecked")` | 抑制警告 | |
 

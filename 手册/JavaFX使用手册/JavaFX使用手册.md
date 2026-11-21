@@ -1418,25 +1418,93 @@ java --module-path "E:\javafx-sdk-17.0.9\lib" --add-modules javafx.controls,java
 
 | 代码 | 作用（注释） | 参数/说明 |
 | --- | --- | --- |
-| `class App extends Application` | 程序入口类 | 重写 `start(Stage)` |
+| **一、程序结构** | | |
+| `class App extends Application` | 入口类 | 重写 `start(Stage)` |
 | `launch(args)` | 启动 | `args`：命令行参数 |
-| `new Scene(root, 800, 600)` | 创建场景 | `root` 根节点；宽高像素 |
+| `void start(Stage stage)` | 创建界面 | 由 JavaFX 自动调用 |
+| `new Scene(root, 800, 600)` | 创建场景 | `root`：根节点；宽高像素 |
 | `stage.setScene(scene)` | 设置场景 | |
 | `stage.show()` | 显示窗口 | |
+| `stage.setTitle("标题")` | 窗口标题 | |
+| `Platform.exit()` | 退出程序 | |
+| **二、布局** | | |
 | `new VBox(8, a, b)` | 竖排 | `8`：间距；后面是子节点 |
 | `new HBox(8)` | 横排 | |
-| `new BorderPane()` | 上下左右中 | `setTop/setCenter/...` |
-| `GridPane.add(node, 0, 1)` | 加到网格 | `0` 列、`1` 行 |
-| `button.setOnAction(e -> { })` | 按钮点击 | |
-| `field.setPromptText("请输入")` | 占位提示 | |
-| `new TableView<>(items)` | 表格 | `items`：`ObservableList` |
-| `col.setCellValueFactory(...)` | 列绑定字段 | `PropertyValueFactory("id")` |
-| `label.textProperty().bind(field.textProperty())` | 单项绑定 | 一行变另一行跟着变 |
-| `a.bindBidirectional(b)` | 双向绑定 | |
-| `Platform.runLater(() -> { })` | 回界面线程 | 后台更新界面必须用 |
-| `new Task<T>() { call() { } }` | 后台任务 | `setOnSucceeded` 取结果 |
-| `bar.progressProperty().bind(task.progressProperty())` | 进度条绑定 | |
-| `new Timeline(new KeyFrame(Duration.seconds(5), e -> ...))` | 定时 | `5`：秒 |
-| `new Alert(AlertType.INFORMATION, "文字")` | 提示框 | `showAndWait()` 阻塞等待 |
-| `FileChooser.showSaveDialog(stage)` | 保存文件对话框 | 返回 `File` 或 `null` |
+| `new BorderPane()` | 上下左右中 | `setTop/setCenter/setBottom/setLeft/setRight` |
+| `new GridPane()` | 网格 | `add(node, 列, 行)`；`setHgap`、`setVgap` |
+| `new FlowPane()` | 自动换行 | |
+| `new StackPane()` | 层叠居中 | |
+| `new AnchorPane()` | 锚点定位 | `setTopAnchor` 等 |
+| `new ScrollPane(node)` | 滚动容器 | |
+| `new TabPane()` | 分页 | `addTab("标题", node)` |
+| `new SplitPane(a, b)` | 分栏 | `setDividerPositions(0.3)` |
+| `HBox.setHgrow(node, Priority.ALWAYS)` | 横向拉伸 | 占剩余空间 |
+| `VBox.setVgrow(node, Priority.ALWAYS)` | 纵向拉伸 | |
+| **三、控件** | | |
+| `new Label("文字")` | 标签 | |
+| `new Button("文字")` | 按钮 | `setOnAction` |
+| `new TextField()` | 单行输入 | `setPromptText("请输入")` 占位提示 |
+| `new PasswordField()` | 密码框 | |
+| `new TextArea()` | 多行文本 | `setEditable(false)` 只读 |
+| `new CheckBox("文字")` | 勾选 | `isSelected()` |
+| `new RadioButton("文字")` + `ToggleGroup` | 单选 | 同组互斥 |
+| `new ComboBox<String>()` | 下拉 | `getItems().addAll(...)`；`getSelectionModel()` |
+| `new ListView<String>()` | 列表 | `getItems()` |
+| `new TableView<>()` | 表格 | 见第六节 |
+| `new TreeView<>()` | 树 | |
+| `new ProgressBar(0.35)` | 进度条 | 0~1 小数；`-1` 表示不确定 |
+| `new Slider(0, 100, 40)` | 滑块 | 最小、最大、初值 |
+| `new Spinner(...)` | 数字调节 | `SpinnerNumberModel` |
+| `new MenuBar()` | 菜单栏 | |
+| **四、事件与绑定** | | |
+| `btn.setOnAction(e -> { })` | 按钮点击 | `e`：`ActionEvent` |
+| `field.textProperty().addListener((obs, o, n) -> { })` | 文字变化 | 旧值、新值 |
+| `check.selectedProperty().addListener(...)` | 勾选变化 | |
+| `label.textProperty().bind(field.textProperty())` | 单向绑定 | 一边变另一边跟着变 |
+| `a.textProperty().bindBidirectional(b.textProperty())` | 双向绑定 | |
+| `Bindings.concat("温度：", temp, " ℃")` | 拼接绑定 | |
+| `temp.asString("%.1f")` | 数值格式化 | |
+| `Platform.runLater(() -> { })` | 回界面线程 | 后台线程更新界面必须用 |
+| **五、FXML** | | |
+| `new FXMLLoader(getClass().getResource("/view/x.fxml"))` | 加载 FXML | 路径从 classpath 根开始 |
+| `loader.load()` | 得到根节点 | 返回 `Parent` |
+| `fx:controller="包.Controller"` | 指定控制器 | FXML 里写 |
+| `@FXML private Button btn;` | 注入控件 | 名字与 `fx:id` 一致 |
+| `@FXML private void onRefresh() { }` | 注入事件 | FXML 里 `onAction="#onRefresh"` |
+| `@FXML private void initialize() { }` | 初始化 | 控件注入后自动调用 |
+| **六、TableView** | | |
+| `ObservableList<E> items = FXCollections.observableArrayList()` | 数据源 | 变化自动刷新 |
+| `new TableView<>(items)` | 表格 | |
+| `new TableColumn<>("列名")` | 列 | |
+| `col.setCellValueFactory(new PropertyValueFactory<>("id"))` | 绑定字段 | 实体要有 `idProperty()` |
+| `col.setCellValueFactory(c -> c.getValue().idProperty().asObject())` | lambda 绑定 | 属性不是 Observable 时 |
+| `col.setCellFactory(...)` | 自定义单元格 | 改颜色、加图标 |
+| `table.getItems().add(record)` | 加一行 | |
+| `table.getSelectionModel().getSelectedItem()` | 选中行 | 没选返回 null |
+| **七、并发** | | |
+| `new Thread(() -> { }).start()` | 后台线程 | 不能直接改界面 |
+| `Task<T>` + `call()` | 后台任务 | `setOnSucceeded` 取结果 |
+| `task.setOnFailed(e -> ...)` | 失败回调 | `getException()` |
+| `Service<T>` + `restart()` | 可复用任务 | |
+| `bar.progressProperty().bind(task.progressProperty())` | 进度绑定 | |
+| `new Timeline(new KeyFrame(Duration.seconds(5), e -> ...))` | 定时 | `setCycleCount(INDEFINITE)` |
+| **八、动画与图表** | | |
+| `FadeTransition(Duration.millis(600), node)` | 淡入淡出 | `play()` |
+| `TranslateTransition(...)` | 平移 | `setByX` |
+| `ScaleTransition(...)` | 缩放 | `setToX` |
+| `new LineChart<>(xAxis, yAxis)` | 折线图 | `XYChart.Series` |
+| `series.getData().add(new XYChart.Data<>("08:00", 24.1))` | 加数据点 | |
+| `chart.getData().add(series)` | 加系列 | |
+| **九、对话框** | | |
+| `new Alert(AlertType.INFORMATION, "文字")` | 提示 | `showAndWait()` |
+| `AlertType.CONFIRMATION` | 确认框 | 返回 `Optional<ButtonType>` |
+| `new TextInputDialog("默认值")` | 输入框 | `showAndWait()` 取 `String` |
+| `new FileChooser().showSaveDialog(stage)` | 保存对话框 | 返回 `File` |
+| `Dialog<ButtonType>` | 自定义对话框 | `setContent(node)` |
+| **十、CSS 与打包** | | |
+| `scene.getStylesheets().add("/css/app.css")` | 加载样式 | 路径要 `toExternalForm()` |
+| `button.getStyleClass().add("primary")` | 加样式类 | CSS 里 `.primary { }` |
+| `button.setStyle("-fx-text-fill: red;")` | 内联样式 | 调试用 |
+| `--module-path ... --add-modules javafx.controls` | 运行参数 | 必须加，否则报 missing |
+| `jpackage --type app-image ...` | 打包 exe | 目标机不用装 Java |
 

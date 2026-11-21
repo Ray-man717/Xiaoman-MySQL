@@ -573,21 +573,45 @@ while 是另一种循环，意思是「只要条件成立就一直做」：
 ------------------------------------------------------------
 
   你想做什么  |  代码  |  参数说明
-  打印一行字  |  System.out.println("文字");  |  括号里放要打印的内容，文字要加双引号
-  定义整数  |  int age = 13;  |  int：整数类型；age：名字；13：值
-  定义小数  |  double score = 95.5;  |  double：小数类型
-  定义文字  |  String name = "小明";  |  String：文字类型，值必须加双引号
-  定义真假  |  boolean ok = true;  |  只能放 true 或 false
-  准备读键盘  |  Scanner sc = new Scanner(System.in);  |  System.in：表示键盘输入
-  读一整行  |  String line = sc.nextLine();  |  读到你按回车为止
-  读一个整数  |  int n = sc.nextInt();  |  输入不是整数会报错
-  判断  |  if (score >= 60) { } else { }  |  >=：大于等于；==：等于（两个等号）
-  循环 10 次  |  for (int i = 1; i <= 10; i++) { }  |  i=1：起点；i<=10：条件；i++：每次加 1
-  条件循环  |  while (i <= 5) { i++; }  |  条件一直成立就会一直做，记得改 i
-  定义方法  |  static int add(int a, int b) { return a + b; }  |  a、b：参数；return：返回结果
-  调用方法  |  int r = add(3, 5);  |  括号里按顺序传参数
-  生成随机数  |  Random r = new Random(); int x = r.nextInt(100);  |  100：上限，结果是 0~99
-  跳出整个循环  |  break;  |  立即结束循环
-  跳过本次  |  continue;  |  跳过这一轮，继续下一轮
-
-  说明：「参数说明」一列写的是括号里、等号右边那些东西分别代表什么。
+  程序的外壳  |  public class Hello { public static void main(String[] args) { } }  |  文件名必须是 Hello.java；main 是入口
+  单行注释  |  // 说明文字  |  编译时被忽略，给自己看的
+  多行注释  |  /* 说明文字 */  |  
+  打印并换行  |  System.out.println("文字");  |  括号里放内容，文字要加双引号
+  打印不换行  |  System.out.print("文字");  |  
+  定义整数  |  int age = 13;  |  int：整数类型；age：名字；13：初始值
+  定义长整数  |  long n = 100000L;  |  字面量后面要加 L
+  定义小数  |  double score = 95.5;  |  
+  定义文字  |  String name = "小明";  |  值必须用双引号
+  定义开关  |  boolean ok = true;  |  只能放 true 或 false
+  定义单个字符  |  char c = 'A';  |  单引号，只能一个字符
+  定义常量  |  final int MAX = 100;  |  定义后不能改
+  字符串转整数  |  int n = Integer.parseInt("123");  |  内容不是数字会报错
+  字符串转小数  |  double d = Double.parseDouble("3.14");  |  
+  加减乘除  |  a + b、a - b、a * b、a / b  |  两个整数相除，结果取整（7/2=3）
+  取余数  |  a % b  |  7 % 2 得 1
+  自增  |  i++  |  用完之后加 1；++i 是先加
+  累加  |  sum += i;  |  等价于 sum = sum + i
+  比较  |  >、<、>=、<=、==、!=  |  等于必须两个等号
+  逻辑与  |  a && b  |  两边都真才真
+  逻辑或  |  `a \  |  \  |  b`  |  一边真就真
+  逻辑非  |  !a  |  取反
+  判断  |  if (条件) { } else if (条件) { } else { }  |  条件要写在括号里
+  三元表达式  |  条件 ? A : B  |  真取 A，假取 B
+  计数循环  |  for (int i = 1; i <= 10; i++) { }  |  i=1 起点；i<=10 条件；i++ 步长
+  条件循环  |  while (条件) { }  |  条件成立就一直做
+  至少做一次  |  do { } while (条件);  |  先执行再判断
+  跳出整个循环  |  break;  |  立即结束
+  跳过本次  |  continue;  |  继续下一轮
+  定义数组  |  int[] nums = {1, 2, 3};  |  
+  数组长度  |  nums.length  |  不是 length()
+  取数组元素  |  nums[0]  |  下标从 0 开始
+  遍历数组  |  for (int n : nums) { }  |  增强 for
+  定义有返回值方法  |  static int add(int a, int b) { return a + b; }  |  a、b：参数；int：返回值类型
+  定义无返回值方法  |  static void sayHello() { }  |  void 表示不返回
+  调用方法  |  int r = add(3, 5);  |  按顺序传参
+  准备读键盘  |  Scanner sc = new Scanner(System.in);  |  要先 import java.util.Scanner;
+  读整数  |  int n = sc.nextInt();  |  输入字母会报错
+  读一整行  |  String s = sc.nextLine();  |  读到回车为止
+  读小数  |  double d = sc.nextDouble();  |  
+  生成随机数  |  Random r = new Random(); int x = r.nextInt(100);  |  100：上限，结果 0~99
+  字符串拼接  |  "我叫" + name  |  任意类型都能拼

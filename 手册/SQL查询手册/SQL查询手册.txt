@@ -642,49 +642,78 @@ Time 列是 DATETIME，下面是排查数据、做报表最常用的一组写法
 
 ------------------------------------------------------------------------
 
-附：写查询的 10 条习惯
-------------------------------------------------------------
-
-  1. 先 DESC 表名 确认字段，再动笔；
-  2. 生产查询不用 SELECT *，只取需要的列；
-  3. WHERE 条件写全，改删数据前先 SELECT 验证；
-  4. AND / OR 混用加括号；
-  5. 判断 NULL 只用 IS NULL；
-  6. 时间范围用 >= ... AND < ...，尽量不对列套函数；
-  7. 分组统计注意 ONLY_FULL_GROUP_BY；
-  8. 分页一定配 ORDER BY，并带上唯一列；
-  9. 大表查询先 EXPLAIN，看有没有 type: ALL；
-  10. 改数据前 START TRANSACTION;，确认后 COMMIT;。
-
-------------------------------------------------------------------------
-
 附：代码与注释对照表
 ------------------------------------------------------------
 
   SQL 代码  |  作用（注释）  |  参数/说明
-  SELECT 列 FROM 表;  |  查询指定列  |  列用逗号分隔，* 表示全部
-  SELECT DISTINCT 列 FROM 表;  |  去重  |  只保留不同的值
-  WHERE 列 运算符 值  |  过滤行  |  运算符：=、>、<、>=、!=
-  WHERE a AND b / OR  |  逻辑组合  |  AND 优先级高于 OR，混用加括号
-  WHERE 列 IN (1,2,3)  |  多值匹配  |  等价于多个 OR
+  一、基础查询  |    |  
+  SELECT 列 FROM 表;  |  查询指定列  |  多列用逗号；* 查全部
+  SELECT 列 AS 别名 FROM 表;  |  起别名  |  别名可中文（加反引号）
+  SELECT DISTINCT 列 FROM 表;  |  去重  |  只保留不同值
+  SELECT 计算表达式 FROM 表;  |  计算列  |  如 Temp * 9 / 5 + 32
+  SELECT COUNT(DISTINCT 列) FROM 表;  |  去重计数  |  不重复的个数
+  二、条件  |    |  
+  WHERE 列 = 值  |  等于  |  数值不加引号，文字加单引号
+  WHERE 列 > 值 / < / >= / <= / !=  |  比较  |  
+  WHERE 条件1 AND 条件2  |  同时成立  |  AND 优先级高于 OR
+  WHERE 条件1 OR 条件2  |  任一成立  |  混用时加括号
+  WHERE 条件1 AND NOT 条件2  |  取反  |  
+  WHERE 列 IN (1, 2, 3)  |  多值之一  |  等价多个 OR
+  WHERE 列 NOT IN (1, 2)  |  都不在  |  
   WHERE 列 BETWEEN 20 AND 30  |  闭区间  |  含两端
-  WHERE 列 LIKE '张%'  |  模糊匹配  |  % 任意多字符，_ 一个字符
-  ORDER BY 列 DESC  |  排序  |  DESC 降序，ASC 升序（默认）
+  WHERE 列 LIKE '张%'  |  模糊匹配  |  % 任意多字符；_ 一个字符
+  WHERE 列 LIKE '%\%%' ESCAPE '\\'  |  匹配百分号本身  |  需要转义
+  WHERE 列 IS NULL / IS NOT NULL  |  判空  |  不能用 = NULL
+  三、排序与分页  |    |  
+  ORDER BY 列 DESC  |  降序  |  ASC 升序（默认）
+  ORDER BY 列1 DESC, 列2 ASC  |  多列排序  |  前一个相同时看后一个
+  LIMIT 10  |  取前 10 条  |  
   LIMIT 10 OFFSET 20  |  分页  |  跳过 20 条，取 10 条
-  COUNT(*)  |  统计行数  |  COUNT(列) 只统计非 NULL
+  LIMIT 20, 10  |  简写分页  |  跳过 20，取 10（易读性差）
+  四、聚合与分组  |    |  
+  COUNT(*)  |  行数  |  统计所有行
+  COUNT(列)  |  非空个数  |  忽略 NULL
   SUM(列) / AVG(列)  |  求和 / 平均  |  AVG 忽略 NULL
   MAX(列) / MIN(列)  |  最大 / 最小  |  
+  ROUND(AVG(列), 2)  |  保留 2 位小数  |  2：小数位数
   GROUP BY 列  |  分组  |  非聚合列必须出现在这里（否则报 1055）
   HAVING 条件  |  过滤分组  |  可以用聚合函数
-  DATE_FORMAT(列, '%Y-%m-%d')  |  时间格式化  |  %H 小时、%i 分钟、%s 秒
-  DATE_SUB(NOW(), INTERVAL 7 DAY)  |  时间减法  |  7：数量；DAY：单位
-  TIMESTAMPDIFF(HOUR, 开始, 结束)  |  时间差  |  返回相差多少 HOUR
-  A JOIN B ON A.id = B.id  |  内连接  |  只保留匹配上的行
+  GROUP BY DATE(列)  |  按天分组  |  会把时间截断到日期
+  GROUP BY DATE_FORMAT(列, '%Y-%m-%d %H:00')  |  按小时分组  |  
+  五、时间  |    |  
+  NOW()  |  当前日期时间  |  2026-01-01 08:00:00
+  CURDATE()  |  当前日期  |  2026-01-01
+  DATE(列)  |  取日期部分  |  
+  YEAR(列) / MONTH(列) / DAY(列)  |  年/月/日  |  
+  HOUR(列) / MINUTE(列)  |  时/分  |  
+  DATE_FORMAT(列, '%Y-%m-%d %H:%i:%s')  |  格式化  |  %Y 年、%m 月、%d 日、%H 时、%i 分、%s 秒
+  DATE_SUB(NOW(), INTERVAL 7 DAY)  |  减 7 天  |  7：数量；DAY：单位（HOUR/MONTH/YEAR）
+  DATE_ADD(NOW(), INTERVAL 1 HOUR)  |  加 1 小时  |  
+  DATEDIFF(a, b)  |  相差天数  |  
+  TIMESTAMPDIFF(HOUR, a, b)  |  相差小时数  |  单位可选 MINUTE/SECOND
+  STR_TO_DATE('2026-01-01', '%Y-%m-%d')  |  字符串转时间  |  
+  六、多表连接  |    |  
+  A JOIN B ON A.id = B.id  |  内连接  |  只保留匹配上的
   A LEFT JOIN B ON ...  |  左连接  |  左表全保留，右表缺失补 NULL
-  (SELECT MAX(列) FROM 表)  |  子查询  |  先用子查询算出值再比较
-  UNION / UNION ALL  |  上下合并  |  UNION 去重，ALL 不去重
-  INSERT INTO 表 (列) VALUES (?)  |  插入  |  ? 是占位符，配 setXxx 用
-  UPDATE 表 SET 列 = ? WHERE id = ?  |  更新  |  不加 WHERE 会改全表
-  DELETE FROM 表 WHERE id = ?  |  删除  |  不加 WHERE 会删全表
-  EXPLAIN SELECT ...  |  看执行计划  |  关注 type、key、rows
+  A RIGHT JOIN B ON ...  |  右连接  |  右表全保留
+  A CROSS JOIN B  |  笛卡尔积  |  慎用
+  七、子查询与合并  |    |  
+  WHERE 列 = (SELECT MAX(列) FROM 表)  |  标量子查询  |  子查询返回一个值
+  WHERE 列 IN (SELECT 列 FROM 表)  |  IN 子查询  |  返回一列
+  WHERE EXISTS (SELECT 1 FROM 表 WHERE ...)  |  存在性  |  通常比 IN 快
+  FROM (SELECT ...) t  |  派生表  |  子查询当临时表
+  SELECT ... UNION SELECT ...  |  合并去重  |  列数、类型要一致
+  SELECT ... UNION ALL SELECT ...  |  合并不去重  |  更快
+  八、修改数据  |    |  
+  INSERT INTO 表 (列1, 列2) VALUES (?, ?)  |  插入  |  ? 是占位符
+  INSERT INTO 表 (列) VALUES (1), (2)  |  批量插入  |  
+  UPDATE 表 SET 列 = ? WHERE id = ?  |  更新  |  不加 WHERE 改全表
+  DELETE FROM 表 WHERE id = ?  |  删除  |  不加 WHERE 删全表
+  TRUNCATE TABLE 表  |  清空  |  不可回滚，重置自增
+  START TRANSACTION / COMMIT / ROLLBACK  |  事务  |  改前开、确认提交、出错回滚
+  九、索引与优化  |    |  
+  EXPLAIN SELECT ...  |  看执行计划  |  关注 type、key、rows、Extra
   CREATE INDEX 名 ON 表 (列);  |  建索引  |  名字建议 idx_表_列
+  ALTER TABLE 表 ADD INDEX 名 (列);  |  加索引  |  
+  DROP INDEX 名 ON 表;  |  删索引  |  
+  SHOW INDEX FROM 表;  |  看索引  |

@@ -818,23 +818,52 @@ Socket 拿到的也是 InputStream / OutputStream，所以前面所有读写技�
 ------------------------------------------------------------
 
   代码  |  作用（注释）  |  参数/说明
-  Files.readString(path, UTF_8)  |  一次读成字符串  |  只适合小文件
+  一、读文件  |    |  
+  Files.readString(path, UTF_8)  |  一次读成字符串  |  小文件
   Files.readAllLines(path, UTF_8)  |  读成行列表  |  
-  Files.readAllBytes(path)  |  读成字节数组  |  二进制用
-  Files.writeString(path, text, UTF_8)  |  覆盖写  |  
-  Files.writeString(path, text, UTF_8, CREATE, APPEND)  |  追加写  |  不覆盖原内容
+  Files.readAllBytes(path)  |  读成字节数组  |  二进制
   Files.newBufferedReader(path, UTF_8)  |  逐行读  |  配 readLine()
+  reader.readLine()  |  读一行  |  返回 null 表示结束
+  Files.lines(path, UTF_8)  |  流式读行  |  用完必须关闭
+  Files.newInputStream(path)  |  字节输入流  |  
+  in.read(buffer)  |  读一块  |  返回 -1 表示结束
+  二、写文件  |    |  
+  Files.writeString(path, text, UTF_8)  |  覆盖写  |  
+  Files.writeString(path, text, UTF_8, CREATE, APPEND)  |  追加写  |  
+  Files.write(path, bytes)  |  写字节  |  
   Files.newBufferedWriter(path, UTF_8)  |  逐行写  |  配 write/newLine
-  Files.lines(path, UTF_8)  |  流式读行  |  用完要关闭
+  writer.write("文字")  |  写内容  |  
+  writer.newLine()  |  换行  |  跨平台
+  writer.flush()  |  刷新缓冲  |  不刷新可能丢
+  Files.newOutputStream(path)  |  字节输出流  |  
+  三、Files 工具  |    |  
+  Files.exists(path)  |  是否存在  |  
+  Files.size(path)  |  大小  |  字节
   Files.createDirectories(dir)  |  建多级目录  |  已存在不报错
   Files.deleteIfExists(path)  |  删除  |  不存在返回 false
   Files.copy(src, dst, REPLACE_EXISTING)  |  复制  |  
   Files.move(src, dst, REPLACE_EXISTING)  |  移动/改名  |  
-  Files.list(dir) / Files.walk(dir)  |  遍历目录  |  返回 Stream，要关闭
+  Files.list(dir) / Files.walk(dir)  |  遍历  |  返回 Stream，要关闭
+  Files.createTempFile("前缀", ".tmp")  |  临时文件  |  
   Path.of("logs", "app.log")  |  拼路径  |  跨平台
-  Files.size(path)  |  文件大小  |  字节数
-  prop.load(reader)  |  读 properties  |  配合 getProperty
-  prop.store(writer, "注释")  |  写 properties  |  整文件覆盖
-  try (BufferedReader r = ...) { }  |  自动关闭  |  异常也会关
-  writer.write('\uFEFF')  |  写 UTF-8 BOM  |  Excel 打开 CSV 不乱码
-  new String(bytes, UTF_8)  |  字节转字符串  |  必须指定编码
+  path.toAbsolutePath()  |  绝对路径  |  
+  四、流与编码  |    |  
+  new InputStreamReader(in, UTF_8)  |  字节转字符  |  指定编码
+  new OutputStreamWriter(out, UTF_8)  |  字符转字节  |  
+  new BufferedReader(new FileReader(f))  |  缓冲读  |  FileReader 编码不控
+  try (BufferedReader r = ...) { }  |  自动关闭  |  
+  new String(bytes, UTF_8)  |  字节转字符串  |  
+  "文字".getBytes(UTF_8)  |  字符串转字节  |  
+  writer.write('\uFEFF')  |  写 UTF-8 BOM  |  Excel 打开 CSV
+  五、Properties  |    |  
+  prop.load(reader)  |  读配置  |  配合 getProperty
+  prop.getProperty("db.ip", "127.0.0.1")  |  取值带默认  |  
+  prop.setProperty("k", "v")  |  设置  |  
+  prop.store(writer, "注释")  |  写回文件  |  整文件覆盖
+  Files.newBufferedReader(Path.of("config.properties"), UTF_8)  |  读配置文件  |  
+  六、CSV 与序列化  |    |  
+  line.split(",")  |  按逗号切分  |  简单场景
+  "a,b".contains(",")  |  判断是否需要引号  |  复杂 CSV 要转义
+  new DataOutputStream(out) + writeInt  |  写基本类型  |  读的顺序要一致
+  new ObjectOutputStream(out).writeObject(obj)  |  序列化  |  类要 implements Serializable
+  new ObjectInputStream(in).readObject()  |  反序列化  |  强转类型

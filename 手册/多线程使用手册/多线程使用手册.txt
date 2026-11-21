@@ -917,24 +917,65 @@ thenApply 是「转换」，thenCompose 是「再返回一个新的 Future」（
 ------------------------------------------------------------
 
   代码  |  作用（注释）  |  参数/说明
-  new Thread(() -> { }).start()  |  启动线程  |  任务写在 lambda 里
-  thread.join()  |  等线程结束  |  阻塞当前线程
-  Thread.sleep(1000)  |  睡 1 秒  |  会抛 InterruptedException
-  thread.setDaemon(true)  |  守护线程  |  主线程结束它也结束
-  synchronized (lock) { }  |  加锁  |  lock：锁对象，建议 private final Object
-  private volatile boolean running = true  |  可见性  |  不保证原子性
-  new AtomicInteger(0).incrementAndGet()  |  原子加 1  |  线程安全计数
-  lock.lock() / unlock()  |  显式锁  |  unlock 放 finally
+  一、创建线程  |    |  
+  new Thread(() -> { }).start()  |  启动线程  |  任务写在 lambda
+  new Thread(task, "名字")  |  带名字的线程  |  jstack 里能认出来
+  t.join()  |  等线程结束  |  阻塞当前线程
+  t.setDaemon(true)  |  守护线程  |  主线程结束它也结束
+  pool.submit(() -> { })  |  线程池执行  |  返回 Future
+  二、线程操作  |    |  
+  Thread.sleep(1000)  |  睡 1 秒  |  抛 InterruptedException
+  t.interrupt()  |  中断  |  配合 isInterrupted()
+  Thread.currentThread().interrupt()  |  恢复中断标志  |  捕获异常后必做
+  t.getName()  |  线程名  |  
+  t.getState()  |  状态  |  NEW/RUNNABLE/BLOCKED/TERMINATED
+  t.isAlive()  |  是否存活  |  
+  三、同步  |    |  
+  synchronized (lock) { }  |  代码块加锁  |  lock 建议 private final Object
+  public synchronized void f() { }  |  实例方法锁  |  锁 this
+  public static synchronized void f() { }  |  静态方法锁  |  锁 Class 对象
+  private volatile boolean running  |  可见性  |  不保证原子性
+  count++ 在多线程下  |  不安全  |  用 AtomicInteger 或锁
+  四、原子类  |    |  
+  AtomicInteger.incrementAndGet()  |  原子加 1  |  返回新值
+  AtomicInteger.getAndIncrement()  |  先取再加  |  
+  AtomicInteger.compareAndSet(1, 2)  |  CAS  |  成功返回 true
+  LongAdder.increment()  |  高并发计数  |  sum() 取总数
+  五、Lock  |    |  
+  ReentrantLock lock = new ReentrantLock()  |  可重入锁  |  
+  lock.lock() / lock.unlock()  |  加锁/释放  |  unlock 放 finally
   lock.tryLock(2, TimeUnit.SECONDS)  |  限时加锁  |  拿不到返回 false
-  queue.put(x) / queue.take()  |  阻塞队列  |  满了/空了会等
-  queue.offer(x)  |  非阻塞放入  |  满了返回 false
-  Executors.newFixedThreadPool(4)  |  固定线程池  |  4：线程数
-  pool.submit(() -> { })  |  提交任务  |  返回 Future
-  future.get()  |  等结果  |  阻塞，可加超时
-  pool.shutdown()  |  关闭线程池  |  等已提交任务跑完
-  CompletableFuture.supplyAsync(() -> v, pool)  |  异步取值  |  
-  .thenApply(f) / .thenAccept(c)  |  串行处理  |  
-  allOf(a, b).join()  |  等全部完成  |  
+  new ReentrantLock(true)  |  公平锁  |  按等待顺序
+  lock.newCondition()  |  条件变量  |  await/signalAll
+  ReadWriteLock  |  读写锁  |  读共享、写独占
+  六、队列  |    |  
+  new LinkedBlockingQueue<>(100)  |  有界阻塞队列  |  100：容量
+  queue.put(x) / queue.take()  |  阻塞放/取  |  满了/空了会等
+  queue.offer(x)  |  非阻塞放  |  满了返回 false
+  queue.poll(1, TimeUnit.SECONDS)  |  限时取  |  超时返回 null
+  queue.drainTo(list, n)  |  批量取  |  
+  ConcurrentHashMap  |  并发 Map  |  putIfAbsent、computeIfAbsent
+  七、线程池  |    |  
+  Executors.newFixedThreadPool(4)  |  固定线程池  |  4：核心线程数
+  Executors.newCachedThreadPool()  |  弹性线程池  |  线程数可能爆炸
+  new ThreadPoolExecutor(core, max, keepAlive, unit, queue, factory, handler)  |  自定义线程池  |  七个参数
+  new ArrayBlockingQueue<>(1000)  |  有界队列  |  防止 OOM
+  new ThreadPoolExecutor.AbortPolicy()  |  拒绝策略  |  也可 CallerRuns/Discard
+  pool.shutdown()  |  优雅关闭  |  不再接新任务
+  pool.awaitTermination(30, TimeUnit.SECONDS)  |  等结束  |  
+  pool.shutdownNow()  |  强制中断  |  
+  pool.getActiveCount() / getQueue().size()  |  监控  |  
+  八、异步与协作  |    |  
+  CompletableFuture.supplyAsync(() -> v, pool)  |  异步有返回值  |  
+  CompletableFuture.runAsync(() -> { }, pool)  |  异步无返回值  |  
+  .thenApply(f)  |  转换结果  |  
+  .thenAccept(c)  |  消费结果  |  
   .exceptionally(ex -> 0)  |  异常兜底  |  
+  CompletableFuture.allOf(a, b).join()  |  等全部  |  
+  .orTimeout(3, TimeUnit.SECONDS)  |  超时  |  JDK 9+
   new CountDownLatch(5) / await() / countDown()  |  等 N 个任务  |  
-  semaphore.acquire() / release()  |  限流  |  最多 N 个同时执行
+  Semaphore(3) / acquire() / release()  |  限流  |  最多 3 个同时
+  九、排查  |    |  
+  jps  |  列出 Java 进程  |  
+  jstack pid  |  线程栈  |  查死锁、卡住
+  jcmd pid Thread.print  |  同上  |

@@ -538,44 +538,61 @@ git push
 
 ---
 
-## 附：本仓库现状
-
-| 项目 | 当前值 |
-| --- | --- |
-| 仓库位置 | `E:\UP\MySQL` |
-| 当前分支 | `master`（已关联 `origin/master`） |
-| 远程地址 | `git@github.com:Ray-man717/Xiaoman-MySQL.git`（SSH） |
-| 用户名 / 邮箱 | `xiaoman` / `man_0723_ruilin@outlook.com` |
-| 已忽略 | `SQL.txt`、`*.properties`、`out/`、`logs/`、`bin/`、`.vscode/` 等 |
-| 建议补进 .gitignore | `.idea/`、`*.iml`（IDE 配置，本机相关） |
-
-常用三条命令记牢即可：`git status` 看状态，`git add` + `git commit` 存版本，`git push` 做同步。
-
----
-
 ## 附：代码与注释对照表
 
 | Git 命令 | 作用（注释） | 参数/说明 |
 | --- | --- | --- |
-| `git status` | 看当前状态 | `-s` 简写输出 |
+| **一、配置** | | |
+| `git config --global user.name "名字"` | 设置用户名 | 全局，所有仓库生效 |
+| `git config --global user.email "邮箱"` | 设置邮箱 | |
+| `git config --global core.quotepath false` | 中文文件名正常显示 | 否则显示 `\346...` |
+| `git config --global core.autocrlf true` | Windows 换行转换 | 避免整文件被标为修改 |
+| `git config --global --list` | 看所有配置 | |
+| **二、日常提交** | | |
+| `git status` | 看状态 | `-s` 简写两列 |
 | `git add 文件` | 加入暂存区 | `.` 表示全部 |
-| `git add -A` | 加入全部变化 | 包括删除 |
+| `git add -A` | 全部变化 | 含删除 |
+| `git add -p 文件` | 逐块选择 | 只提交部分改动 |
 | `git commit -m "说明"` | 提交 | `-m` 后是提交信息 |
-| `git commit -am "说明"` | 跳过 add 提交已跟踪文件 | 新文件仍需 `add` |
-| `git push` | 推送到远程 | 首次用 `-u origin master` |
-| `git pull` | 拉取并合并 | `--rebase` 变基拉取 |
-| `git fetch` | 只下载不合并 | 比 `pull` 安全 |
-| `git log --oneline` | 看历史 | `-5` 只看 5 条 |
-| `git diff` | 看未暂存改动 | `--cached` 看已暂存 |
+| `git commit -am "说明"` | 跳过 add 提交已跟踪文件 | 新文件仍需 add |
+| `git commit --amend -m "新说明"` | 改最后一次提交 | 会改变提交号 |
+| **三、查看历史** | | |
+| `git log --oneline` | 一行一条 | `-5` 只看 5 条 |
+| `git log --graph --oneline --all` | 分支图 | |
+| `git log -p -1` | 看最后一次改动 | |
+| `git diff` | 工作区 vs 暂存区 | |
+| `git diff --cached` | 暂存区 vs 上次提交 | |
+| `git show 提交号` | 看某次提交 | |
+| `git blame 文件` | 每行谁改的 | `-L 10,20` 看 10~20 行 |
+| `git reflog` | 操作流水 | 找回误 reset 的提交 |
+| **四、撤销** | | |
 | `git restore 文件` | 丢弃工作区改动 | 老写法 `checkout -- 文件` |
 | `git restore --staged 文件` | 取消暂存 | 老写法 `reset HEAD 文件` |
-| `git reset --soft HEAD~1` | 撤销提交、改动留着 | `HEAD~1` 表示上一个提交 |
-| `git reset --hard 提交号` | 彻底回退 | 会丢改动，慎用 |
+| `git reset --soft HEAD~1` | 撤销提交、改动留暂存 | `HEAD~1` 上一个提交 |
+| `git reset HEAD~1` | 撤销提交、改动留工作区 | 默认 mixed |
+| `git reset --hard 提交号` | 彻底回退 | 丢改动，慎用 |
 | `git revert 提交号` | 反向提交 | 用于已推送的提交 |
-| `git branch` | 看分支 | `-a` 含远程，`-d` 删除 |
+| `git stash` / `git stash pop` | 暂存/恢复现场 | `-u` 含未跟踪文件 |
+| **五、分支** | | |
+| `git branch` | 本地分支 | `-a` 含远程；`-d` 删除 |
 | `git switch -c 分支名` | 新建并切换 | 老写法 `checkout -b` |
-| `git merge 分支名` | 合并分支 | 冲突时手工解决后 `add` + `commit` |
-| `git remote -v` | 看远程地址 | `set-url` 改地址 |
-| `git mv 旧 新` | 重命名并保留历史 | 不要用系统重命名 |
-| `git check-ignore -v 文件` | 查是否被忽略 | 显示是哪条规则 |
+| `git switch 分支名` | 切换分支 | |
+| `git merge 分支名` | 合并 | `--no-ff` 保留合并提交 |
+| `git merge --abort` | 放弃合并 | 冲突时用 |
+| `git branch -d 分支名` / `-D` | 删除分支 | `-D` 强制 |
+| `git rebase 分支名` | 变基 | 已推送的分支别用 |
+| **六、远程** | | |
+| `git remote -v` | 看远程地址 | |
+| `git remote add origin 地址` | 添加远程 | |
+| `git remote set-url origin 地址` | 改地址 | |
+| `git fetch` | 下载不合并 | 安全 |
+| `git pull` | 下载并合并 | `--rebase` 变基拉取 |
+| `git push` | 推送 | 首次 `-u origin master` |
+| `git push origin --delete 分支` | 删远程分支 | |
+| **七、其它** | | |
+| `git mv 旧 新` | 重命名保留历史 | 不要用系统重命名 |
+| `git tag v1.0` | 打标签 | |
+| `git check-ignore -v 文件` | 查忽略规则 | 显示命中的规则 |
+| `git rm --cached 文件` | 停止跟踪 | 保留本地文件 |
+| `.gitignore` 里写 `*.log` | 忽略规则 | 只对未跟踪文件生效 |
 
