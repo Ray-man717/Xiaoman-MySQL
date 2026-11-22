@@ -11,26 +11,18 @@ import java.util.Scanner;
 
 import static com.github.rayman717.util.InputUtil.input;
 
-/**
- * 配置管理类。
- * <p>
- * 负责 config.properties 的创建、读取与解析：
- * 文件不存在时在控制台交互式询问连接参数并写盘；
- * 文件已存在时直接加载，最后由 getDbConfig() 包装成 DbConfig 返回。
- */
+/** 配置管理：读写 config.properties，缺文件时交互式创建。 */
 public class ConfigManager {
-    private static final String CONFIG_FILE = "config.properties";   //配置文件名（相对程序运行目录）
-    private static Properties prop = new Properties();               //配置内容容器，由 initConfig 填充
+    private static final String CONFIG_FILE = "config.properties";   //配置文件名
+    private static Properties prop = new Properties();               //配置内容
 
-    /**
-     * 初始化配置：没有配置文件就引导用户创建，有就直接读取。
-     */
-    public static void initConfig(){
+    /** 初始化配置：无文件则询问输入并落盘，有则加载。 */
+    public static void initConfig() {
+        Scanner sc = new Scanner(System.in);
         File file = new File(CONFIG_FILE);
         if(!file.exists()){
-            //没有配置文件：逐项询问，直接回车则使用括号里的默认值
+            //没有配置文件：逐项询问，回车用默认值
             System.out.println("未找到config");
-            Scanner sc = new Scanner(System.in);
             System.out.println("输入信息");
             String ip = input(sc,"MySQL IP(默认值:127.0.0.1):");
             if(ip.trim().isEmpty()) ip = "127.0.0.1";
@@ -41,7 +33,7 @@ public class ConfigManager {
             String password = input(sc,"MySQL Password:");
             String dbName = input(sc,"MySQL dbName:");
 
-            //把用户输入写入 Properties，键名与读取时保持一致
+            //写入 Properties，键名与读取时一致
             prop.setProperty("db.ip",ip);
             prop.setProperty("db.port",port);
             prop.setProperty("db.user",user);
@@ -49,27 +41,21 @@ public class ConfigManager {
             prop.setProperty("db.name",dbName);
             try (FileWriter fw = new FileWriter(CONFIG_FILE)) {
                 prop.store(fw,"Database Configuration");   //落盘，第二参数是文件头注释
-                LogUtil.info("Config is ready 已创建");
+                LogUtil.info("Config is ready 已创建",ConfigManager.class.getSimpleName());
             }catch (IOException e){
-                LogUtil.error("Config error 创建失败"+e.getMessage());
+                LogUtil.error("Config error 创建失败"+e.getMessage(),ConfigManager.class.getSimpleName());
             }
         }else {
             try (FileReader fis = new FileReader(CONFIG_FILE)) {
                 prop.load(fis);   //读取已有配置
-                LogUtil.info("Config is pass 读取成功");
+                LogUtil.info("Config is pass 读取成功",ConfigManager.class.getSimpleName());
             }catch (IOException e){
-                LogUtil.error("Config error 读取失败"+e.getMessage());
+                LogUtil.error("Config error 读取失败"+e.getMessage(),ConfigManager.class.getSimpleName());
             }
         }
 
     }
-    /**
-     * 从已加载的配置中取出各项参数，组装成 DbConfig 实体。
-     * <p>
-     * 取不到时使用默认值：IP 127.0.0.1、端口 3306、用户 root、密码与库名为空。
-     *
-     * @return 数据库连接配置实体
-     */
+    /** 取出配置组装成 DbConfig，缺项用默认值。 */
     public static DbConfig getDbConfig(){
         String ip = prop.getProperty("db.ip","127.0.0.1");
         String port = prop.getProperty("db.port","3306");
@@ -77,6 +63,6 @@ public class ConfigManager {
         String password = prop.getProperty("db.password","");
         String dbName = prop.getProperty("db.name","");
 
-        return new DbConfig(ip,port,dbName,user,password);   //注意参数顺序：ip, port, dbName, user, password
+        return new DbConfig(ip,port,dbName,user,password);   //参数顺序：ip, port, dbName, user, password
     }
 }
