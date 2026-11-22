@@ -6,6 +6,8 @@ out/
 *.properties
 logs/
 .kotlin
+javafx-sdk-17.0.16/
+.idea/
 
 ### Eclipse ###
 .apt_generated
