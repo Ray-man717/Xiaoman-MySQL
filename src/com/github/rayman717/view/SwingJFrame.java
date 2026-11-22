@@ -5,7 +5,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/** 旧版 Swing 登录界面（已弃用，现用 JavaFX）。 */
 public class SwingJFrame extends JFrame {
+    @Deprecated
     public SwingJFrame(String title) {
         setTitle(title);
         Container container = getContentPane();
@@ -40,7 +42,9 @@ public class SwingJFrame extends JFrame {
     }
 }
 
+/** 登录对话框（旧版，已弃用）。 */
 class SignIn extends JDialog {
+    @Deprecated
     public SignIn(SwingJFrame frame, String title) {
         super(frame, title, true);
         Container container = getContentPane();
