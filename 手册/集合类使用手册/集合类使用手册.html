@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Java 集合类使用手册（List / Set / Map）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="java-集合类使用手册list--set--map">Java 集合类使用手册（List / Set / Map）</h1>
+<blockquote><p>集合是 Java 里除了字符串之外用得最多的东西：存设备列表、统计上报次数、去重、做缓存、按条件分组。这一本把 <code>ArrayList</code>、<code>HashSet</code>、<code>HashMap</code>、<code>Hashtable</code>、<code>TreeMap</code> 这些一次讲清楚：它们<strong>底层怎么存</strong>、<strong>什么时候用哪个</strong>、<strong>有哪些坑</strong>。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-集合框架总览">集合框架总览</a></li><li><a href="#2-list-家族">List 家族</a></li><li><a href="#3-set-家族">Set 家族</a></li><li><a href="#4-map-家族">Map 家族</a></li><li><a href="#5-hashmap-内部原理">HashMap 内部原理</a></li><li><a href="#6-hashmap-常用操作">HashMap 常用操作</a></li><li><a href="#7-hashmap-遍历与删除">HashMap 遍历与删除</a></li><li><a href="#8-hashset-与去重">HashSet 与去重</a></li><li><a href="#9-hashtable老式线程安全-map">Hashtable：老式线程安全 Map</a></li><li><a href="#10-linkedhashmap-与-lru-缓存">LinkedHashMap 与 LRU 缓存</a></li><li><a href="#11-treemap-与-treeset">TreeMap 与 TreeSet</a></li><li><a href="#12-equals-与-hashcode">equals 与 hashCode</a></li><li><a href="#13-并发集合">并发集合</a></li><li><a href="#14-性能对比与选择">性能对比与选择</a></li><li><a href="#15-泛型与类型安全">泛型与类型安全</a></li><li><a href="#16-不可变集合与初始化">不可变集合与初始化</a></li><li><a href="#17-实战计数去重缓存top-n">实战：计数、去重、缓存、Top N</a></li><li><a href="#18-常见坑">常见坑</a></li><li><a href="#19-老式集合类legacy">老式集合类（Legacy）</a></li><li><a href="#20-速查表">速查表</a></li></ol>
+<hr>
+<h2 id="1-集合框架总览">1. 集合框架总览</h2>
+<p>Java 集合分两大阵营：</p>
+<pre class="language-text"><code>Collection（单个元素的集合）
+├── List（有序、可重复、有下标）
+│   ├── ArrayList      数组，查快
+│   ├── LinkedList     链表，头尾增删快
+│   └── Vector         老式线程安全数组（不推荐）
+├── Set（不重复）
+│   ├── HashSet        哈希表，无序
+│   ├── LinkedHashSet  哈希 + 链表，保持插入顺序
+│   └── TreeSet        红黑树，自动排序
+└── Queue（队列）
+    ├── ArrayDeque
+    ├── PriorityQueue  优先队列
+    └── BlockingQueue  阻塞队列（并发用）
+
+Map（键值对集合）
+├── HashMap            哈希表，最常用
+├── LinkedHashMap      保持插入/访问顺序
+├── TreeMap            按 key 排序
+├── Hashtable          老式线程安全（不推荐）
+└── ConcurrentHashMap  并发安全、性能好（推荐）</code></pre>
+<p>一句话选择：</p>
+<table><thead><tr><th>需求</th><th>用什么</th></tr></thead><tbody><tr><td>按顺序存一堆东西、要下标</td><td><code>ArrayList</code></td></tr><tr><td>去重</td><td><code>HashSet</code></td></tr><tr><td>键值对、按键快速查</td><td><code>HashMap</code></td></tr><tr><td>键值对、按 key 排序</td><td><code>TreeMap</code></td></tr><tr><td>键值对、保持插入顺序</td><td><code>LinkedHashMap</code></td></tr><tr><td>多线程共享</td><td><code>ConcurrentHashMap</code></td></tr><tr><td>老代码里遇到</td><td><code>Hashtable</code> / <code>Vector</code></td></tr></tbody></table>
+<hr>
+<h2 id="2-list-家族">2. List 家族</h2>
+<h3 id="21-arraylist">2.1 ArrayList</h3>
+<pre class="language-java"><code>List&lt;String&gt; list = new ArrayList&lt;&gt;();
+list.add("A");
+list.add("B");
+list.add(0, "开头");           // 插到下标 0
+list.get(0);                  // "开头"
+list.set(0, "新");             // 改
+list.remove("A");             // 按值删
+list.remove(0);               // 按下标删
+list.size();
+list.contains("B");
+list.indexOf("B");
+list.isEmpty();
+list.clear();</code></pre>
+<p>特点：底层是数组，<strong>随机访问快，中间插入删除慢</strong>（要移动元素）。</p>
+<p>默认容量 10，满了扩容 <strong>1.5 倍</strong>。</p>
+<h3 id="22-linkedlist">2.2 LinkedList</h3>
+<pre class="language-java"><code>List&lt;String&gt; list = new LinkedList&lt;&gt;();
+list.add("A");
+list.addFirst("头");
+list.addLast("尾");</code></pre>
+<p>底层是双向链表：<strong>头尾增删快，按下标访问慢</strong>（要一个个走）。</p>
+<p>实际项目里 <code>ArrayList</code> 用得最多，<code>LinkedList</code> 只适合「频繁在两端增删」的场景，比如当队列用。</p>
+<h3 id="23-vector老式不推荐">2.3 Vector（老式，不推荐）</h3>
+<pre class="language-java"><code>Vector&lt;String&gt; v = new Vector&lt;&gt;();
+v.add("A");</code></pre>
+<p>方法都加了 <code>synchronized</code>，相当于每个操作都锁全表，性能差。新代码用 <code>ArrayList</code> + 自己控制同步，或 <code>CopyOnWriteArrayList</code>。</p>
+<h3 id="24-三个-list-对比">2.4 三个 List 对比</h3>
+<table><thead><tr><th></th><th>ArrayList</th><th>LinkedList</th><th>Vector</th></tr></thead><tbody><tr><td>底层</td><td>数组</td><td>双向链表</td><td>数组</td></tr><tr><td>随机访问</td><td>快 O(1)</td><td>慢 O(n)</td><td>快</td></tr><tr><td>中间插入/删除</td><td>慢 O(n)</td><td>快 O(1)（有节点引用时）</td><td>慢</td></tr><tr><td>线程安全</td><td>否</td><td>否</td><td>是（全表锁）</td></tr><tr><td>推荐</td><td>★★★</td><td>★☆☆</td><td>老代码</td></tr></tbody></table>
+<hr>
+<h2 id="3-set-家族">3. Set 家族</h2>
+<p>Set 的核心特点：<strong>不重复</strong>。</p>
+<h3 id="31-hashset">3.1 HashSet</h3>
+<pre class="language-java"><code>Set&lt;String&gt; set = new HashSet&lt;&gt;();
+set.add("A");
+set.add("A");             // 加不进去，size 还是 1
+set.contains("A");        // true
+set.remove("A");
+set.size();</code></pre>
+<p>无序：遍历顺序和添加顺序无关。</p>
+<h3 id="32-linkedhashset">3.2 LinkedHashSet</h3>
+<pre class="language-java"><code>Set&lt;String&gt; set = new LinkedHashSet&lt;&gt;();
+set.add("B");
+set.add("A");
+set.add("C");
+// 遍历顺序：B, A, C（保持插入顺序）</code></pre>
+<h3 id="33-treeset">3.3 TreeSet</h3>
+<pre class="language-java"><code>Set&lt;Integer&gt; set = new TreeSet&lt;&gt;();
+set.add(3);
+set.add(1);
+set.add(2);
+// 遍历顺序：1, 2, 3（自动排序）
+
+set.first();       // 1
+set.last();        // 3
+set.headSet(2);    // [1]
+set.tailSet(2);    // [2, 3]</code></pre>
+<h3 id="34-三个-set-对比">3.4 三个 Set 对比</h3>
+<table><thead><tr><th></th><th>HashSet</th><th>LinkedHashSet</th><th>TreeSet</th></tr></thead><tbody><tr><td>顺序</td><td>无序</td><td>插入顺序</td><td>排序</td></tr><tr><td>底层</td><td>HashMap</td><td>LinkedHashMap</td><td>TreeMap</td></tr><tr><td>性能</td><td>最快</td><td>稍慢</td><td>慢（O(log n)）</td></tr><tr><td>允许 null</td><td>允许一个</td><td>允许一个</td><td>不允许（会抛异常）</td></tr></tbody></table>
+<hr>
+<h2 id="4-map-家族">4. Map 家族</h2>
+<p>Map 存「键 → 值」，键不能重复。</p>
+<h3 id="41-五个-map-对比">4.1 五个 Map 对比</h3>
+<table><thead><tr><th></th><th>HashMap</th><th>LinkedHashMap</th><th>TreeMap</th><th>Hashtable</th><th>ConcurrentHashMap</th></tr></thead><tbody><tr><td>顺序</td><td>无序</td><td>插入/访问顺序</td><td>key 排序</td><td>无序</td><td>无序</td></tr><tr><td>线程安全</td><td>否</td><td>否</td><td>否</td><td>是（全表锁）</td><td>是（桶级）</td></tr><tr><td>null 键</td><td>允许 1 个</td><td>允许 1 个</td><td>不允许</td><td>不允许</td><td>不允许</td></tr><tr><td>null 值</td><td>允许</td><td>允许</td><td>允许</td><td>不允许</td><td>不允许</td></tr><tr><td>性能</td><td>快</td><td>稍慢</td><td>O(log n)</td><td>慢</td><td>快</td></tr><tr><td>推荐</td><td>★★★</td><td>按需</td><td>按需</td><td>老代码</td><td>并发场景</td></tr></tbody></table>
+<h3 id="42-基本操作以-hashmap-为例">4.2 基本操作（以 HashMap 为例）</h3>
+<pre class="language-java"><code>Map&lt;String, Double&gt; temp = new HashMap&lt;&gt;();
+
+temp.put("ems-01", 26.4);              // 放
+temp.get("ems-01");                    // 26.4
+temp.get("ems-99");                    // null
+temp.getOrDefault("ems-99", 0.0);      // 0.0
+temp.containsKey("ems-01");            // true
+temp.containsValue(26.4);              // true
+temp.remove("ems-01");                 // 删
+temp.size();
+temp.isEmpty();
+temp.keySet();                         // 所有键
+temp.values();                         // 所有值
+temp.entrySet();                       // 所有键值对</code></pre>
+<p><code>put</code> 同一个 key 会覆盖旧值，并返回旧值：</p>
+<pre class="language-java"><code>Double old = temp.put("ems-01", 27.0);   // old = 26.4</code></pre>
+<hr>
+<h2 id="5-hashmap-内部原理">5. HashMap 内部原理</h2>
+<p>理解原理，才知道为什么「初始容量」和「hashCode」重要。</p>
+<h3 id="51-结构">5.1 结构</h3>
+<pre class="language-text"><code>数组（桶数组 table）
+ ├── [0] → 链表/红黑树 → 节点(key, value, hash, next)
+ ├── [1] → null
+ ├── [2] → 节点
+ ...</code></pre>
+<ul><li>每个元素存在「桶」里，桶的位置由 <code>key.hashCode()</code> 计算；</li><li>同一个桶里的多个元素用<strong>链表</strong>串起来；</li><li>JDK 8 起，链表长度 ≥ 8 且数组长度 ≥ 64 时，转成<strong>红黑树</strong>（查询从 O(n) 变 O(log n)）。</li></ul>
+<h3 id="52-定位过程">5.2 定位过程</h3>
+<pre class="language-java"><code>// 简化版
+int hash = key.hashCode();
+int index = (数组长度 - 1) &amp; hash;   // 等价于 hash % 长度，但更快</code></pre>
+<ul><li>数组长度总是 2 的幂（16、32、64…），这样 <code>&amp;</code> 才等价于取模；</li><li><code>hash</code> 还会做一次扰动（高 16 位异或），减少冲突。</li></ul>
+<h3 id="53-扩容">5.3 扩容</h3>
+<table><thead><tr><th>参数</th><th>默认值</th><th>说明</th></tr></thead><tbody><tr><td>初始容量</td><td>16</td><td>第一次 put 时创建</td></tr><tr><td>负载因子</td><td>0.75</td><td>元素数 &gt; 容量 × 0.75 就扩容</td></tr><tr><td>扩容</td><td>× 2</td><td>重新分配并迁移元素（rehash）</td></tr></tbody></table>
+<pre class="language-java"><code>// 已知要放 1000 个元素，直接给容量，避免反复扩容
+Map&lt;String, Double&gt; map = new HashMap&lt;&gt;(1024);</code></pre>
+<p>计算：预期元素数 / 0.75 + 1，向上取整到 2 的幂。1000 / 0.75 ≈ 1333 → 用 2048。</p>
+<h3 id="54-为什么-key-要用不可变对象">5.4 为什么 key 要用不可变对象</h3>
+<p>如果 key 放进去之后又改了内容（比如可变对象的字段变了），<code>hashCode</code> 变了，就再也找不到它——桶的位置对不上。</p>
+<p><strong>规则</strong>：作为 key 的对象，要么用 <code>String</code>、<code>Integer</code> 这类不可变类型，要么自己保证放进去之后不改。</p>
+<hr>
+<h2 id="6-hashmap-常用操作">6. HashMap 常用操作</h2>
+<pre class="language-java"><code>Map&lt;String, Integer&gt; count = new HashMap&lt;&gt;();
+
+// ① 普通 get + 判空
+Integer n = count.get("ems-01");
+count.put("ems-01", n == null ? 1 : n + 1);
+
+// ② getOrDefault：没有就给默认值
+int m = count.getOrDefault("ems-01", 0) + 1;
+
+// ③ putIfAbsent：不存在才放
+count.putIfAbsent("ems-01", 0);
+
+// ④ computeIfAbsent：不存在就计算一个放进去
+Map&lt;String, List&lt;String&gt;&gt; byDevice = new HashMap&lt;&gt;();
+byDevice.computeIfAbsent("ems-01", k -&gt; new ArrayList&lt;&gt;()).add("record-1");
+
+// ⑤ compute / merge：原子地更新
+count.compute("ems-01", (k, v) -&gt; v == null ? 1 : v + 1);
+count.merge("ems-01", 1, Integer::sum);        // 计数首选</code></pre>
+<p><code>merge</code> 是计数最简洁的写法：key 不存在就放 1，存在就把旧值和 1 相加。</p>
+<table><thead><tr><th>方法</th><th>作用</th></tr></thead><tbody><tr><td><code>put(k, v)</code></td><td>放，返回旧值</td></tr><tr><td><code>get(k)</code></td><td>取，没有返回 null</td></tr><tr><td><code>getOrDefault(k, d)</code></td><td>取，没有返回 d</td></tr><tr><td><code>putIfAbsent(k, v)</code></td><td>k 不存在才放</td></tr><tr><td><code>computeIfAbsent(k, f)</code></td><td>k 不存在才计算并放</td></tr><tr><td><code>compute(k, f)</code></td><td>总是计算并放</td></tr><tr><td><code>merge(k, v, f)</code></td><td>合并旧值和新值</td></tr><tr><td><code>remove(k)</code></td><td>删</td></tr><tr><td><code>replace(k, v)</code></td><td>存在才替换</td></tr></tbody></table>
+<hr>
+<h2 id="7-hashmap-遍历与删除">7. HashMap 遍历与删除</h2>
+<h3 id="71-四种遍历">7.1 四种遍历</h3>
+<pre class="language-java"><code>Map&lt;String, Double&gt; map = new HashMap&lt;&gt;();
+
+// ① 遍历键值对（最常用）
+for (Map.Entry&lt;String, Double&gt; e : map.entrySet()) {
+    System.out.println(e.getKey() + " = " + e.getValue());
+}
+
+// ② 遍历键
+for (String key : map.keySet()) {
+    System.out.println(key);
+}
+
+// ③ 遍历值
+for (Double v : map.values()) {
+    System.out.println(v);
+}
+
+// ④ forEach（JDK 8+）
+map.forEach((k, v) -&gt; System.out.println(k + " = " + v));</code></pre>
+<h3 id="72-遍历时删除">7.2 遍历时删除</h3>
+<p><strong>错误写法</strong>（会抛 <code>ConcurrentModificationException</code>）：</p>
+<pre class="language-java"><code>for (String key : map.keySet()) {
+    if (key.startsWith("ems")) {
+        map.remove(key);        // 抛异常！
+    }
+}</code></pre>
+<p>三种正确写法：</p>
+<pre class="language-java"><code>// ① Iterator
+Iterator&lt;Map.Entry&lt;String, Double&gt;&gt; it = map.entrySet().iterator();
+while (it.hasNext()) {
+    Map.Entry&lt;String, Double&gt; e = it.next();
+    if (e.getKey().startsWith("ems")) {
+        it.remove();
+    }
+}
+
+// ② removeIf（JDK 8+，只适用于 keySet/values/entrySet 的视图）
+map.entrySet().removeIf(e -&gt; e.getKey().startsWith("ems"));
+
+// ③ 先收集要删的 key，再统一删
+List&lt;String&gt; toRemove = new ArrayList&lt;&gt;();
+for (String key : map.keySet()) {
+    if (key.startsWith("ems")) {
+        toRemove.add(key);
+    }
+}
+toRemove.forEach(map::remove);</code></pre>
+<h3 id="73-排序">7.3 排序</h3>
+<pre class="language-java"><code>// 按 key 排序
+List&lt;String&gt; keys = new ArrayList&lt;&gt;(map.keySet());
+Collections.sort(keys);
+
+// 按 value 排序（Top N 常用）
+List&lt;Map.Entry&lt;String, Double&gt;&gt; entries = new ArrayList&lt;&gt;(map.entrySet());
+entries.sort((a, b) -&gt; Double.compare(b.getValue(), a.getValue()));   // 降序</code></pre>
+<hr>
+<h2 id="8-hashset-与去重">8. HashSet 与去重</h2>
+<h3 id="81-hashset-底层">8.1 HashSet 底层</h3>
+<p><code>HashSet</code> 内部就是一个 <code>HashMap</code>，元素当 key，value 是一个固定的占位对象：</p>
+<pre class="language-java"><code>// 简化版源码
+public class HashSet&lt;E&gt; {
+    private HashMap&lt;E, Object&gt; map = new HashMap&lt;&gt;();
+    private static final Object PRESENT = new Object();
+
+    public boolean add(E e) {
+        return map.put(e, PRESENT) == null;   // 放成功返回 true
+    }
+}</code></pre>
+<p>所以：<strong>HashSet 的去重能力来自 HashMap 的 key 唯一性</strong>。</p>
+<h3 id="82-去重原理">8.2 去重原理</h3>
+<pre class="language-java"><code>Set&lt;String&gt; set = new HashSet&lt;&gt;();
+set.add("A");      // 新元素，size=1
+set.add("A");      // hashCode 相同、equals 相等，加不进去</code></pre>
+<p>判断步骤：</p>
+<ol><li>算 <code>hashCode</code>，找到桶；</li><li>桶里有元素，逐个用 <code>equals</code> 比较；</li><li>有相等的就认为重复，不加。</li></ol>
+<h3 id="83-自定义对象去重">8.3 自定义对象去重</h3>
+<p>必须<strong>同时重写 <code>equals</code> 和 <code>hashCode</code></strong>，否则会「去重失败」：</p>
+<pre class="language-java"><code>public class Device {
+    private String id;
+    private String name;
+
+    // 只重写 equals 不重写 hashCode：两个内容相同的对象 hashCode 不同，
+    // 会落到不同的桶里，HashSet 认为它们是两个不同的元素。
+}</code></pre>
+<p>正确写法：</p>
+<pre class="language-java"><code>public class Device {
+    private final String id;
+    private final String name;
+
+    public Device(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Device other = (Device) o;
+        return Objects.equals(id, other.id) &amp;&amp; Objects.equals(name, other.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
+}</code></pre>
+<p>用 IDEA 的 <strong>Alt + Insert → equals() and hashCode()</strong> 一键生成，比自己写靠谱。</p>
+<hr>
+<h2 id="9-hashtable老式线程安全-map">9. Hashtable：老式线程安全 Map</h2>
+<p><code>Hashtable</code> 是 JDK 1.0 就有的类，也是哈希表，但有几个特点：</p>
+<pre class="language-java"><code>Hashtable&lt;String, Double&gt; table = new Hashtable&lt;&gt;();
+table.put("ems-01", 26.4);
+table.get("ems-01");
+table.elements();              // Enumeration，老式遍历</code></pre>
+<h3 id="91-和-hashmap-的区别">9.1 和 HashMap 的区别</h3>
+<table><thead><tr><th></th><th>HashMap</th><th>Hashtable</th></tr></thead><tbody><tr><td>出生</td><td>JDK 1.2</td><td>JDK 1.0</td></tr><tr><td>线程安全</td><td>否</td><td>是（每个方法都 <code>synchronized</code>）</td></tr><tr><td>null 键</td><td>允许 1 个</td><td><strong>不允许</strong>，抛 <code>NullPointerException</code></td></tr><tr><td>null 值</td><td>允许</td><td><strong>不允许</strong></td></tr><tr><td>性能</td><td>快</td><td>慢（全表锁）</td></tr><tr><td>遍历</td><td><code>Iterator</code></td><td><code>Iterator</code> / <code>Enumeration</code></td></tr><tr><td>推荐</td><td>日常使用</td><td>只在老代码里遇到</td></tr></tbody></table>
+<h3 id="92-为什么不推荐">9.2 为什么不推荐</h3>
+<pre class="language-java"><code>Hashtable&lt;String, Double&gt; table = new Hashtable&lt;&gt;();
+table.put("ems-01", null);       // NullPointerException！</code></pre>
+<p>即使单线程，<code>Hashtable</code> 也把每个操作加锁，性能比 <code>HashMap</code> 差。</p>
+<p><strong>替代方案</strong>：</p>
+<table><thead><tr><th>场景</th><th>用什么</th></tr></thead><tbody><tr><td>单线程</td><td><code>HashMap</code></td></tr><tr><td>多线程</td><td><code>ConcurrentHashMap</code></td></tr><tr><td>需要包一层同步</td><td><code>Collections.synchronizedMap(new HashMap&lt;&gt;())</code></td></tr></tbody></table>
+<blockquote><p>注意：类名是 <code>Hashtable</code>（t 小写），不是 <code>HashTable</code>。写错会编译不过。</p></blockquote>
+<hr>
+<h2 id="10-linkedhashmap-与-lru-缓存">10. LinkedHashMap 与 LRU 缓存</h2>
+<p><code>LinkedHashMap</code> 在 HashMap 基础上多了一条双向链表，能保持顺序。</p>
+<pre class="language-java"><code>Map&lt;String, Double&gt; map = new LinkedHashMap&lt;&gt;();
+map.put("b", 2.0);
+map.put("a", 1.0);
+map.put("c", 3.0);
+// 遍历顺序：b, a, c（插入顺序）</code></pre>
+<p>构造时传 <code>accessOrder = true</code>，就变成「最近访问的排到最后」，可以拿来做 LRU 缓存：</p>
+<pre class="language-java"><code>public class LruCache&lt;K, V&gt; extends LinkedHashMap&lt;K, V&gt; {
+    private final int maxSize;
+
+    public LruCache(int maxSize) {
+        super(16, 0.75f, true);       // true = 按访问顺序
+        this.maxSize = maxSize;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry&lt;K, V&gt; eldest) {
+        return size() &gt; maxSize;      // 超过上限就删最老的
+    }
+}</code></pre>
+<pre class="language-java"><code>LruCache&lt;String, Double&gt; cache = new LruCache&lt;&gt;(3);
+cache.put("a", 1.0);
+cache.put("b", 2.0);
+cache.put("c", 3.0);
+cache.get("a");          // 访问 a，a 变成最新的
+cache.put("d", 4.0);     // 超了，删掉最久没用的 b</code></pre>
+<p>注意：这个 LRU 缓存<strong>不是线程安全</strong>的，多线程要自己加锁或换 <code>ConcurrentHashMap</code> + 手写淘汰。</p>
+<hr>
+<h2 id="11-treemap-与-treeset">11. TreeMap 与 TreeSet</h2>
+<p>按 key 排序的 Map：</p>
+<pre class="language-java"><code>Map&lt;String, Double&gt; map = new TreeMap&lt;&gt;();
+map.put("c", 3.0);
+map.put("a", 1.0);
+map.put("b", 2.0);
+// 遍历顺序：a, b, c
+
+map.firstKey();              // "a"
+map.lastKey();               // "c"
+map.headMap("b");            // {"a":1.0}
+map.tailMap("b");            // {"b":2.0,"c":3.0}
+map.subMap("a", "c");        // {"a":1.0,"b":2.0}</code></pre>
+<p>自定义排序：</p>
+<pre class="language-java"><code>Map&lt;String, Double&gt; map = new TreeMap&lt;&gt;(Comparator.reverseOrder());
+// 或者按长度排序
+Map&lt;String, Double&gt; byLength = new TreeMap&lt;&gt;(Comparator.comparingInt(String::length));</code></pre>
+<p>TreeSet 类似：</p>
+<pre class="language-java"><code>Set&lt;Integer&gt; set = new TreeSet&lt;&gt;(Comparator.reverseOrder());
+set.add(1);
+set.add(3);
+set.add(2);
+// 遍历：3, 2, 1</code></pre>
+<p>要点：</p>
+<ul><li>key 必须可比较（实现 <code>Comparable</code>）或提供 <code>Comparator</code>，否则抛 <code>ClassCastException</code>；</li><li>不允许 null key；</li><li>性能 O(log n)，比 HashMap 慢，但能排序、能按范围查。</li></ul>
+<hr>
+<h2 id="12-equals-与-hashcode">12. equals 与 hashCode</h2>
+<h3 id="121-约定">12.1 约定</h3>
+<table><thead><tr><th>规则</th><th>说明</th></tr></thead><tbody><tr><td><code>equals</code> 相等 → <code>hashCode</code> 必须相等</td><td>否则 HashSet/HashMap 会重复</td></tr><tr><td><code>hashCode</code> 相等 → <code>equals</code> 不一定相等</td><td>叫哈希冲突，正常现象</td></tr><tr><td>重写 <code>equals</code> 必须重写 <code>hashCode</code></td><td>标准要求</td></tr><tr><td>用于 key 的对象要不可变</td><td>否则放进去后找不到</td></tr></tbody></table>
+<h3 id="122-例子为什么必须一起重写">12.2 例子：为什么必须一起重写</h3>
+<pre class="language-java"><code>public class Point {
+    int x;
+    int y;
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Point p &amp;&amp; p.x == x &amp;&amp; p.y == y;
+    }
+    // 没重写 hashCode：默认用地址，两个 x、y 相同的对象 hashCode 不同
+}
+
+Set&lt;Point&gt; set = new HashSet&lt;&gt;();
+set.add(new Point(1, 2));
+set.add(new Point(1, 2));     // 内容相同，但 hashCode 不同，被当成两个元素
+System.out.println(set.size());   // 2，去重失败</code></pre>
+<p>重写 <code>hashCode</code> 之后才是 1。</p>
+<h3 id="123-生成的写法">12.3 生成的写法</h3>
+<pre class="language-java"><code>@Override
+public int hashCode() {
+    return Objects.hash(x, y);      // JDK 7+，简单可靠
+}
+
+// 或者手写（性能略好）
+@Override
+public int hashCode() {
+    int result = Integer.hashCode(x);
+    result = 31 * result + Integer.hashCode(y);
+    return result;
+}</code></pre>
+<hr>
+<h2 id="13-并发集合">13. 并发集合</h2>
+<p>多线程同时读写普通 <code>HashMap</code> / <code>ArrayList</code> 会丢数据、抛异常甚至死循环（JDK 7 的 HashMap）。</p>
+<table><thead><tr><th>场景</th><th>并发集合</th></tr></thead><tbody><tr><td>并发的 Map</td><td><code>ConcurrentHashMap</code></td></tr><tr><td>读多写少的 List</td><td><code>CopyOnWriteArrayList</code></td></tr><tr><td>并发队列</td><td><code>ConcurrentLinkedQueue</code>、<code>ArrayBlockingQueue</code></td></tr><tr><td>并发 Set</td><td><code>ConcurrentHashMap.newKeySet()</code></td></tr></tbody></table>
+<pre class="language-java"><code>ConcurrentHashMap&lt;String, Double&gt; map = new ConcurrentHashMap&lt;&gt;();
+map.put("ems-01", 26.4);
+map.putIfAbsent("ems-02", 27.0);
+map.computeIfAbsent("ems-03", k -&gt; 0.0);
+map.merge("ems-01", 0.5, Double::sum);</code></pre>
+<p>注意：</p>
+<ul><li><code>ConcurrentHashMap</code> <strong>不允许 null 键和 null 值</strong>；</li><li>遍历时删除是安全的（弱一致性迭代器，不会抛 <code>ConcurrentModificationException</code>）；</li><li><code>size()</code> 在并发下是估算值，不精确。</li></ul>
+<p><code>Collections.synchronizedMap</code> 也能用，但全表锁，性能不如 <code>ConcurrentHashMap</code>。</p>
+<hr>
+<h2 id="14-性能对比与选择">14. 性能对比与选择</h2>
+<h3 id="141-时间复杂度">14.1 时间复杂度</h3>
+<table><thead><tr><th>操作</th><th>ArrayList</th><th>LinkedList</th><th>HashSet</th><th>HashMap</th><th>TreeMap</th></tr></thead><tbody><tr><td>按下标访问</td><td>O(1)</td><td>O(n)</td><td>—</td><td>—</td><td>—</td></tr><tr><td>按 key 查</td><td>—</td><td>—</td><td>O(1) 平均</td><td>O(1) 平均</td><td>O(log n)</td></tr><tr><td>插入</td><td>O(n)</td><td>O(1) 头尾</td><td>O(1)</td><td>O(1)</td><td>O(log n)</td></tr><tr><td>删除</td><td>O(n)</td><td>O(1) 头尾</td><td>O(1)</td><td>O(1)</td><td>O(log n)</td></tr><tr><td>遍历</td><td>O(n)</td><td>O(n)</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr></tbody></table>
+<h3 id="142-内存">14.2 内存</h3>
+<table><thead><tr><th>结构</th><th>额外开销</th></tr></thead><tbody><tr><td><code>ArrayList</code></td><td>数组 + 空槽（扩容留余量）</td></tr><tr><td><code>LinkedList</code></td><td>每个元素两个引用（前后指针）</td></tr><tr><td><code>HashMap</code></td><td>桶数组 + 每个 Entry 对象</td></tr><tr><td><code>TreeMap</code></td><td>每个节点多存颜色、左右指针</td></tr></tbody></table>
+<h3 id="143-选择口诀">14.3 选择口诀</h3>
+<ul><li><strong>要顺序、要下标</strong> → <code>ArrayList</code>；</li><li><strong>要去重</strong> → <code>HashSet</code>；</li><li><strong>要键值对</strong> → <code>HashMap</code>；</li><li><strong>要排序</strong> → <code>TreeMap</code> / <code>TreeSet</code>；</li><li><strong>要插入顺序</strong> → <code>LinkedHashMap</code> / <code>LinkedHashSet</code>；</li><li><strong>要并发</strong> → <code>ConcurrentHashMap</code>；</li><li><strong>老代码里的 <code>Hashtable</code> / <code>Vector</code></strong> → 理解、别新增。</li></ul>
+<hr>
+<h2 id="15-泛型与类型安全">15. 泛型与类型安全</h2>
+<pre class="language-java"><code>// 好：指定类型，取出来不用强转
+List&lt;String&gt; names = new ArrayList&lt;&gt;();
+names.add("A");
+String s = names.get(0);
+
+// 差：不指定类型，什么都能放，取出来要强转
+List list = new ArrayList();
+list.add("A");
+list.add(123);
+String x = (String) list.get(1);    // ClassCastException</code></pre>
+<p>Map 同理：</p>
+<pre class="language-java"><code>Map&lt;String, List&lt;Double&gt;&gt; data = new HashMap&lt;&gt;();
+data.computeIfAbsent("ems-01", k -&gt; new ArrayList&lt;&gt;()).add(26.4);</code></pre>
+<p>注意：泛型只存在于编译期，运行时会被擦除（所以 <code>new TypeToken&lt;List&lt;X&gt;&gt;(){}.getType()</code> 这种技巧才存在）。</p>
+<hr>
+<h2 id="16-不可变集合与初始化">16. 不可变集合与初始化</h2>
+<pre class="language-java"><code>// 不可变 List/Set/Map（JDK 9+）
+List&lt;String&gt; list = List.of("a", "b");
+Set&lt;String&gt; set = Set.of("a", "b");
+Map&lt;String, Integer&gt; map = Map.of("a", 1, "b", 2);
+
+list.add("c");       // UnsupportedOperationException</code></pre>
+<p>JS 里的 <code>Arrays.asList</code> 是「固定大小」，不能 add/remove，但能 set：</p>
+<pre class="language-java"><code>List&lt;String&gt; fixed = Arrays.asList("a", "b");
+fixed.set(0, "c");    // 可以
+fixed.add("d");       // UnsupportedOperationException</code></pre>
+<p>把可变集合包成只读：</p>
+<pre class="language-java"><code>Map&lt;String, Double&gt; readOnly = Collections.unmodifiableMap(new HashMap&lt;&gt;());</code></pre>
+<p>集合初始化时给容量（HashMap 专用）：</p>
+<pre class="language-java"><code>Map&lt;String, Double&gt; map = new HashMap&lt;&gt;(1024);   // 避免扩容</code></pre>
+<hr>
+<h2 id="17-实战计数去重缓存top-n">17. 实战：计数、去重、缓存、Top N</h2>
+<h3 id="171-统计每个设备上报了多少条">17.1 统计每个设备上报了多少条</h3>
+<pre class="language-java"><code>Map&lt;String, Integer&gt; count = new HashMap&lt;&gt;();
+for (String deviceId : records) {
+    count.merge(deviceId, 1, Integer::sum);
+}
+
+// 按次数从多到少排序
+List&lt;Map.Entry&lt;String, Integer&gt;&gt; list = new ArrayList&lt;&gt;(count.entrySet());
+list.sort((a, b) -&gt; b.getValue() - a.getValue());</code></pre>
+<h3 id="172-按设备分组">17.2 按设备分组</h3>
+<pre class="language-java"><code>Map&lt;String, List&lt;EmsRecord&gt;&gt; byDevice = new HashMap&lt;&gt;();
+for (EmsRecord r : records) {
+    byDevice.computeIfAbsent(r.getDeviceId(), k -&gt; new ArrayList&lt;&gt;()).add(r);
+}</code></pre>
+<h3 id="173-去重自定义对象">17.3 去重（自定义对象）</h3>
+<pre class="language-java"><code>Set&lt;Device&gt; devices = new HashSet&lt;&gt;();     // Device 必须重写 equals + hashCode
+devices.addAll(list);</code></pre>
+<p>或者按某个字段去重：</p>
+<pre class="language-java"><code>Map&lt;String, Device&gt; unique = new LinkedHashMap&lt;&gt;();
+for (Device d : list) {
+    unique.putIfAbsent(d.getId(), d);      // 同 id 只保留第一个
+}</code></pre>
+<h3 id="174-top-n">17.4 Top N</h3>
+<pre class="language-java"><code>public static List&lt;Map.Entry&lt;String, Double&gt;&gt; topN(Map&lt;String, Double&gt; map, int n) {
+    return map.entrySet().stream()
+            .sorted((a, b) -&gt; Double.compare(b.getValue(), a.getValue()))
+            .limit(n)
+            .collect(Collectors.toList());
+}</code></pre>
+<h3 id="175-缓存最近数据">17.5 缓存最近数据</h3>
+<pre class="language-java"><code>Map&lt;String, EmsRecord&gt; cache = new LinkedHashMap&lt;&gt;(16, 0.75f, true) {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry&lt;String, EmsRecord&gt; eldest) {
+        return size() &gt; 100;
+    }
+};</code></pre>
+<hr>
+<h2 id="18-常见坑">18. 常见坑</h2>
+<table><thead><tr><th>坑</th><th>现象</th><th>原因与解决</th></tr></thead><tbody><tr><td>遍历时 <code>map.remove</code></td><td><code>ConcurrentModificationException</code></td><td>用 <code>Iterator.remove</code> 或 <code>removeIf</code></td></tr><tr><td>自定义对象去重失败</td><td>Set 里出现「重复」元素</td><td>重写 <code>equals</code> 和 <code>hashCode</code></td></tr><tr><td>改了 key 的内容</td><td>再也 get 不到</td><td>key 用不可变对象</td></tr><tr><td><code>Hashtable</code> 放 null</td><td><code>NullPointerException</code></td><td>换 <code>HashMap</code> 或 <code>ConcurrentHashMap</code></td></tr><tr><td><code>ConcurrentHashMap</code> 放 null</td><td><code>NullPointerException</code></td><td>用 <code>getOrDefault</code> 等</td></tr><tr><td>用 <code>Hashtable</code> 当并发容器</td><td>性能差</td><td>换 <code>ConcurrentHashMap</code></td></tr><tr><td><code>HashMap</code> 初始容量太小</td><td>频繁扩容</td><td>预估元素数，给容量</td></tr><tr><td><code>ArrayList</code> 中间插删多</td><td>慢</td><td>用 <code>LinkedList</code> 或换数据结构</td></tr><tr><td><code>Arrays.asList</code> 上 <code>add</code></td><td><code>UnsupportedOperationException</code></td><td>包一层 <code>new ArrayList&lt;&gt;(...)</code></td></tr><tr><td><code>List.of</code> 上 <code>add</code></td><td>同上</td><td>用可变集合</td></tr><tr><td>用 <code>==</code> 比较 key</td><td>找不到</td><td>用 <code>equals</code>（Map 内部就是 equals）</td></tr><tr><td>多线程共用 <code>HashMap</code></td><td>数据错乱</td><td>用 <code>ConcurrentHashMap</code></td></tr><tr><td><code>TreeMap</code> 的 key 不可比较</td><td><code>ClassCastException</code></td><td>实现 <code>Comparable</code> 或传 <code>Comparator</code></td></tr></tbody></table>
+<hr>
+<h2 id="19-老式集合类legacy">19. 老式集合类（Legacy）</h2>
+<p>JDK 1.0 / 1.1 就存在的老集合，现在还在 <code>java.util</code> 里，旧教材、老代码里经常出现，遇到要认识。</p>
+<h3 id="191-老集合清单">19.1 老集合清单</h3>
+<table><thead><tr><th>类</th><th>类型</th><th>现在还用吗</th><th>替代</th></tr></thead><tbody><tr><td><code>Vector</code></td><td>List</td><td>不用</td><td><code>ArrayList</code></td></tr><tr><td><code>Stack</code></td><td>栈</td><td>不用</td><td><code>ArrayDeque</code></td></tr><tr><td><code>Hashtable</code></td><td>Map</td><td>不用</td><td><code>HashMap</code> / <code>ConcurrentHashMap</code></td></tr><tr><td><code>Dictionary</code></td><td>抽象类</td><td>不用</td><td><code>Map</code> 接口</td></tr><tr><td><code>Properties</code></td><td>配置</td><td><strong>还在用</strong></td><td>没有替代（配置文件场景）</td></tr><tr><td><code>Enumeration</code></td><td>遍历接口</td><td>不用</td><td><code>Iterator</code></td></tr><tr><td><code>BitSet</code></td><td>位集合</td><td>偶尔用</td><td>没有直接替代</td></tr></tbody></table>
+<h3 id="192-vector">19.2 Vector</h3>
+<pre class="language-java"><code>Vector&lt;String&gt; v = new Vector&lt;&gt;();
+v.addElement("A");          // 老方法，等价 add
+v.addElement("B");
+
+v.elementAt(0);             // "A"，等价 get
+v.firstElement();           // "A"
+v.lastElement();            // "B"
+v.removeElement("A");
+v.size();
+
+// 老的遍历方式
+Enumeration&lt;String&gt; e = v.elements();
+while (e.hasMoreElements()) {
+    System.out.println(e.nextElement());
+}</code></pre>
+<p>特点：所有方法都 <code>synchronized</code>，扩容默认 <strong>2 倍</strong>（可以传 <code>capacityIncrement</code> 指定增量）。</p>
+<p><code>Vector</code> 的「线程安全」只是把每个方法各自加锁，组合操作照样不安全（比如「先判断再添加」），性能还差。新代码用 <code>ArrayList</code>。</p>
+<h3 id="193-stack">19.3 Stack</h3>
+<pre class="language-java"><code>Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();
+stack.push(1);          // 压栈
+stack.push(2);
+stack.peek();           // 2，看栈顶不移除
+stack.pop();            // 2，弹出
+stack.empty();          // false
+stack.search(1);        // 距离栈顶的位置（1 在栈底，返回 2），找不到返回 -1</code></pre>
+<p><code>Stack</code> 继承 <code>Vector</code>，所以也带了一堆 List 方法（比如 <code>get(0)</code>），语义混乱。</p>
+<p><strong>替代</strong>：用 <code>ArrayDeque</code> 当栈，性能更好：</p>
+<pre class="language-java"><code>Deque&lt;Integer&gt; stack = new ArrayDeque&lt;&gt;();
+stack.push(1);          // 也可以 addFirst
+stack.push(2);
+stack.peek();           // 2
+stack.pop();            // 2</code></pre>
+<h3 id="194-hashtable-与它的老接口">19.4 Hashtable 与它的老接口</h3>
+<p><code>Hashtable</code> 在第 9 章详细讲过，这里补充它的老式遍历：</p>
+<pre class="language-java"><code>Hashtable&lt;String, Double&gt; table = new Hashtable&lt;&gt;();
+table.put("ems-01", 26.4);
+
+// 老的取键方式，返回 Enumeration
+Enumeration&lt;String&gt; keys = table.keys();
+while (keys.hasMoreElements()) {
+    System.out.println(keys.nextElement());
+}
+
+// 老的取值方式
+Enumeration&lt;Double&gt; values = table.elements();</code></pre>
+<p><code>Hashtable</code> 还有一个 <code>contains(Object value)</code> 方法，等价于 <code>containsValue</code>，名字容易和 <code>containsKey</code> 混淆。</p>
+<h3 id="195-dictionary">19.5 Dictionary</h3>
+<p><code>Dictionary</code> 是 <code>Hashtable</code> 的抽象父类，JDK 文档里明确标注 <strong>已过时（obsolete）</strong>：</p>
+<pre class="language-java"><code>// 能用，但不要在新代码里写
+Dictionary&lt;String, String&gt; d = new Hashtable&lt;&gt;();
+d.put("k", "v");
+d.get("k");</code></pre>
+<p>新代码直接用 <code>Map</code> 接口 + <code>HashMap</code>。</p>
+<h3 id="196-properties老类里唯一还常用的">19.6 Properties（老类里唯一还常用的）</h3>
+<p><code>Properties</code> 继承 <code>Hashtable&lt;Object, Object&gt;</code>，专门用来读写配置文件（键值都是字符串），本项目 <code>config.properties</code> 就是它。</p>
+<pre class="language-java"><code>import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
+// 读
+Properties prop = new Properties();
+try (Reader reader = Files.newBufferedReader(Path.of("config.properties"), StandardCharsets.UTF_8)) {
+    prop.load(reader);
+}
+String ip = prop.getProperty("db.ip", "127.0.0.1");    // 第二个参数是默认值
+String port = prop.getProperty("db.port", "3306");
+
+// 遍历所有键值
+for (String name : prop.stringPropertyNames()) {
+    System.out.println(name + " = " + prop.getProperty(name));
+}
+
+// 写回（整文件覆盖）
+prop.setProperty("db.port", "3307");
+try (Writer writer = Files.newBufferedWriter(Path.of("config.properties"), StandardCharsets.UTF_8)) {
+    prop.store(writer, "Database Configuration");
+}</code></pre>
+<p>要点：</p>
+<table><thead><tr><th>要点</th><th>说明</th></tr></thead><tbody><tr><td>推荐用 <code>getProperty</code> / <code>setProperty</code></td><td>而不是 <code>get</code> / <code>put</code>，类型更明确</td></tr><tr><td>不允许 null</td><td>底层是 Hashtable，<code>setProperty(k, null)</code> 抛 <code>NullPointerException</code></td></tr><tr><td><code>store</code> 会转义中文</td><td>存成 <code>\u4F60</code> 形式，<code>load</code> 能还原，正常现象</td></tr><tr><td><code>load(Reader)</code> 用 Reader 的编码</td><td>用 <code>Files.newBufferedReader(..., UTF_8)</code> 避免乱码</td></tr><tr><td><code>stringPropertyNames()</code></td><td>返回所有键的 Set，比 <code>keySet()</code> 类型安全</td></tr></tbody></table>
+<p>本项目 <code>ConfigManager</code> 就是「读配置 → 没有就控制台问 → 写盘」的封装，核心就是 <code>Properties</code>。</p>
+<h3 id="197-enumeration">19.7 Enumeration</h3>
+<p><code>Enumeration</code> 是 <code>Iterator</code> 之前的老接口，只有两个方法：</p>
+<pre class="language-java"><code>Enumeration&lt;String&gt; e = someVector.elements();
+
+while (e.hasMoreElements()) {          // 还有吗
+    String s = e.nextElement();        // 取下一个
+    System.out.println(s);
+}</code></pre>
+<p>和 <code>Iterator</code> 对比：</p>
+<table><thead><tr><th></th><th><code>Enumeration</code></th><th><code>Iterator</code></th></tr></thead><tbody><tr><td>方法</td><td><code>hasMoreElements</code> / <code>nextElement</code></td><td><code>hasNext</code> / <code>next</code></td></tr><tr><td>删除</td><td>不支持</td><td><code>remove()</code></td></tr><tr><td>支持 for-each</td><td>不支持</td><td>支持</td></tr><tr><td>状态</td><td>老接口</td><td>推荐</td></tr></tbody></table>
+<p>新代码一律用 <code>Iterator</code> 或 for-each，<code>Enumeration</code> 只在新老代码对接时出现。</p>
+<h3 id="198-bitset位集合">19.8 BitSet（位集合）</h3>
+<p>严格说它不是 <code>Collection</code>，但也是 <code>java.util</code> 里的老成员，用位来存布尔标记，非常省内存。</p>
+<pre class="language-java"><code>import java.util.BitSet;
+
+BitSet bits = new BitSet(64);
+
+bits.set(3);                    // 第 3 位设为 1
+bits.set(5);
+bits.get(3);                    // true
+bits.get(4);                    // false
+bits.cardinality();             // 2，1 的个数
+bits.nextSetBit(0);             // 3，从 0 开始找第一个 1
+bits.nextSetBit(4);             // 5
+
+bits.clear(3);
+bits.cardinality();             // 1</code></pre>
+<p>典型用途：大量「有/没有」的标记（设备在线状态、打卡记录），比 <code>boolean[]</code> 省内存。</p>
+<h3 id="199-新旧对照与迁移">19.9 新旧对照与迁移</h3>
+<table><thead><tr><th>老写法</th><th>新写法</th><th>说明</th></tr></thead><tbody><tr><td><code>Vector&lt;String&gt; v = new Vector&lt;&gt;();</code></td><td><code>List&lt;String&gt; l = new ArrayList&lt;&gt;();</code></td><td>性能更好</td></tr><tr><td><code>v.addElement("a")</code></td><td><code>l.add("a")</code></td><td>方法名统一</td></tr><tr><td><code>v.elementAt(0)</code></td><td><code>l.get(0)</code></td><td></td></tr><tr><td><code>Stack&lt;Integer&gt; s = new Stack&lt;&gt;();</code></td><td><code>Deque&lt;Integer&gt; s = new ArrayDeque&lt;&gt;();</code></td><td>语义更清晰</td></tr><tr><td><code>Hashtable&lt;K,V&gt;</code></td><td><code>HashMap&lt;K,V&gt;</code> 或 <code>ConcurrentHashMap&lt;K,V&gt;</code></td><td>并发用 CHM</td></tr><tr><td><code>table.keys()</code> + <code>Enumeration</code></td><td><code>map.keySet()</code> + for-each</td><td></td></tr><tr><td><code>Dictionary&lt;K,V&gt;</code></td><td><code>Map&lt;K,V&gt;</code></td><td>抽象类已废弃</td></tr><tr><td><code>e.hasMoreElements()</code></td><td><code>it.hasNext()</code></td><td></td></tr><tr><td><code>e.nextElement()</code></td><td><code>it.next()</code></td><td></td></tr></tbody></table>
+<p>迁移示例：</p>
+<pre class="language-java"><code>// 旧代码
+Vector&lt;String&gt; v = new Vector&lt;&gt;();
+v.addElement("A");
+Enumeration&lt;String&gt; e = v.elements();
+while (e.hasMoreElements()) {
+    process(e.nextElement());
+}
+
+// 新代码
+List&lt;String&gt; list = new ArrayList&lt;&gt;();
+list.add("A");
+for (String s : list) {
+    process(s);
+}</code></pre>
+<h3 id="1910-为什么不要用老类">19.10 为什么不要用老类</h3>
+<table><thead><tr><th>问题</th><th>说明</th></tr></thead><tbody><tr><td>同步是「假安全」</td><td>每个方法各自加锁，组合操作仍不安全，还拖慢速度</td></tr><tr><td>API 老旧</td><td>没有 <code>computeIfAbsent</code>、<code>merge</code>、Stream 支持</td></tr><tr><td>语义混乱</td><td><code>Stack</code> 继承了 Vector，能 <code>get(0)</code> 也能 <code>push</code></td></tr><tr><td>文档标记过时</td><td><code>Dictionary</code> 直接标注 obsolete</td></tr><tr><td>生态不兼容</td><td>新库、新框架的参数类型基本都是 <code>List</code>/<code>Map</code> 接口</td></tr></tbody></table>
+<p><strong>例外</strong>：<code>Properties</code> 还在大量使用（配置文件就是这么回事），<code>BitSet</code> 在需要极致省内存时仍有价值。</p>
+<hr>
+<h2 id="20-速查表">20. 速查表</h2>
+<h3 id="201-list">20.1 List</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>创建</td><td><code>new ArrayList&lt;&gt;()</code></td></tr><tr><td>加</td><td><code>list.add(x)</code></td></tr><tr><td>取</td><td><code>list.get(i)</code></td></tr><tr><td>改</td><td><code>list.set(i, x)</code></td></tr><tr><td>删</td><td><code>list.remove(i)</code> / <code>remove(x)</code></td></tr><tr><td>长度</td><td><code>list.size()</code></td></tr><tr><td>是否包含</td><td><code>list.contains(x)</code></td></tr><tr><td>排序</td><td><code>Collections.sort(list)</code></td></tr><tr><td>转数组</td><td><code>list.toArray(new String[0])</code></td></tr><tr><td>数组转 List</td><td><code>new ArrayList&lt;&gt;(Arrays.asList(arr))</code></td></tr></tbody></table>
+<h3 id="202-set">20.2 Set</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>创建</td><td><code>new HashSet&lt;&gt;()</code></td></tr><tr><td>加（自动去重）</td><td><code>set.add(x)</code></td></tr><tr><td>是否包含</td><td><code>set.contains(x)</code></td></tr><tr><td>删</td><td><code>set.remove(x)</code></td></tr><tr><td>大小</td><td><code>set.size()</code></td></tr><tr><td>保持插入顺序</td><td><code>new LinkedHashSet&lt;&gt;()</code></td></tr><tr><td>排序</td><td><code>new TreeSet&lt;&gt;()</code></td></tr></tbody></table>
+<h3 id="203-map">20.3 Map</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>创建</td><td><code>new HashMap&lt;&gt;()</code></td></tr><tr><td>放/取</td><td><code>put(k, v)</code> / <code>get(k)</code></td></tr><tr><td>取或默认</td><td><code>getOrDefault(k, d)</code></td></tr><tr><td>不存在才放</td><td><code>putIfAbsent(k, v)</code></td></tr><tr><td>不存在才计算</td><td><code>computeIfAbsent(k, f)</code></td></tr><tr><td>计数</td><td><code>merge(k, 1, Integer::sum)</code></td></tr><tr><td>遍历</td><td><code>for (Map.Entry&lt;K,V&gt; e : map.entrySet())</code></td></tr><tr><td>判断键</td><td><code>containsKey(k)</code></td></tr><tr><td>按键排序</td><td><code>new TreeMap&lt;&gt;(map)</code></td></tr></tbody></table>
+<h3 id="204-并发">20.4 并发</h3>
+<table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>并发 Map</td><td><code>new ConcurrentHashMap&lt;&gt;()</code></td></tr><tr><td>并发 List</td><td><code>new CopyOnWriteArrayList&lt;&gt;()</code></td></tr><tr><td>并发 Set</td><td><code>ConcurrentHashMap.newKeySet()</code></td></tr><tr><td>只读包装</td><td><code>Collections.unmodifiableMap(map)</code></td></tr></tbody></table>
+<hr>
+<h2 id="附代码与注释对照表">附：代码与注释对照表</h2>
+<table><thead><tr><th>代码</th><th>作用（注释）</th><th>参数/说明</th></tr></thead><tbody><tr><td><strong>一、List</strong></td><td></td><td></td></tr><tr><td><code>new ArrayList&lt;&gt;()</code></td><td>创建列表</td><td>默认容量 10，扩容 ×1.5</td></tr><tr><td><code>list.add(x)</code></td><td>追加</td><td>返回 boolean</td></tr><tr><td><code>list.get(i)</code></td><td>取</td><td>下标从 0</td></tr><tr><td><code>list.remove(i)</code></td><td>按删下标</td><td>返回被删元素</td></tr><tr><td><code>list.remove(x)</code></td><td>按值删</td><td>删第一个匹配</td></tr><tr><td><code>list.size()</code></td><td>长度</td><td></td></tr><tr><td><code>list.contains(x)</code></td><td>是否包含</td><td>用 equals 比较</td></tr><tr><td><code>Collections.sort(list)</code></td><td>排序</td><td>元素要可比较</td></tr><tr><td><code>new LinkedList&lt;&gt;()</code></td><td>链表</td><td>头尾增删快</td></tr><tr><td><strong>二、Set</strong></td><td></td><td></td></tr><tr><td><code>new HashSet&lt;&gt;()</code></td><td>哈希集合</td><td>无序、不重复</td></tr><tr><td><code>set.add(x)</code></td><td>加</td><td>已存在返回 false</td></tr><tr><td><code>set.contains(x)</code></td><td>是否包含</td><td></td></tr><tr><td><code>new LinkedHashSet&lt;&gt;()</code></td><td>保持插入顺序</td><td></td></tr><tr><td><code>new TreeSet&lt;&gt;()</code></td><td>排序集合</td><td>key 要可比较</td></tr><tr><td><code>set.size()</code></td><td>大小</td><td></td></tr><tr><td><strong>三、Map 基本</strong></td><td></td><td></td></tr><tr><td><code>new HashMap&lt;&gt;()</code></td><td>哈希表</td><td>最常用</td></tr><tr><td><code>map.put(k, v)</code></td><td>放</td><td>返回旧值</td></tr><tr><td><code>map.get(k)</code></td><td>取</td><td>没有返回 null</td></tr><tr><td><code>map.getOrDefault(k, d)</code></td><td>取或默认</td><td></td></tr><tr><td><code>map.putIfAbsent(k, v)</code></td><td>不存在才放</td><td></td></tr><tr><td><code>map.containsKey(k)</code></td><td>是否含键</td><td></td></tr><tr><td><code>map.remove(k)</code></td><td>删</td><td>返回旧值</td></tr><tr><td><code>map.size()</code></td><td>大小</td><td></td></tr><tr><td><code>new HashMap&lt;&gt;(1024)</code></td><td>指定初始容量</td><td>避免扩容</td></tr><tr><td><strong>四、Map 高级</strong></td><td></td><td></td></tr><tr><td><code>map.computeIfAbsent(k, f)</code></td><td>不存在才计算并放</td><td>分组常用</td></tr><tr><td><code>map.compute(k, f)</code></td><td>总是计算并放</td><td></td></tr><tr><td><code>map.merge(k, v, f)</code></td><td>合并</td><td>计数用 <code>Integer::sum</code></td></tr><tr><td><code>map.replace(k, v)</code></td><td>存在才替换</td><td></td></tr><tr><td><code>map.forEach((k, v) -&gt; ...)</code></td><td>遍历</td><td></td></tr><tr><td><code>map.entrySet()</code></td><td>键值对集合</td><td>遍历首选</td></tr><tr><td><code>map.keySet()</code></td><td>键集合</td><td></td></tr><tr><td><code>map.values()</code></td><td>值集合</td><td></td></tr><tr><td><strong>五、遍历删除与排序</strong></td><td></td><td></td></tr><tr><td><code>Iterator it = map.entrySet().iterator()</code></td><td>迭代器</td><td>遍历删除用</td></tr><tr><td><code>it.remove()</code></td><td>迭代器删除</td><td>安全</td></tr><tr><td><code>map.entrySet().removeIf(e -&gt; ...)</code></td><td>条件删除</td><td>JDK 8+</td></tr><tr><td><code>new ArrayList&lt;&gt;(map.entrySet())</code></td><td>转列表</td><td>排序前</td></tr><tr><td><code>list.sort((a, b) -&gt; ...)</code></td><td>自定义排序</td><td></td></tr><tr><td><strong>六、其它实现</strong></td><td></td><td></td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式线程安全 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>new LinkedHashMap&lt;&gt;(16, 0.75f, true)</code></td><td>访问顺序</td><td>LRU 用</td></tr><tr><td><code>removeEldestEntry(...)</code></td><td>淘汰策略</td><td>超过大小返回 true</td></tr><tr><td><code>new TreeMap&lt;&gt;(Comparator.reverseOrder())</code></td><td>倒序 Map</td><td>key 要可比较</td></tr><tr><td><code>new ConcurrentHashMap&lt;&gt;()</code></td><td>并发 Map</td><td>不允许 null</td></tr><tr><td><code>ConcurrentHashMap.newKeySet()</code></td><td>并发 Set</td><td></td></tr><tr><td><code>Collections.unmodifiableMap(map)</code></td><td>只读包装</td><td>改会抛异常</td></tr><tr><td><code>Map.of("a", 1)</code></td><td>不可变 Map</td><td>JDK 9+</td></tr><tr><td><strong>七、老式集合</strong></td><td></td><td></td></tr><tr><td><code>new Vector&lt;&gt;()</code></td><td>老式 List</td><td>所有方法同步，推荐 ArrayList</td></tr><tr><td><code>v.addElement("a")</code></td><td>老式添加</td><td>等价 <code>add</code></td></tr><tr><td><code>v.elementAt(0)</code></td><td>老式取</td><td>等价 <code>get</code></td></tr><tr><td><code>new Stack&lt;&gt;()</code></td><td>老式栈</td><td>推荐 <code>ArrayDeque</code></td></tr><tr><td><code>stack.push(x)</code> / <code>pop()</code></td><td>压栈/弹栈</td><td>Deque 同名方法</td></tr><tr><td><code>stack.search(x)</code></td><td>距栈顶位置</td><td>找不到 -1</td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>table.keys()</code> / <code>elements()</code></td><td>返回 Enumeration</td><td>用 <code>keySet</code>/<code>values</code></td></tr><tr><td><code>new Properties()</code></td><td>配置文件</td><td>继承 Hashtable</td></tr><tr><td><code>prop.getProperty("k", "默认")</code></td><td>读配置</td><td>第二个参数是默认值</td></tr><tr><td><code>prop.setProperty("k", "v")</code></td><td>写配置</td><td>不能传 null</td></tr><tr><td><code>prop.load(reader)</code> / <code>store(writer, "注释")</code></td><td>读/写文件</td><td></td></tr><tr><td><code>new BitSet()</code></td><td>位集合</td><td><code>set</code>/<code>get</code>/<code>cardinality</code></td></tr><tr><td><code>Enumeration e = v.elements()</code></td><td>老式遍历</td><td>用 <code>Iterator</code> 替代</td></tr><tr><td><code>e.hasMoreElements()</code> / <code>nextElement()</code></td><td>老式取元素</td><td><code>hasNext</code>/<code>next</code></td></tr></tbody></table>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>
