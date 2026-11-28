@@ -1,0 +1,785 @@
+# JavaScript 使用手册（网页的第三层：行为）
+
+> HTML 管结构，CSS 管样式，JavaScript 管**行为**：点击按钮、校验表单、请求数据、更新页面。
+> 这一本从语法讲到 DOM 操作、事件、异步请求，最后做一个「拉数据 → 渲染表格」的实战。
+
+---
+
+## 目录
+
+1. [JavaScript 是什么](#1-javascript-是什么)
+2. [变量与数据类型](#2-变量与数据类型)
+3. [运算符与类型转换](#3-运算符与类型转换)
+4. [流程控制与循环](#4-流程控制与循环)
+5. [函数](#5-函数)
+6. [数组与常用方法](#6-数组与常用方法)
+7. [对象](#7-对象)
+8. [字符串与模板字符串](#8-字符串与模板字符串)
+9. [DOM 操作](#9-dom-操作)
+10. [事件](#10-事件)
+11. [异步：setTimeout、Promise、fetch](#11-异步settimeoutpromisefetch)
+12. [JSON 与本地存储](#12-json-与本地存储)
+13. [模块化](#13-模块化)
+14. [实战：拉数据并渲染表格](#14-实战拉数据并渲染表格)
+15. [常见坑](#15-常见坑)
+16. [速查表](#16-速查表)
+
+---
+
+## 1. JavaScript 是什么
+
+JavaScript（简称 JS）是运行在浏览器里的编程语言，负责页面的交互。
+
+三种写法：
+
+```html
+<!-- ① 外部文件（推荐） -->
+<script src="app.js"></script>
+
+<!-- ② 页面内 -->
+<script>
+    console.log("hello");
+</script>
+
+<!-- ③ 内联（不推荐） -->
+<button onclick="alert('hi')">点我</button>
+```
+
+写在哪里：
+
+| 位置 | 说明 |
+| --- | --- |
+| `<head>` 里 | 此时页面还没加载完，操作 DOM 会失败 |
+| `<body>` 末尾 | 推荐，DOM 已就绪 |
+| 加 `defer` | `<script src="app.js" defer>`，等页面解析完再执行 |
+
+调试：浏览器按 **F12** → Console，可以看输出、报错、直接执行代码。
+
+```js
+console.log("普通信息");
+console.warn("警告");
+console.error("错误");
+console.table([{ a: 1, b: 2 }]);
+```
+
+---
+
+## 2. 变量与数据类型
+
+### 2.1 三种声明
+
+```js
+let count = 0;        // 可变，推荐
+const name = "EMS";   // 不可重新赋值，推荐
+var old = 1;          // 老写法，有变量提升问题，别用
+```
+
+规则：能用 `const` 就用 `const`，需要改再用 `let`，不要用 `var`。
+
+### 2.2 数据类型
+
+```js
+let s = "文字";            // string
+let n = 42;               // number（整数和小数都是 number）
+let f = 3.14;             // number
+let b = true;             // boolean
+let nothing = null;       // null：空值
+let notDefined;           // undefined：未赋值
+let arr = [1, 2, 3];      // object（数组）
+let obj = { a: 1 };       // object
+let fn = function () {};  // function
+let big = 9007199254740993n;   // bigint
+```
+
+`typeof` 查看类型：
+
+```js
+typeof "abc"      // "string"
+typeof 42         // "number"
+typeof true       // "boolean"
+typeof undefined  // "undefined"
+typeof null       // "object"（历史 bug，记住即可）
+typeof []         // "object"
+typeof function(){} // "function"
+```
+
+`null` 和 `undefined` 的区别：`undefined` 是「没赋值」，`null` 是「主动清空」。
+
+---
+
+## 3. 运算符与类型转换
+
+### 3.1 运算符
+
+```js
+1 + 2          // 3
+"a" + "b"      // "ab"
+"1" + 2        // "12"（+ 遇到字符串会拼接）
+5 - 2          // 3
+5 * 2          // 10
+5 / 2          // 2.5
+5 % 2          // 1
+2 ** 3         // 8（幂）
+
+a > b, a < b, a >= b, a <= b
+a === b        // 严格相等（值和类型都相同）★ 推荐
+a !== b
+a == b         // 宽松相等（会做类型转换）✗ 不推荐
+
+true && false  // 与
+true || false  // 或
+!true          // 非
+
+cond ? a : b   // 三元
+```
+
+### 3.2 `==` 和 `===` 的区别
+
+```js
+1 == "1"       // true（自动类型转换）
+1 === "1"      // false（类型不同）
+null == undefined      // true
+null === undefined     // false
+
+// 结论：一律用 ===
+```
+
+### 3.3 类型转换
+
+```js
+Number("123")      // 123
+Number("abc")      // NaN
+parseInt("12px")   // 12（从头开始解析整数）
+parseFloat("1.5kg")// 1.5
+String(42)         // "42"
+(42).toString()    // "42"
+Boolean(0)         // false（0、""、null、undefined、NaN 都是 false）
+```
+
+`NaN` 表示「不是数字」，判断要用 `Number.isNaN(x)`，不能用 `x === NaN`。
+
+---
+
+## 4. 流程控制与循环
+
+```js
+// if / else
+if (score >= 90) {
+    console.log("优秀");
+} else if (score >= 60) {
+    console.log("及格");
+} else {
+    console.log("不及格");
+}
+
+// switch
+switch (status) {
+    case "online":
+        console.log("在线");
+        break;
+    case "offline":
+        console.log("离线");
+        break;
+    default:
+        console.log("未知");
+}
+
+// for
+for (let i = 0; i < 5; i++) {
+    console.log(i);
+}
+
+// for...of（遍历数组/字符串）
+for (const item of [1, 2, 3]) {
+    console.log(item);
+}
+
+// for...in（遍历对象的键）
+for (const key in { a: 1, b: 2 }) {
+    console.log(key);
+}
+
+// while
+let i = 0;
+while (i < 5) {
+    i++;
+}
+
+// break / continue
+for (const n of [1, 2, 3, 4]) {
+    if (n === 2) continue;   // 跳过
+    if (n === 4) break;      // 结束
+    console.log(n);
+}
+```
+
+`for...of` 用于值，`for...in` 用于键——遍历数组用 `for...of`，别用 `for...in`（会把原型链上的属性也遍历出来）。
+
+---
+
+## 5. 函数
+
+```js
+// ① 函数声明（会被提升，可以在定义前调用）
+function add(a, b) {
+    return a + b;
+}
+
+// ② 函数表达式
+const sub = function (a, b) {
+    return a - b;
+};
+
+// ③ 箭头函数（最常用）
+const mul = (a, b) => a * b;
+
+const square = x => x * x;          // 一个参数可省括号
+const getUser = () => ({ id: 1 });  // 返回对象要加括号
+
+// ④ 默认参数
+function greet(name = "同学") {
+    return `你好，${name}`;
+}
+
+// ⑤ 剩余参数
+function sum(...nums) {
+    return nums.reduce((a, b) => a + b, 0);
+}
+
+// ⑥ 解构参数
+function show({ name, age }) {
+    console.log(name, age);
+}
+show({ name: "小明", age: 13 });
+```
+
+箭头函数和普通函数的区别（记住两条够用）：
+
+| | 普通函数 | 箭头函数 |
+| --- | --- | --- |
+| `this` | 调用时决定 | 继承外层 |
+| `arguments` | 有 | 没有 |
+| 能否当构造函数 | 能 | 不能 |
+
+---
+
+## 6. 数组与常用方法
+
+```js
+const arr = [1, 2, 3];
+
+arr.length;          // 3
+arr[0];              // 1
+arr.push(4);         // 末尾加，返回新长度
+arr.pop();           // 末尾删
+arr.unshift(0);      // 开头加
+arr.shift();         // 开头删
+arr.includes(2);     // 是否包含
+arr.indexOf(2);      // 位置，没有返回 -1
+arr.join("-");       // "1-2-3"
+arr.reverse();
+arr.slice(1, 3);     // 截取 [2, 3]，不改原数组
+arr.splice(1, 1);    // 删除 1 个，改原数组
+```
+
+### 6.1 五个必会的方法
+
+```js
+const users = [
+    { name: "A", age: 13 },
+    { name: "B", age: 14 },
+    { name: "C", age: 15 }
+];
+
+// map：转换，返回新数组
+const names = users.map(u => u.name);          // ["A", "B", "C"]
+
+// filter：筛选
+const adults = users.filter(u => u.age >= 14);
+
+// find：找第一个
+const b = users.find(u => u.name === "B");
+
+// some / every：有没有 / 是不是都
+users.some(u => u.age > 14);                   // true
+users.every(u => u.age > 10);                  // true
+
+// reduce：汇总
+const totalAge = users.reduce((sum, u) => sum + u.age, 0);
+
+// forEach：遍历（没有返回值）
+users.forEach(u => console.log(u.name));
+```
+
+### 6.2 排序
+
+```js
+const nums = [10, 2, 33, 5];
+
+nums.sort();                          // [10, 2, 33, 5] → 按字符串排，结果不对
+nums.sort((a, b) => a - b);           // 升序
+nums.sort((a, b) => b - a);           // 降序
+```
+
+默认 `sort()` 会把元素转成字符串比较，数字必须传比较函数。
+
+### 6.3 解构与展开
+
+```js
+const [first, second] = [1, 2];
+const { name, age } = user;
+
+const copy = [...arr];                // 浅拷贝
+const merged = [...arr1, ...arr2];    // 合并
+
+const obj2 = { ...obj1, extra: 1 };   // 对象浅拷贝/合并
+```
+
+---
+
+## 7. 对象
+
+```js
+const user = {
+    id: 1,
+    name: "小明",
+    age: 13,
+    greet() {
+        return `你好，${this.name}`;
+    }
+};
+
+user.name;              // 点
+user["name"];           // 方括号（键是变量时用）
+user.id = 2;            // 改
+user.email = "a@b.c";   // 加
+delete user.age;        // 删
+
+"name" in user;         // 是否含该键
+Object.keys(user);      // 所有键
+Object.values(user);    // 所有值
+Object.entries(user);   // 键值对数组
+```
+
+可选链与空值合并（处理「可能没有」的值）：
+
+```js
+const city = user?.address?.city;      // 中间任何一层是 null/undefined 就返回 undefined
+const name = user.nickname ?? "匿名";   // 左边是 null/undefined 才用右边
+```
+
+`?.` 和 `??` 是现在最常用的两个语法，能免掉一堆 `if` 判空。
+
+---
+
+## 8. 字符串与模板字符串
+
+```js
+const name = "EMS";
+const temp = 26.4;
+
+// 反引号模板字符串，可以嵌变量和换行
+const msg = `设备 ${name} 温度 ${temp.toFixed(1)}℃`;
+const multi = `第一行
+第二行`;
+```
+
+常用方法：
+
+```js
+s.length
+s.toUpperCase()
+s.toLowerCase()
+s.trim()
+s.includes("x")
+s.startsWith("x")
+s.endsWith("x")
+s.indexOf("x")
+s.slice(1, 3)
+s.replace("a", "b")
+s.split(",")          // 切成数组
+"a,b,c".split(",")    // ["a","b","c"]
+```
+
+---
+
+## 9. DOM 操作
+
+DOM（Document Object Model）是浏览器把 HTML 解析成的对象树，JS 通过它操作页面。
+
+### 9.1 选取元素
+
+```js
+const el = document.querySelector("#app");        // 第一个匹配
+const items = document.querySelectorAll(".item"); // 所有匹配（NodeList）
+const title = document.getElementById("title");
+```
+
+`querySelector` 用 CSS 选择器语法，最通用。
+
+### 9.2 改内容、样式、属性
+
+```js
+el.textContent = "纯文本";        // 安全，不解析 HTML
+el.innerHTML = "<b>HTML</b>";     // 会解析 HTML（小心 XSS）
+
+el.style.color = "red";
+el.style.display = "none";
+el.classList.add("active");
+el.classList.remove("active");
+el.classList.toggle("active");
+el.classList.contains("active");
+
+el.setAttribute("data-id", "1");
+el.getAttribute("data-id");
+el.dataset.id;                    // 读 data-id
+```
+
+### 9.3 创建与插入元素
+
+```js
+const li = document.createElement("li");
+li.textContent = "新的一项";
+
+const ul = document.querySelector("ul");
+ul.appendChild(li);          // 放到末尾
+ul.prepend(li);              // 放到开头
+
+li.remove();                 // 删除自己
+el.replaceWith(newEl);       // 替换
+```
+
+### 9.4 渲染表格（常用套路）
+
+```js
+const data = [
+    { device: "ems-01", temp: 26.4 },
+    { device: "ems-02", temp: 27.1 }
+];
+
+const tbody = document.querySelector("tbody");
+tbody.innerHTML = data.map(row => `
+    <tr>
+        <td>${row.device}</td>
+        <td>${row.temp}</td>
+    </tr>
+`).join("");
+```
+
+注意：用 `innerHTML` 拼用户输入有 XSS 风险，用户内容要用 `textContent` 或转义。
+
+---
+
+## 10. 事件
+
+```js
+const btn = document.querySelector("#btn");
+
+btn.addEventListener("click", () => {
+    console.log("点击了");
+});
+
+// 带事件对象
+btn.addEventListener("click", (event) => {
+    console.log(event.target);       // 触发事件的元素
+    event.preventDefault();          // 阻止默认行为（表单提交、链接跳转）
+    event.stopPropagation();         // 阻止冒泡
+});
+```
+
+常用事件：
+
+| 事件 | 触发时机 |
+| --- | --- |
+| `click` | 点击 |
+| `dblclick` | 双击 |
+| `input` | 输入内容变化（实时） |
+| `change` | 值改变并失焦（下拉、文件） |
+| `submit` | 表单提交 |
+| `keydown` / `keyup` | 键盘按下 / 抬起 |
+| `mouseenter` / `mouseleave` | 鼠标进入 / 离开 |
+| `scroll` | 滚动 |
+| `load` | 资源加载完 |
+
+表单提交示例：
+
+```js
+document.querySelector("form").addEventListener("submit", (e) => {
+    e.preventDefault();              // 不刷新页面
+
+    const device = document.querySelector("#device").value;
+    const temp = document.querySelector("#temp").value;
+
+    if (!device || !temp) {
+        alert("请填写完整");
+        return;
+    }
+    console.log(device, temp);
+});
+```
+
+事件委托（动态元素用）：
+
+```js
+document.querySelector("tbody").addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+        const id = e.target.dataset.id;
+        console.log("删除", id);
+    }
+});
+```
+
+---
+
+## 11. 异步：setTimeout、Promise、fetch
+
+### 11.1 setTimeout
+
+```js
+setTimeout(() => {
+    console.log("1 秒后执行");
+}, 1000);
+
+setInterval(() => {
+    console.log("每 2 秒执行");
+}, 2000);
+```
+
+### 11.2 Promise
+
+```js
+const p = new Promise((resolve, reject) => {
+    const ok = true;
+    if (ok) {
+        resolve("成功");
+    } else {
+        reject(new Error("失败"));
+    }
+});
+
+p.then(v => console.log(v))
+ .catch(e => console.error(e))
+ .finally(() => console.log("结束"));
+```
+
+### 11.3 async / await（现在的主流写法）
+
+```js
+async function load() {
+    try {
+        const res = await fetch("/api/ems");
+        if (!res.ok) {
+            throw new Error("HTTP " + res.status);
+        }
+        const data = await res.json();
+        console.log(data);
+    } catch (e) {
+        console.error("加载失败", e);
+    } finally {
+        console.log("结束");
+    }
+}
+```
+
+`await` 只能在 `async` 函数里用；`await` 会等 Promise 完成，代码看起来像同步。
+
+### 11.4 fetch 请求
+
+```js
+// GET
+const res = await fetch("https://example.com/api/ems");
+const data = await res.json();
+
+// POST JSON
+const res2 = await fetch("/api/ems", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ temp: 26.4 })
+});
+```
+
+注意：`fetch` 对 404、500 **不会**进入 `catch`，要自己判断 `res.ok`。
+
+---
+
+## 12. JSON 与本地存储
+
+```js
+// 对象 → JSON 字符串
+const json = JSON.stringify({ id: 1, temp: 26.4 });
+
+// JSON 字符串 → 对象
+const obj = JSON.parse(json);
+```
+
+本地存储（localStorage，刷新不丢）：
+
+```js
+localStorage.setItem("user", JSON.stringify({ name: "小明" }));
+const user = JSON.parse(localStorage.getItem("user"));
+localStorage.removeItem("user");
+localStorage.clear();
+```
+
+`localStorage` 只能存字符串，存对象要先 `JSON.stringify`。
+
+---
+
+## 13. 模块化
+
+```js
+// math.js
+export function add(a, b) {
+    return a + b;
+}
+
+export const PI = 3.14;
+
+// main.js
+import { add, PI } from "./math.js";
+```
+
+```html
+<script type="module" src="main.js"></script>
+```
+
+注意：用模块时脚本要加 `type="module"`，且从本地文件（`file://`）打开可能受限，最好用本地服务器。
+
+---
+
+## 14. 实战：拉数据并渲染表格
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>设备数据</title>
+</head>
+<body>
+    <h1>设备数据</h1>
+    <button id="refresh">刷新</button>
+    <table>
+        <thead>
+            <tr><th>设备</th><th>温度</th><th>时间</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <p id="status"></p>
+
+    <script>
+        const tbody = document.querySelector("tbody");
+        const status = document.querySelector("#status");
+
+        async function loadData() {
+            status.textContent = "加载中…";
+            try {
+                const res = await fetch("/api/ems");
+                if (!res.ok) {
+                    throw new Error("HTTP " + res.status);
+                }
+                const data = await res.json();
+                render(data);
+                status.textContent = `共 ${data.length} 条`;
+            } catch (e) {
+                status.textContent = "加载失败：" + e.message;
+            }
+        }
+
+        function render(data) {
+            tbody.innerHTML = data.map(row => `
+                <tr>
+                    <td>${row.device}</td>
+                    <td>${row.temp}</td>
+                    <td>${row.time}</td>
+                </tr>
+            `).join("");
+        }
+
+        document.querySelector("#refresh").addEventListener("click", loadData);
+        loadData();                     // 页面打开就加载一次
+    </script>
+</body>
+</html>
+```
+
+这个例子用到了：`querySelector`、`addEventListener`、`async/await`、`fetch`、`JSON.parse`（`res.json()` 内部做了）、`map`、模板字符串。
+
+---
+
+## 15. 常见坑
+
+| 坑 | 现象 | 解决 |
+| --- | --- | --- |
+| 用 `==` 比较 | `"1" == 1` 是 true | 一律用 `===` |
+| `var` 的变量提升 | 在声明前能用但值是 undefined | 用 `let` / `const` |
+| `this` 指向错 | 普通函数里 this 不是预期对象 | 用箭头函数 |
+| 在 `head` 里操作 DOM | 报 `null` 的错 | 放 `body` 末尾或用 `defer` |
+| `fetch` 404 不进 catch | 以为成功了 | 判断 `res.ok` |
+| 忘记 `await` | 拿到的是 Promise 不是数据 | 加 `await` |
+| 循环里用 `var` 注册事件 | 所有回调拿到最后一个值 | 用 `let` |
+| `innerHTML` 拼用户输入 | XSS 风险 | 用 `textContent` 或转义 |
+| `sort()` 不传函数 | 数字按字符串排 | `sort((a,b) => a-b)` |
+| `NaN` 比较 | `NaN === NaN` 是 false | 用 `Number.isNaN` |
+| 修改数组时遍历 | 漏项 | 用 `map`/`filter` 生成新数组 |
+
+---
+
+## 16. 速查表
+
+### 16.1 语法
+
+| 我想…… | 写法 |
+| --- | --- |
+| 变量 | `let a = 1;` / `const b = 2;` |
+| 模板字符串 | `` `你好，${name}` `` |
+| 判断 | `if (x) {} else {}` |
+| 三元 | `x ? a : b` |
+| 循环数组 | `for (const x of arr)` |
+| 函数 | `const f = (a) => a + 1;` |
+| 解构 | `const { name, age } = user;` |
+| 展开 | `[...arr]`、`{ ...obj }` |
+| 可选链 | `user?.address?.city` |
+| 空值合并 | `x ?? 默认值` |
+
+### 16.2 数组
+
+| 我想…… | 写法 |
+| --- | --- |
+| 转换 | `arr.map(x => x * 2)` |
+| 筛选 | `arr.filter(x => x > 0)` |
+| 查找 | `arr.find(x => x.id === 1)` |
+| 汇总 | `arr.reduce((s, x) => s + x, 0)` |
+| 遍历 | `arr.forEach(x => ...)` |
+| 判断存在 | `arr.includes(x)` |
+| 排序 | `arr.sort((a, b) => a - b)` |
+| 拼接 | `arr.join(",")` |
+
+### 16.3 DOM
+
+| 我想…… | 写法 |
+| --- | --- |
+| 选元素 | `document.querySelector("#id")` |
+| 选多个 | `document.querySelectorAll(".item")` |
+| 改文字 | `el.textContent = "x"` |
+| 改 HTML | `el.innerHTML = "<b>x</b>"` |
+| 加类 | `el.classList.add("active")` |
+| 改样式 | `el.style.color = "red"` |
+| 建元素 | `document.createElement("li")` |
+| 插入 | `parent.appendChild(el)` |
+| 删除 | `el.remove()` |
+| 监听 | `el.addEventListener("click", fn)` |
+| 阻止默认 | `e.preventDefault()` |
+
+### 16.4 异步
+
+| 我想…… | 写法 |
+| --- | --- |
+| 延迟 | `setTimeout(fn, 1000)` |
+| 请求 | `const res = await fetch(url)` |
+| 取 JSON | `const data = await res.json()` |
+| 发 POST | `fetch(url, { method: "POST", headers, body })` |
+| 判断成功 | `if (!res.ok) throw ...` |
+| 本地存 | `localStorage.setItem("k", JSON.stringify(v))` |

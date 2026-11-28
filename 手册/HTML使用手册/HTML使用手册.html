@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML 使用手册（网页的第一层：结构）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="html-使用手册网页的第一层结构">HTML 使用手册（网页的第一层：结构）</h1>
+<blockquote><p>网页由三样东西组成：<strong>HTML 管结构、CSS 管样式、JavaScript 管行为</strong>。这一本讲 HTML：用什么标签、怎么组织页面、怎么放表单和图片。看完能自己写出一个结构完整的页面（样式和交互看另外两本）。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-html-是什么">HTML 是什么</a></li><li><a href="#2-一个最小的网页">一个最小的网页</a></li><li><a href="#3-常用标签">常用标签</a></li><li><a href="#4-列表与表格">列表与表格</a></li><li><a href="#5-链接与图片">链接与图片</a></li><li><a href="#6-表单">表单</a></li><li><a href="#7-语义化结构标签">语义化结构标签</a></li><li><a href="#8-属性-idclass-与-data-">属性 id、class 与 data-*</a></li><li><a href="#9-音频视频与其它">音频、视频与其它</a></li><li><a href="#10-一个完整页面">一个完整页面</a></li><li><a href="#11-常见错误">常见错误</a></li><li><a href="#12-标签速查表">标签速查表</a></li></ol>
+<hr>
+<h2 id="1-html-是什么">1. HTML 是什么</h2>
+<p>HTML（HyperText Markup Language，超文本标记语言）用<strong>标签</strong>描述网页的<strong>结构</strong>：</p>
+<pre class="language-html"><code>&lt;h1&gt;这是标题&lt;/h1&gt;
+&lt;p&gt;这是段落。&lt;/p&gt;</code></pre>
+<ul><li>标签一般成对出现：<code>&lt;p&gt;</code> 开始，<code>&lt;/p&gt;</code> 结束；</li><li>少数标签自闭合：<code>&lt;img&gt;</code>、<code>&lt;br&gt;</code>、<code>&lt;input&gt;</code>；</li><li>标签可以带属性：<code>&lt;a href="https://example.com"&gt;链接&lt;/a&gt;</code>；</li><li>浏览器读 HTML，画出页面，这个过程叫「渲染」。</li></ul>
+<p>浏览器打开一个 <code>.html</code> 文件就能看效果，不需要装任何东西。</p>
+<hr>
+<h2 id="2-一个最小的网页">2. 一个最小的网页</h2>
+<pre class="language-html"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;我的第一个网页&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;你好，网页&lt;/h1&gt;
+    &lt;p&gt;这是一个段落。&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>逐行说明：</p>
+<table><thead><tr><th>代码</th><th>作用</th></tr></thead><tbody><tr><td><code>&lt;!DOCTYPE html&gt;</code></td><td>声明这是 HTML5，必须第一行</td></tr><tr><td><code>&lt;html lang="zh-CN"&gt;</code></td><td>整个页面的根，<code>lang</code> 说明语言</td></tr><tr><td><code>&lt;head&gt;</code></td><td>页面信息（不显示在页面上）</td></tr><tr><td><code>&lt;meta charset="UTF-8"&gt;</code></td><td>编码，不写中文会乱码</td></tr><tr><td><code>&lt;meta name="viewport" ...&gt;</code></td><td>手机端适配，不写手机上会缩小</td></tr><tr><td><code>&lt;title&gt;</code></td><td>浏览器标签页上的标题</td></tr><tr><td><code>&lt;body&gt;</code></td><td>页面上看得见的内容</td></tr></tbody></table>
+<p>保存为 <code>index.html</code>，双击用浏览器打开即可。</p>
+<hr>
+<h2 id="3-常用标签">3. 常用标签</h2>
+<h3 id="31-标题与段落">3.1 标题与段落</h3>
+<pre class="language-html"><code>&lt;h1&gt;一级标题&lt;/h1&gt;
+&lt;h2&gt;二级标题&lt;/h2&gt;
+&lt;h3&gt;三级标题&lt;/h3&gt;
+&lt;h4&gt;四级标题&lt;/h4&gt;
+&lt;h5&gt;五级标题&lt;/h5&gt;
+&lt;h6&gt;六级标题&lt;/h6&gt;
+
+&lt;p&gt;这是一个段落。&lt;/p&gt;
+&lt;p&gt;段落之间会自动换行。&lt;/p&gt;
+
+&lt;br&gt;          &lt;!-- 强制换行 --&gt;
+&lt;hr&gt;          &lt;!-- 一条分隔线 --&gt;</code></pre>
+<p>规则：</p>
+<ul><li><code>h1</code> 一页只用一个（主标题），依次往下用；</li><li><code>p</code> 表示段落，不要用 <code>br</code> 代替段落。</li></ul>
+<h3 id="32-强调与行内元素">3.2 强调与行内元素</h3>
+<pre class="language-html"><code>&lt;strong&gt;加粗（重要）&lt;/strong&gt;
+&lt;em&gt;斜体（强调）&lt;/em&gt;
+&lt;span&gt;行内的一小段，用来单独加样式&lt;/span&gt;
+&lt;code&gt;行内代码&lt;/code&gt;
+&lt;pre&gt;保留空格和换行的文本块&lt;/pre&gt;</code></pre>
+<p><code>div</code> 和 <code>span</code> 的区别：</p>
+<table><thead><tr><th>标签</th><th>类型</th><th>用途</th></tr></thead><tbody><tr><td><code>div</code></td><td>块级（独占一行）</td><td>布局容器</td></tr><tr><td><code>span</code></td><td>行内（不换行）</td><td>包裹一小段文字</td></tr></tbody></table>
+<hr>
+<h2 id="4-列表与表格">4. 列表与表格</h2>
+<h3 id="41-列表">4.1 列表</h3>
+<pre class="language-html"><code>&lt;!-- 无序列表（圆点） --&gt;
+&lt;ul&gt;
+    &lt;li&gt;苹果&lt;/li&gt;
+    &lt;li&gt;香蕉&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- 有序列表（数字） --&gt;
+&lt;ol&gt;
+    &lt;li&gt;第一步&lt;/li&gt;
+    &lt;li&gt;第二步&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;!-- 描述列表 --&gt;
+&lt;dl&gt;
+    &lt;dt&gt;HTML&lt;/dt&gt;
+    &lt;dd&gt;管结构的语言&lt;/dd&gt;
+&lt;/dl&gt;</code></pre>
+<h3 id="42-表格">4.2 表格</h3>
+<pre class="language-html"><code>&lt;table&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;设备&lt;/th&gt;
+            &lt;th&gt;温度&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;ems-01&lt;/td&gt;
+            &lt;td&gt;26.4&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;ems-02&lt;/td&gt;
+            &lt;td&gt;27.1&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;</code></pre>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>table</code></td><td>表格</td></tr><tr><td><code>thead</code> / <code>tbody</code> / <code>tfoot</code></td><td>表头 / 表体 / 表尾</td></tr><tr><td><code>tr</code></td><td>一行</td></tr><tr><td><code>th</code></td><td>表头单元格（加粗居中）</td></tr><tr><td><code>td</code></td><td>普通单元格</td></tr><tr><td><code>colspan</code> / <code>rowspan</code></td><td>跨列 / 跨行</td></tr></tbody></table>
+<pre class="language-html"><code>&lt;td colspan="2"&gt;合并两列&lt;/td&gt;
+&lt;td rowspan="3"&gt;合并三行&lt;/td&gt;</code></pre>
+<p>表格不要用来做页面布局，布局用 CSS（Flex/Grid）。</p>
+<hr>
+<h2 id="5-链接与图片">5. 链接与图片</h2>
+<h3 id="51-链接">5.1 链接</h3>
+<pre class="language-html"><code>&lt;a href="https://www.example.com"&gt;普通链接&lt;/a&gt;
+
+&lt;a href="https://www.example.com" target="_blank"&gt;新标签页打开&lt;/a&gt;
+
+&lt;a href="#section2"&gt;跳到页面内某处（锚点）&lt;/a&gt;
+&lt;h2 id="section2"&gt;第二部分&lt;/h2&gt;
+
+&lt;a href="mailto:test@example.com"&gt;发邮件&lt;/a&gt;
+&lt;a href="tel:12345678900"&gt;打电话&lt;/a&gt;</code></pre>
+<p><code>target="_blank"</code> 建议同时加 <code>rel="noopener"</code>（安全）。</p>
+<h3 id="52-图片">5.2 图片</h3>
+<pre class="language-html"><code>&lt;img src="images/logo.png" alt="公司 Logo" width="120"&gt;
+
+&lt;img src="https://example.com/a.jpg" alt="远程图片"&gt;
+
+&lt;!-- 点击图片跳转 --&gt;
+&lt;a href="/home"&gt;
+    &lt;img src="logo.png" alt="首页"&gt;
+&lt;/a&gt;</code></pre>
+<table><thead><tr><th>属性</th><th>说明</th></tr></thead><tbody><tr><td><code>src</code></td><td>图片地址（必填）</td></tr><tr><td><code>alt</code></td><td>图片说明，加载失败时显示，也方便读屏（必填）</td></tr><tr><td><code>width</code> / <code>height</code></td><td>宽高（像素）</td></tr></tbody></table>
+<h3 id="53-路径">5.3 路径</h3>
+<table><thead><tr><th>写法</th><th>含义</th></tr></thead><tbody><tr><td><code>images/a.png</code></td><td>同目录下的 images 文件夹</td></tr><tr><td><code>./a.png</code></td><td>当前目录（可省略 <code>./</code>）</td></tr><tr><td><code>../a.png</code></td><td>上一级目录</td></tr><tr><td><code>/a.png</code></td><td>网站根目录</td></tr><tr><td><code>https://...</code></td><td>完整网址</td></tr></tbody></table>
+<hr>
+<h2 id="6-表单">6. 表单</h2>
+<p>表单用来收集用户输入。</p>
+<pre class="language-html"><code>&lt;form action="/submit" method="post"&gt;
+    &lt;label for="username"&gt;用户名：&lt;/label&gt;
+    &lt;input type="text" id="username" name="username" placeholder="请输入用户名" required&gt;
+
+    &lt;label for="password"&gt;密码：&lt;/label&gt;
+    &lt;input type="password" id="password" name="password"&gt;
+
+    &lt;label for="age"&gt;年龄：&lt;/label&gt;
+    &lt;input type="number" id="age" name="age" min="1" max="120"&gt;
+
+    &lt;label for="email"&gt;邮箱：&lt;/label&gt;
+    &lt;input type="email" id="email" name="email"&gt;
+
+    &lt;label for="birthday"&gt;生日：&lt;/label&gt;
+    &lt;input type="date" id="birthday" name="birthday"&gt;
+
+    &lt;label&gt;
+        &lt;input type="checkbox" name="hobby" value="code"&gt; 编程
+    &lt;/label&gt;
+    &lt;label&gt;
+        &lt;input type="checkbox" name="hobby" value="music"&gt; 音乐
+    &lt;/label&gt;
+
+    &lt;label&gt;
+        &lt;input type="radio" name="gender" value="male"&gt; 男
+    &lt;/label&gt;
+    &lt;label&gt;
+        &lt;input type="radio" name="gender" value="female"&gt; 女
+    &lt;/label&gt;
+
+    &lt;label for="city"&gt;城市：&lt;/label&gt;
+    &lt;select id="city" name="city"&gt;
+        &lt;option value="bj"&gt;北京&lt;/option&gt;
+        &lt;option value="sh"&gt;上海&lt;/option&gt;
+    &lt;/select&gt;
+
+    &lt;label for="remark"&gt;备注：&lt;/label&gt;
+    &lt;textarea id="remark" name="remark" rows="4" cols="30"&gt;&lt;/textarea&gt;
+
+    &lt;button type="submit"&gt;提交&lt;/button&gt;
+    &lt;button type="reset"&gt;重置&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+<p>常用 <code>input</code> 类型：</p>
+<table><thead><tr><th>type</th><th>作用</th></tr></thead><tbody><tr><td><code>text</code></td><td>单行文本</td></tr><tr><td><code>password</code></td><td>密码（显示为圆点）</td></tr><tr><td><code>number</code></td><td>数字，有上下箭头</td></tr><tr><td><code>email</code></td><td>邮箱，自带格式校验</td></tr><tr><td><code>date</code></td><td>日期选择</td></tr><tr><td><code>checkbox</code></td><td>复选框</td></tr><tr><td><code>radio</code></td><td>单选框（同 <code>name</code> 互斥）</td></tr><tr><td><code>file</code></td><td>选择文件</td></tr><tr><td><code>submit</code> / <code>button</code> / <code>reset</code></td><td>提交 / 普通按钮 / 重置</td></tr></tbody></table>
+<p>常用属性：</p>
+<table><thead><tr><th>属性</th><th>作用</th></tr></thead><tbody><tr><td><code>name</code></td><td>提交时的字段名（后端靠它取数据）</td></tr><tr><td><code>id</code></td><td>唯一标识，<code>label for</code> 和 JS 用</td></tr><tr><td><code>value</code></td><td>默认值</td></tr><tr><td><code>placeholder</code></td><td>灰色提示文字</td></tr><tr><td><code>required</code></td><td>必填</td></tr><tr><td><code>disabled</code> / <code>readonly</code></td><td>禁用 / 只读</td></tr><tr><td><code>maxlength</code></td><td>最大长度</td></tr></tbody></table>
+<p>要点：</p>
+<ul><li><code>label</code> 的 <code>for</code> 要等于对应 <code>input</code> 的 <code>id</code>，点文字也能聚焦输入框；</li><li>一组 <code>radio</code> 的 <code>name</code> 必须相同，才会互斥；</li><li>表单提交会跳转页面，想不跳转要用 JavaScript 阻止默认行为。</li></ul>
+<hr>
+<h2 id="7-语义化结构标签">7. 语义化结构标签</h2>
+<p>现代页面推荐用这些标签代替「一堆 div」：</p>
+<pre class="language-html"><code>&lt;header&gt;
+    &lt;h1&gt;网站标题&lt;/h1&gt;
+    &lt;nav&gt;
+        &lt;a href="/"&gt;首页&lt;/a&gt;
+        &lt;a href="/about"&gt;关于&lt;/a&gt;
+    &lt;/nav&gt;
+&lt;/header&gt;
+
+&lt;main&gt;
+    &lt;section&gt;
+        &lt;h2&gt;第一部分&lt;/h2&gt;
+        &lt;article&gt;
+            &lt;h3&gt;一篇文章&lt;/h3&gt;
+            &lt;p&gt;内容……&lt;/p&gt;
+        &lt;/article&gt;
+    &lt;/section&gt;
+
+    &lt;aside&gt;
+        &lt;p&gt;侧边栏&lt;/p&gt;
+    &lt;/aside&gt;
+&lt;/main&gt;
+
+&lt;footer&gt;
+    &lt;p&gt;© 2026 我的网站&lt;/p&gt;
+&lt;/footer&gt;</code></pre>
+<table><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody><tr><td><code>header</code></td><td>页头</td></tr><tr><td><code>nav</code></td><td>导航</td></tr><tr><td><code>main</code></td><td>主内容（一页一个）</td></tr><tr><td><code>section</code></td><td>一个区块</td></tr><tr><td><code>article</code></td><td>独立内容（文章、卡片）</td></tr><tr><td><code>aside</code></td><td>侧边栏</td></tr><tr><td><code>footer</code></td><td>页脚</td></tr></tbody></table>
+<p>好处：结构清晰、利于 SEO、读屏软件好读、CSS 选择器好写。</p>
+<hr>
+<h2 id="8-属性-idclass-与-data-">8. 属性 id、class 与 data-*</h2>
+<pre class="language-html"><code>&lt;div id="app" class="container main-box" data-device="ems-01" data-temp="26.4"&gt;
+    内容
+&lt;/div&gt;</code></pre>
+<table><thead><tr><th>属性</th><th>规则</th><th>用途</th></tr></thead><tbody><tr><td><code>id</code></td><td>全页唯一，一个元素一个</td><td>CSS <code>#app</code>、JS 定位</td></tr><tr><td><code>class</code></td><td>可以多个，空格分隔</td><td>CSS <code>.container</code>、复用样式</td></tr><tr><td><code>data-*</code></td><td>自定义数据属性</td><td>存小数据，JS 读取</td></tr><tr><td><code>style</code></td><td>内联样式</td><td>临时改样式（不推荐大量用）</td></tr><tr><td><code>title</code></td><td>鼠标悬停提示</td><td>提示文字</td></tr></tbody></table>
+<p>JavaScript 读 <code>data-*</code>：</p>
+<pre class="language-js"><code>const el = document.querySelector("#app");
+console.log(el.dataset.device);   // "ems-01"</code></pre>
+<p>命名习惯：<code>class</code> 用短横线（<code>main-box</code>），<code>id</code> 用驼峰或短横线，全页保持一致。</p>
+<hr>
+<h2 id="9-音频视频与其它">9. 音频、视频与其它</h2>
+<pre class="language-html"><code>&lt;video src="movie.mp4" controls width="480"&gt;&lt;/video&gt;
+
+&lt;audio src="music.mp3" controls&gt;&lt;/audio&gt;
+
+&lt;iframe src="https://example.com" width="600" height="400"&gt;&lt;/iframe&gt;
+
+&lt;details&gt;
+    &lt;summary&gt;点我展开&lt;/summary&gt;
+    &lt;p&gt;隐藏的内容。&lt;/p&gt;
+&lt;/details&gt;
+
+&lt;progress value="70" max="100"&gt;&lt;/progress&gt;</code></pre>
+<p><code>controls</code> 表示显示播放控件；<code>iframe</code> 用来嵌入别的页面（注意有些网站禁止被嵌入）。</p>
+<hr>
+<h2 id="10-一个完整页面">10. 一个完整页面</h2>
+<pre class="language-html"><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;设备数据展示&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;
+        &lt;h1&gt;设备数据展示&lt;/h1&gt;
+        &lt;nav&gt;
+            &lt;a href="#list"&gt;数据列表&lt;/a&gt;
+            &lt;a href="#form"&gt;添加数据&lt;/a&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+
+    &lt;main&gt;
+        &lt;section id="list"&gt;
+            &lt;h2&gt;数据列表&lt;/h2&gt;
+            &lt;table&gt;
+                &lt;thead&gt;
+                    &lt;tr&gt;
+                        &lt;th&gt;设备&lt;/th&gt;
+                        &lt;th&gt;温度&lt;/th&gt;
+                        &lt;th&gt;时间&lt;/th&gt;
+                    &lt;/tr&gt;
+                &lt;/thead&gt;
+                &lt;tbody&gt;
+                    &lt;tr&gt;
+                        &lt;td&gt;ems-01&lt;/td&gt;
+                        &lt;td&gt;26.4&lt;/td&gt;
+                        &lt;td&gt;2026-01-01 08:00&lt;/td&gt;
+                    &lt;/tr&gt;
+                    &lt;tr&gt;
+                        &lt;td&gt;ems-02&lt;/td&gt;
+                        &lt;td&gt;27.1&lt;/td&gt;
+                        &lt;td&gt;2026-01-01 08:05&lt;/td&gt;
+                    &lt;/tr&gt;
+                &lt;/tbody&gt;
+            &lt;/table&gt;
+        &lt;/section&gt;
+
+        &lt;section id="form"&gt;
+            &lt;h2&gt;添加数据&lt;/h2&gt;
+            &lt;form action="/api/ems" method="post"&gt;
+                &lt;label for="device"&gt;设备：&lt;/label&gt;
+                &lt;input type="text" id="device" name="device" required&gt;
+
+                &lt;label for="temp"&gt;温度：&lt;/label&gt;
+                &lt;input type="number" id="temp" name="temp" step="0.1" required&gt;
+
+                &lt;button type="submit"&gt;提交&lt;/button&gt;
+            &lt;/form&gt;
+        &lt;/section&gt;
+    &lt;/main&gt;
+
+    &lt;footer&gt;
+        &lt;p&gt;© 2026 示例页面&lt;/p&gt;
+    &lt;/footer&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>这个页面没有任何样式，是「毛坯房」；加上 CSS 才好看（见《CSS 使用手册》）。</p>
+<hr>
+<h2 id="11-常见错误">11. 常见错误</h2>
+<table><thead><tr><th>错误</th><th>现象</th><th>解决</th></tr></thead><tbody><tr><td>忘记写 <code>&lt;!DOCTYPE html&gt;</code></td><td>浏览器进「怪异模式」，布局异常</td><td>第一行补上</td></tr><tr><td>忘记 <code>&lt;meta charset="UTF-8"&gt;</code></td><td>中文乱码</td><td>加在 <code>&lt;head&gt;</code> 里</td></tr><tr><td>标签没闭合</td><td>后面内容跑到标签里</td><td>检查 <code>&lt;/div&gt;</code>、<code>&lt;/p&gt;</code></td></tr><tr><td>属性值没加引号</td><td>带空格时解析错</td><td><code>class="a b"</code> 加引号</td></tr><tr><td><code>id</code> 重复</td><td>CSS/JS 只作用于第一个</td><td>改成唯一</td></tr><tr><td>图片不显示</td><td>路径错或文件名大小写不对</td><td>用相对路径，检查扩展名</td></tr><tr><td>表单提交后页面跳走</td><td>默认行为</td><td>JS 里 <code>event.preventDefault()</code></td></tr><tr><td>用表格做布局</td><td>难维护、不响应式</td><td>用 CSS Flex/Grid</td></tr><tr><td><code>&lt;br&gt;</code> 当段落用</td><td>间距不可控</td><td>用 <code>&lt;p&gt;</code> + 样式</td></tr></tbody></table>
+<hr>
+<h2 id="12-标签速查表">12. 标签速查表</h2>
+<h3 id="121-结构">12.1 结构</h3>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>&lt;!DOCTYPE html&gt;</code></td><td>声明 HTML5</td></tr><tr><td><code>html</code></td><td>根元素</td></tr><tr><td><code>head</code></td><td>页面信息</td></tr><tr><td><code>body</code></td><td>可见内容</td></tr><tr><td><code>header</code> / <code>footer</code></td><td>页头 / 页脚</td></tr><tr><td><code>nav</code></td><td>导航</td></tr><tr><td><code>main</code></td><td>主内容</td></tr><tr><td><code>section</code></td><td>区块</td></tr><tr><td><code>article</code></td><td>独立内容</td></tr><tr><td><code>aside</code></td><td>侧边栏</td></tr><tr><td><code>div</code></td><td>通用块级容器</td></tr></tbody></table>
+<h3 id="122-文本">12.2 文本</h3>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>h1</code> ~ <code>h6</code></td><td>标题</td></tr><tr><td><code>p</code></td><td>段落</td></tr><tr><td><code>br</code></td><td>换行</td></tr><tr><td><code>hr</code></td><td>分隔线</td></tr><tr><td><code>strong</code> / <code>em</code></td><td>加粗 / 斜体</td></tr><tr><td><code>span</code></td><td>行内容器</td></tr><tr><td><code>code</code> / <code>pre</code></td><td>代码</td></tr><tr><td><code>blockquote</code></td><td>引用</td></tr><tr><td><code>small</code></td><td>小字</td></tr></tbody></table>
+<h3 id="123-媒体与链接">12.3 媒体与链接</h3>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>a</code></td><td>链接</td></tr><tr><td><code>img</code></td><td>图片</td></tr><tr><td><code>video</code> / <code>audio</code></td><td>视频 / 音频</td></tr><tr><td><code>iframe</code></td><td>嵌入页面</td></tr><tr><td><code>canvas</code> / <code>svg</code></td><td>绘图</td></tr></tbody></table>
+<h3 id="124-表单">12.4 表单</h3>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>form</code></td><td>表单</td></tr><tr><td><code>label</code></td><td>标签文字</td></tr><tr><td><code>input</code></td><td>输入框（类型靠 <code>type</code>）</td></tr><tr><td><code>textarea</code></td><td>多行文本</td></tr><tr><td><code>select</code> / <code>option</code></td><td>下拉框 / 选项</td></tr><tr><td><code>button</code></td><td>按钮</td></tr><tr><td><code>fieldset</code> / <code>legend</code></td><td>表单分组</td></tr></tbody></table>
+<h3 id="125-列表与表格">12.5 列表与表格</h3>
+<table><thead><tr><th>标签</th><th>作用</th></tr></thead><tbody><tr><td><code>ul</code> / <code>ol</code> / <code>li</code></td><td>无序 / 有序列表</td></tr><tr><td><code>dl</code> / <code>dt</code> / <code>dd</code></td><td>描述列表</td></tr><tr><td><code>table</code> / <code>tr</code> / <code>th</code> / <code>td</code></td><td>表格 / 行 / 表头 / 单元格</td></tr><tr><td><code>thead</code> / <code>tbody</code> / <code>tfoot</code></td><td>表头 / 表体 / 表尾</td></tr></tbody></table>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

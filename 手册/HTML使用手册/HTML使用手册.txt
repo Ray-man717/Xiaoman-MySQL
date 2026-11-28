@@ -1,0 +1,539 @@
+﻿HTML 使用手册（网页的第一层：结构）
+============================================================
+
+  网页由三样东西组成：HTML 管结构、CSS 管样式、JavaScript 管行为。
+  这一本讲 HTML：用什么标签、怎么组织页面、怎么放表单和图片。
+  看完能自己写出一个结构完整的页面（样式和交互看另外两本）。
+
+------------------------------------------------------------------------
+
+目录
+------------------------------------------------------------
+
+  1. HTML 是什么
+  2. 一个最小的网页
+  3. 常用标签
+  4. 列表与表格
+  5. 链接与图片
+  6. 表单
+  7. 语义化结构标签
+  8. 属性 id、class 与 data-*
+  9. 音频、视频与其它
+  10. 一个完整页面
+  11. 常见错误
+  12. 标签速查表
+
+------------------------------------------------------------------------
+
+1. HTML 是什么
+------------------------------------------------------------
+
+HTML（HyperText Markup Language，超文本标记语言）用标签描述网页的结构：
+
+    <h1>这是标题</h1>
+    <p>这是段落。</p>
+
+  - 标签一般成对出现：<p> 开始，</p> 结束；
+  - 少数标签自闭合：<img>、<br>、<input>；
+  - 标签可以带属性：<a href="https://example.com">链接</a>；
+  - 浏览器读 HTML，画出页面，这个过程叫「渲染」。
+
+浏览器打开一个 .html 文件就能看效果，不需要装任何东西。
+
+------------------------------------------------------------------------
+
+2. 一个最小的网页
+------------------------------------------------------------
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>我的第一个网页</title>
+    </head>
+    <body>
+        <h1>你好，网页</h1>
+        <p>这是一个段落。</p>
+    </body>
+    </html>
+
+逐行说明：
+
+  代码  |  作用
+  <!DOCTYPE html>  |  声明这是 HTML5，必须第一行
+  <html lang="zh-CN">  |  整个页面的根，lang 说明语言
+  <head>  |  页面信息（不显示在页面上）
+  <meta charset="UTF-8">  |  编码，不写中文会乱码
+  <meta name="viewport" ...>  |  手机端适配，不写手机上会缩小
+  <title>  |  浏览器标签页上的标题
+  <body>  |  页面上看得见的内容
+
+保存为 index.html，双击用浏览器打开即可。
+
+------------------------------------------------------------------------
+
+3. 常用标签
+------------------------------------------------------------
+
+3.1 标题与段落
+········································
+
+    <h1>一级标题</h1>
+    <h2>二级标题</h2>
+    <h3>三级标题</h3>
+    <h4>四级标题</h4>
+    <h5>五级标题</h5>
+    <h6>六级标题</h6>
+    
+    <p>这是一个段落。</p>
+    <p>段落之间会自动换行。</p>
+    
+    <br>          <!-- 强制换行 -->
+    <hr>          <!-- 一条分隔线 -->
+
+规则：
+
+  - h1 一页只用一个（主标题），依次往下用；
+  - p 表示段落，不要用 br 代替段落。
+
+3.2 强调与行内元素
+········································
+
+    <strong>加粗（重要）</strong>
+    <em>斜体（强调）</em>
+    <span>行内的一小段，用来单独加样式</span>
+    <code>行内代码</code>
+    <pre>保留空格和换行的文本块</pre>
+
+div 和 span 的区别：
+
+  标签  |  类型  |  用途
+  div  |  块级（独占一行）  |  布局容器
+  span  |  行内（不换行）  |  包裹一小段文字
+
+------------------------------------------------------------------------
+
+4. 列表与表格
+------------------------------------------------------------
+
+4.1 列表
+········································
+
+    <!-- 无序列表（圆点） -->
+    <ul>
+        <li>苹果</li>
+        <li>香蕉</li>
+    </ul>
+    
+    <!-- 有序列表（数字） -->
+    <ol>
+        <li>第一步</li>
+        <li>第二步</li>
+    </ol>
+    
+    <!-- 描述列表 -->
+    <dl>
+        <dt>HTML</dt>
+        <dd>管结构的语言</dd>
+    </dl>
+
+4.2 表格
+········································
+
+    <table>
+        <thead>
+            <tr>
+                <th>设备</th>
+                <th>温度</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>ems-01</td>
+                <td>26.4</td>
+            </tr>
+            <tr>
+                <td>ems-02</td>
+                <td>27.1</td>
+            </tr>
+        </tbody>
+    </table>
+
+  标签  |  作用
+  table  |  表格
+  thead / tbody / tfoot  |  表头 / 表体 / 表尾
+  tr  |  一行
+  th  |  表头单元格（加粗居中）
+  td  |  普通单元格
+  colspan / rowspan  |  跨列 / 跨行
+
+    <td colspan="2">合并两列</td>
+    <td rowspan="3">合并三行</td>
+
+表格不要用来做页面布局，布局用 CSS（Flex/Grid）。
+
+------------------------------------------------------------------------
+
+5. 链接与图片
+------------------------------------------------------------
+
+5.1 链接
+········································
+
+    <a href="https://www.example.com">普通链接</a>
+    
+    <a href="https://www.example.com" target="_blank">新标签页打开</a>
+    
+    <a href="#section2">跳到页面内某处（锚点）</a>
+    <h2 id="section2">第二部分</h2>
+    
+    <a href="mailto:test@example.com">发邮件</a>
+    <a href="tel:12345678900">打电话</a>
+
+target="_blank" 建议同时加 rel="noopener"（安全）。
+
+5.2 图片
+········································
+
+    <img src="images/logo.png" alt="公司 Logo" width="120">
+    
+    <img src="https://example.com/a.jpg" alt="远程图片">
+    
+    <!-- 点击图片跳转 -->
+    <a href="/home">
+        <img src="logo.png" alt="首页">
+    </a>
+
+  属性  |  说明
+  src  |  图片地址（必填）
+  alt  |  图片说明，加载失败时显示，也方便读屏（必填）
+  width / height  |  宽高（像素）
+
+5.3 路径
+········································
+
+  写法  |  含义
+  images/a.png  |  同目录下的 images 文件夹
+  ./a.png  |  当前目录（可省略 ./）
+  ../a.png  |  上一级目录
+  /a.png  |  网站根目录
+  https://...  |  完整网址
+
+------------------------------------------------------------------------
+
+6. 表单
+------------------------------------------------------------
+
+表单用来收集用户输入。
+
+    <form action="/submit" method="post">
+        <label for="username">用户名：</label>
+        <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+    
+        <label for="password">密码：</label>
+        <input type="password" id="password" name="password">
+    
+        <label for="age">年龄：</label>
+        <input type="number" id="age" name="age" min="1" max="120">
+    
+        <label for="email">邮箱：</label>
+        <input type="email" id="email" name="email">
+    
+        <label for="birthday">生日：</label>
+        <input type="date" id="birthday" name="birthday">
+    
+        <label>
+            <input type="checkbox" name="hobby" value="code"> 编程
+        </label>
+        <label>
+            <input type="checkbox" name="hobby" value="music"> 音乐
+        </label>
+    
+        <label>
+            <input type="radio" name="gender" value="male"> 男
+        </label>
+        <label>
+            <input type="radio" name="gender" value="female"> 女
+        </label>
+    
+        <label for="city">城市：</label>
+        <select id="city" name="city">
+            <option value="bj">北京</option>
+            <option value="sh">上海</option>
+        </select>
+    
+        <label for="remark">备注：</label>
+        <textarea id="remark" name="remark" rows="4" cols="30"></textarea>
+    
+        <button type="submit">提交</button>
+        <button type="reset">重置</button>
+    </form>
+
+常用 input 类型：
+
+  type  |  作用
+  text  |  单行文本
+  password  |  密码（显示为圆点）
+  number  |  数字，有上下箭头
+  email  |  邮箱，自带格式校验
+  date  |  日期选择
+  checkbox  |  复选框
+  radio  |  单选框（同 name 互斥）
+  file  |  选择文件
+  submit / button / reset  |  提交 / 普通按钮 / 重置
+
+常用属性：
+
+  属性  |  作用
+  name  |  提交时的字段名（后端靠它取数据）
+  id  |  唯一标识，label for 和 JS 用
+  value  |  默认值
+  placeholder  |  灰色提示文字
+  required  |  必填
+  disabled / readonly  |  禁用 / 只读
+  maxlength  |  最大长度
+
+要点：
+
+  - label 的 for 要等于对应 input 的 id，点文字也能聚焦输入框；
+  - 一组 radio 的 name 必须相同，才会互斥；
+  - 表单提交会跳转页面，想不跳转要用 JavaScript 阻止默认行为。
+
+------------------------------------------------------------------------
+
+7. 语义化结构标签
+------------------------------------------------------------
+
+现代页面推荐用这些标签代替「一堆 div」：
+
+    <header>
+        <h1>网站标题</h1>
+        <nav>
+            <a href="/">首页</a>
+            <a href="/about">关于</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section>
+            <h2>第一部分</h2>
+            <article>
+                <h3>一篇文章</h3>
+                <p>内容……</p>
+            </article>
+        </section>
+    
+        <aside>
+            <p>侧边栏</p>
+        </aside>
+    </main>
+    
+    <footer>
+        <p>© 2026 我的网站</p>
+    </footer>
+
+  标签  |  含义
+  header  |  页头
+  nav  |  导航
+  main  |  主内容（一页一个）
+  section  |  一个区块
+  article  |  独立内容（文章、卡片）
+  aside  |  侧边栏
+  footer  |  页脚
+
+好处：结构清晰、利于 SEO、读屏软件好读、CSS 选择器好写。
+
+------------------------------------------------------------------------
+
+8. 属性 id、class 与 data-*
+------------------------------------------------------------
+
+    <div id="app" class="container main-box" data-device="ems-01" data-temp="26.4">
+        内容
+    </div>
+
+  属性  |  规则  |  用途
+  id  |  全页唯一，一个元素一个  |  CSS #app、JS 定位
+  class  |  可以多个，空格分隔  |  CSS .container、复用样式
+  data-*  |  自定义数据属性  |  存小数据，JS 读取
+  style  |  内联样式  |  临时改样式（不推荐大量用）
+  title  |  鼠标悬停提示  |  提示文字
+
+JavaScript 读 data-*：
+
+    const el = document.querySelector("#app");
+    console.log(el.dataset.device);   // "ems-01"
+
+命名习惯：class 用短横线（main-box），id 用驼峰或短横线，全页保持一致。
+
+------------------------------------------------------------------------
+
+9. 音频、视频与其它
+------------------------------------------------------------
+
+    <video src="movie.mp4" controls width="480"></video>
+    
+    <audio src="music.mp3" controls></audio>
+    
+    <iframe src="https://example.com" width="600" height="400"></iframe>
+    
+    <details>
+        <summary>点我展开</summary>
+        <p>隐藏的内容。</p>
+    </details>
+    
+    <progress value="70" max="100"></progress>
+
+controls 表示显示播放控件；iframe 用来嵌入别的页面（注意有些网站禁止被嵌入）。
+
+------------------------------------------------------------------------
+
+10. 一个完整页面
+------------------------------------------------------------
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>设备数据展示</title>
+    </head>
+    <body>
+        <header>
+            <h1>设备数据展示</h1>
+            <nav>
+                <a href="#list">数据列表</a>
+                <a href="#form">添加数据</a>
+            </nav>
+        </header>
+    
+        <main>
+            <section id="list">
+                <h2>数据列表</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>设备</th>
+                            <th>温度</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>ems-01</td>
+                            <td>26.4</td>
+                            <td>2026-01-01 08:00</td>
+                        </tr>
+                        <tr>
+                            <td>ems-02</td>
+                            <td>27.1</td>
+                            <td>2026-01-01 08:05</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+    
+            <section id="form">
+                <h2>添加数据</h2>
+                <form action="/api/ems" method="post">
+                    <label for="device">设备：</label>
+                    <input type="text" id="device" name="device" required>
+    
+                    <label for="temp">温度：</label>
+                    <input type="number" id="temp" name="temp" step="0.1" required>
+    
+                    <button type="submit">提交</button>
+                </form>
+            </section>
+        </main>
+    
+        <footer>
+            <p>© 2026 示例页面</p>
+        </footer>
+    </body>
+    </html>
+
+这个页面没有任何样式，是「毛坯房」；加上 CSS 才好看（见《CSS 使用手册》）。
+
+------------------------------------------------------------------------
+
+11. 常见错误
+------------------------------------------------------------
+
+  错误  |  现象  |  解决
+  忘记写 <!DOCTYPE html>  |  浏览器进「怪异模式」，布局异常  |  第一行补上
+  忘记 <meta charset="UTF-8">  |  中文乱码  |  加在 <head> 里
+  标签没闭合  |  后面内容跑到标签里  |  检查 </div>、</p>
+  属性值没加引号  |  带空格时解析错  |  class="a b" 加引号
+  id 重复  |  CSS/JS 只作用于第一个  |  改成唯一
+  图片不显示  |  路径错或文件名大小写不对  |  用相对路径，检查扩展名
+  表单提交后页面跳走  |  默认行为  |  JS 里 event.preventDefault()
+  用表格做布局  |  难维护、不响应式  |  用 CSS Flex/Grid
+  <br> 当段落用  |  间距不可控  |  用 <p> + 样式
+
+------------------------------------------------------------------------
+
+12. 标签速查表
+------------------------------------------------------------
+
+12.1 结构
+········································
+
+  标签  |  作用
+  <!DOCTYPE html>  |  声明 HTML5
+  html  |  根元素
+  head  |  页面信息
+  body  |  可见内容
+  header / footer  |  页头 / 页脚
+  nav  |  导航
+  main  |  主内容
+  section  |  区块
+  article  |  独立内容
+  aside  |  侧边栏
+  div  |  通用块级容器
+
+12.2 文本
+········································
+
+  标签  |  作用
+  h1 ~ h6  |  标题
+  p  |  段落
+  br  |  换行
+  hr  |  分隔线
+  strong / em  |  加粗 / 斜体
+  span  |  行内容器
+  code / pre  |  代码
+  blockquote  |  引用
+  small  |  小字
+
+12.3 媒体与链接
+········································
+
+  标签  |  作用
+  a  |  链接
+  img  |  图片
+  video / audio  |  视频 / 音频
+  iframe  |  嵌入页面
+  canvas / svg  |  绘图
+
+12.4 表单
+········································
+
+  标签  |  作用
+  form  |  表单
+  label  |  标签文字
+  input  |  输入框（类型靠 type）
+  textarea  |  多行文本
+  select / option  |  下拉框 / 选项
+  button  |  按钮
+  fieldset / legend  |  表单分组
+
+12.5 列表与表格
+········································
+
+  标签  |  作用
+  ul / ol / li  |  无序 / 有序列表
+  dl / dt / dd  |  描述列表
+  table / tr / th / td  |  表格 / 行 / 表头 / 单元格
+  thead / tbody / tfoot  |  表头 / 表体 / 表尾

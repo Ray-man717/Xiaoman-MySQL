@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TypeScript 使用手册（给 JavaScript 加类型）</title>
+<script>
+  try {
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('manual-theme') || 'dark');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+<style>
+  :root {
+    --fg: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0969da; --bg: #eef1f4; --card: #ffffff;
+    --soft: #f6f8fa; --soft2: #fbfcfd; --quote-line: #afb8c1;
+    --code-bg: rgba(27, 31, 36, .07); --code-fg: #c7254e;
+    --strong: #b3261e; --shadow: rgba(31, 35, 40, .10);
+    --pre-bg: #0f172a; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  html[data-theme="dark"] {
+    --fg: #e6edf3; --muted: #9aa7b3; --border: #30363d;
+    --accent: #58a6ff; --bg: #0b0f14; --card: #161b22;
+    --soft: #1c2229; --soft2: #191f26; --quote-line: #3d444d;
+    --code-bg: rgba(110, 118, 129, .28); --code-fg: #ff8fa3;
+    --strong: #ff9492; --shadow: rgba(0, 0, 0, .5);
+    --pre-bg: #0d1117; --pre-fg: #e6edf3;
+    --kw: #79c0ff; --st: #a5d6ff; --cm: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px 64px; background: var(--bg); color: var(--fg);
+    font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Segoe UI", sans-serif;
+    font-size: 15.5px; line-height: 1.8;
+    transition: background .2s ease;
+  }
+  article {
+    max-width: 940px; margin: 0 auto; background: var(--card);
+    padding: 48px 56px 56px; border-radius: 12px;
+    box-shadow: 0 4px 24px var(--shadow);
+    transition: background .2s ease;
+  }
+  h1 {
+    font-size: 28px; margin: 0 0 8px; padding-bottom: 14px;
+    border-bottom: 2px solid var(--border); letter-spacing: .5px;
+  }
+  h2 {
+    font-size: 22px; margin: 44px 0 14px; padding: 6px 0 6px 12px;
+    border-left: 5px solid var(--accent); background: var(--soft);
+  }
+  h3 { font-size: 18px; margin: 28px 0 10px; color: var(--fg); }
+  h4 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  strong { color: var(--strong); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+  blockquote {
+    margin: 16px 0; padding: 10px 18px; color: var(--muted);
+    background: var(--soft); border-left: 4px solid var(--quote-line);
+    border-radius: 0 6px 6px 0;
+  }
+  blockquote p { margin: 0; }
+  ul, ol { margin: 12px 0; padding-left: 2.2em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--muted); }
+  :not(pre) > code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    font-size: .9em; padding: .18em .42em; border-radius: 5px;
+    background: var(--code-bg); color: var(--code-fg);
+  }
+  pre {
+    margin: 14px 0; padding: 16px 18px; overflow-x: auto;
+    background: var(--pre-bg); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; line-height: 1.65;
+  }
+  pre code {
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+    color: var(--pre-fg); white-space: pre;
+  }
+  pre .kw  { color: var(--kw); }
+  pre .st  { color: var(--st); }
+  pre .cm  { color: var(--cm); font-style: italic; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 14.5px;
+  }
+  th, td {
+    border: 1px solid var(--border); padding: 8px 12px;
+    text-align: left; vertical-align: top;
+  }
+  th { background: var(--soft); white-space: nowrap; }
+  tbody tr:nth-child(even) { background: var(--soft2); }
+  #theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 99;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--card); color: var(--fg);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  #theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    article { box-shadow: none; max-width: none; padding: 0; background: #fff; color: #1f2328; }
+    #theme-toggle { display: none; }
+    h2 { page-break-after: avoid; background: #f6f8fa; }
+    h3 { color: #1f2328; }
+    strong { color: #b3261e; }
+    pre { page-break-inside: avoid; background: #f6f8fa; border: 1px solid #d1d9e0; }
+    pre code, pre .kw, pre .st, pre .cm { color: #1f2328; }
+    th { background: #f6f8fa; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<button id="theme-toggle" type="button">☀ 浅色模式</button>
+<article>
+<h1 id="typescript-使用手册给-javascript-加类型">TypeScript 使用手册（给 JavaScript 加类型）</h1>
+<blockquote><p>TypeScript = JavaScript + 类型检查。写错类型时编辑器直接标红，不用等运行才发现。这一本讲清楚：怎么装、怎么写类型、泛型和工具类型怎么用、常见报错怎么改。</p></blockquote>
+<hr>
+<h2 id="目录">目录</h2>
+<ol><li><a href="#1-typescript-是什么">TypeScript 是什么</a></li><li><a href="#2-安装与运行">安装与运行</a></li><li><a href="#3-基础类型">基础类型</a></li><li><a href="#4-接口与类型别名">接口与类型别名</a></li><li><a href="#5-函数类型">函数类型</a></li><li><a href="#6-类">类</a></li><li><a href="#7-泛型">泛型</a></li><li><a href="#8-联合交叉与类型收窄">联合、交叉与类型收窄</a></li><li><a href="#9-枚举">枚举</a></li><li><a href="#10-类型断言与类型守卫">类型断言与类型守卫</a></li><li><a href="#11-工具类型">工具类型</a></li><li><a href="#12-模块与声明文件">模块与声明文件</a></li><li><a href="#13-实战给数据模型加类型">实战：给数据模型加类型</a></li><li><a href="#14-常见编译错误">常见编译错误</a></li><li><a href="#15-速查表">速查表</a></li></ol>
+<hr>
+<h2 id="1-typescript-是什么">1. TypeScript 是什么</h2>
+<p>TypeScript（TS）是 JavaScript 的超集：</p>
+<ul><li>所有 JS 语法在 TS 里都能用；</li><li>额外提供<strong>静态类型</strong>，编译时检查；</li><li>最终会被编译成普通 JS 在浏览器/Node 里运行。</li></ul>
+<pre class="language-ts"><code>// JavaScript：运行时才知道错了
+function add(a, b) {
+    return a + b;
+}
+add(1, "2");        // "12"，不报错，但结果不对
+
+// TypeScript：写的时候就标红
+function add(a: number, b: number): number {
+    return a + b;
+}
+add(1, "2");        // 编译报错：类型 "string" 不能赋给 "number"</code></pre>
+<p>好处：编辑器有补全、重构安全、错误提前发现、团队协作接口清晰。</p>
+<p>代价：多一层编译，需要配置。</p>
+<hr>
+<h2 id="2-安装与运行">2. 安装与运行</h2>
+<h3 id="21-安装">2.1 安装</h3>
+<pre class="language-bash"><code># 在项目目录初始化（如果没有 package.json）
+npm init -y
+
+# 安装 TypeScript（开发依赖）
+npm install -D typescript
+
+# 生成配置文件
+npx tsc --init</code></pre>
+<h3 id="22-tsconfigjson-常用配置">2.2 tsconfig.json 常用配置</h3>
+<pre class="language-json"><code>{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"]
+}</code></pre>
+<table><thead><tr><th>配置</th><th>作用</th></tr></thead><tbody><tr><td><code>target</code></td><td>编译成哪个版本的 JS</td></tr><tr><td><code>module</code></td><td>模块格式（ESNext / CommonJS）</td></tr><tr><td><code>strict</code></td><td>打开全部严格检查（强烈建议）</td></tr><tr><td><code>outDir</code></td><td>编译输出目录</td></tr><tr><td><code>rootDir</code></td><td>源码目录</td></tr><tr><td><code>esModuleInterop</code></td><td>兼容 <code>import</code> 引入 CommonJS 包</td></tr></tbody></table>
+<h3 id="23-编译与运行">2.3 编译与运行</h3>
+<pre class="language-bash"><code># 编译一次
+npx tsc
+
+# 监听文件变化，自动编译
+npx tsc --watch
+
+# 直接运行 .ts（需安装 ts-node 或 tsx）
+npm install -D ts-node
+npx ts-node src/index.ts</code></pre>
+<p>前端项目一般用 Vite / webpack，它们内置了 TS 编译，不需要手动 <code>tsc</code>。</p>
+<hr>
+<h2 id="3-基础类型">3. 基础类型</h2>
+<pre class="language-ts"><code>let n: number = 42;
+let s: string = "文字";
+let b: boolean = true;
+let big: bigint = 100n;
+let sym: symbol = Symbol("id");
+
+let nothing: null = null;
+let undef: undefined = undefined;
+
+// 数组
+let nums: number[] = [1, 2, 3];
+let strs: Array&lt;string&gt; = ["a", "b"];
+
+// 元组：固定长度和类型
+let pair: [string, number] = ["ages", 13];
+
+// 任意类型（尽量少用）
+let anyValue: any = 123;
+anyValue = "也可以";
+
+// 未知类型（比 any 安全：用之前必须收窄）
+let unknownValue: unknown = 123;
+
+// 没有返回值
+function log(msg: string): void {
+    console.log(msg);
+}
+
+// 永远不会返回（抛异常、死循环）
+function fail(msg: string): never {
+    throw new Error(msg);
+}</code></pre>
+<p><code>any</code> 和 <code>unknown</code> 的区别：</p>
+<table><thead><tr><th></th><th><code>any</code></th><th><code>unknown</code></th></tr></thead><tbody><tr><td>赋值给别的类型</td><td>可以</td><td>不行，要先判断</td></tr><tr><td>调用方法</td><td>可以</td><td>不行，要先判断</td></tr><tr><td>用途</td><td>暂时不管类型</td><td>接收外部数据，安全</td></tr></tbody></table>
+<pre class="language-ts"><code>const data: unknown = await res.json();
+if (typeof data === "object" &amp;&amp; data !== null) {
+    // 收窄之后才能用
+}</code></pre>
+<hr>
+<h2 id="4-接口与类型别名">4. 接口与类型别名</h2>
+<h3 id="41-interface">4.1 interface</h3>
+<pre class="language-ts"><code>interface User {
+    id: number;
+    name: string;
+    age?: number;              // 可选属性
+    readonly createdAt: string; // 只读
+    tags: string[];
+    address?: {
+        city: string;
+        street: string;
+    };
+}
+
+const user: User = {
+    id: 1,
+    name: "小明",
+    createdAt: "2026-01-01",
+    tags: ["student"]
+};</code></pre>
+<h3 id="42-type">4.2 type</h3>
+<pre class="language-ts"><code>type Point = {
+    x: number;
+    y: number;
+};
+
+type Id = number | string;             // 联合类型
+type Status = "online" | "offline";    // 字面量类型</code></pre>
+<p><code>interface</code> 和 <code>type</code> 的区别：</p>
+<table><thead><tr><th></th><th>interface</th><th>type</th></tr></thead><tbody><tr><td>扩展</td><td><code>interface B extends A</code></td><td><code>type B = A &amp; {...}</code></td></tr><tr><td>同名合并</td><td>会自动合并</td><td>不能重复定义</td></tr><tr><td>适用</td><td>对象结构</td><td>联合、元组、函数等</td></tr></tbody></table>
+<p>日常写对象类型用 <code>interface</code>，需要联合/组合时用 <code>type</code>。</p>
+<h3 id="43-索引签名与任意属性">4.3 索引签名与任意属性</h3>
+<pre class="language-ts"><code>interface Dict {
+    [key: string]: number;
+}
+
+const counts: Dict = { a: 1, b: 2 };</code></pre>
+<hr>
+<h2 id="5-函数类型">5. 函数类型</h2>
+<pre class="language-ts"><code>// 参数和返回值
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+// 函数类型变量
+let fn: (a: number, b: number) =&gt; number;
+fn = (x, y) =&gt; x + y;
+
+// 可选参数（必须放最后）
+function greet(name: string, title?: string): string {
+    return title ? `${title} ${name}` : name;
+}
+
+// 默认参数
+function greet2(name: string = "同学"): string {
+    return `你好，${name}`;
+}
+
+// 剩余参数
+function sum(...nums: number[]): number {
+    return nums.reduce((a, b) =&gt; a + b, 0);
+}
+
+// 解构参数
+function show({ name, age }: { name: string; age: number }) {
+    console.log(name, age);
+}</code></pre>
+<hr>
+<h2 id="6-类">6. 类</h2>
+<pre class="language-ts"><code>class Animal {
+    public name: string;              // 公开
+    private age: number;              // 只能在类内部访问
+    protected legs: number = 4;       // 子类可以访问
+    readonly species: string;         // 只读
+
+    constructor(name: string, age: number, species: string) {
+        this.name = name;
+        this.age = age;
+        this.species = species;
+    }
+
+    speak(): void {
+        console.log(`${this.name} 叫了一声`);
+    }
+}
+
+// 继承
+class Dog extends Animal {
+    constructor(name: string, age: number) {
+        super(name, age, "犬");
+    }
+
+    speak(): void {
+        console.log("汪汪");
+    }
+}
+
+// 实现接口
+interface Serializable {
+    toJson(): string;
+}
+
+class Point implements Serializable {
+    constructor(public x: number, public y: number) {}
+
+    toJson(): string {
+        return JSON.stringify({ x: this.x, y: this.y });
+    }
+}</code></pre>
+<p>构造函数参数加 <code>public</code> / <code>private</code> / <code>readonly</code> 会自动声明并赋值（参数属性）：</p>
+<pre class="language-ts"><code>class Point {
+    constructor(public x: number, public y: number) {}
+}
+// 等价于自己写 x、y 字段再在构造里赋值</code></pre>
+<p>抽象类：</p>
+<pre class="language-ts"><code>abstract class Shape {
+    abstract area(): number;          // 子类必须实现
+
+    describe(): string {
+        return `面积：${this.area()}`;
+    }
+}
+
+class Circle extends Shape {
+    constructor(private r: number) {
+        super();
+    }
+
+    area(): number {
+        return Math.PI * this.r * this.r;
+    }
+}</code></pre>
+<hr>
+<h2 id="7-泛型">7. 泛型</h2>
+<p>泛型让类型像参数一样传进去，用的时候才确定。</p>
+<pre class="language-ts"><code>// 泛型函数
+function identity&lt;T&gt;(value: T): T {
+    return value;
+}
+
+identity&lt;number&gt;(42);
+identity("abc");            // 自动推断 T 为 string
+
+// 泛型约束
+function getLength&lt;T extends { length: number }&gt;(value: T): number {
+    return value.length;
+}
+
+getLength("abc");           // 3
+getLength([1, 2, 3]);       // 3
+
+// 泛型接口
+interface ApiResponse&lt;T&gt; {
+    code: number;
+    msg: string;
+    data: T;
+}
+
+const resp: ApiResponse&lt;User&gt; = {
+    code: 0,
+    msg: "ok",
+    data: { id: 1, name: "小明", createdAt: "", tags: [] }
+};
+
+// 泛型类
+class Box&lt;T&gt; {
+    constructor(private value: T) {}
+
+    get(): T {
+        return this.value;
+    }
+}
+
+const box = new Box&lt;number&gt;(42);</code></pre>
+<p>泛型参数命名习惯：<code>T</code>（类型）、<code>K</code>（键）、<code>V</code>（值）、<code>E</code>（元素）。</p>
+<hr>
+<h2 id="8-联合交叉与类型收窄">8. 联合、交叉与类型收窄</h2>
+<h3 id="81-联合类型或">8.1 联合类型（或）</h3>
+<pre class="language-ts"><code>type Id = number | string;
+
+function printId(id: Id) {
+    console.log(id);
+}</code></pre>
+<h3 id="82-交叉类型且">8.2 交叉类型（且）</h3>
+<pre class="language-ts"><code>type Name = { name: string };
+type Age = { age: number };
+type Person = Name &amp; Age;      // 必须同时有 name 和 age</code></pre>
+<h3 id="83-字面量类型">8.3 字面量类型</h3>
+<pre class="language-ts"><code>type Status = "online" | "offline" | "unknown";
+
+function setStatus(s: Status) {}
+setStatus("online");     // ok
+setStatus("run");        // 编译报错</code></pre>
+<h3 id="84-类型收窄">8.4 类型收窄</h3>
+<p>处理联合类型时，要先「收窄」才能用具体属性：</p>
+<pre class="language-ts"><code>function format(value: string | number) {
+    if (typeof value === "string") {
+        return value.toUpperCase();     // 这里 TS 知道是 string
+    }
+    return value.toFixed(1);            // 这里知道是 number
+}</code></pre>
+<p>三种常见收窄方式：</p>
+<pre class="language-ts"><code>// typeof：基本类型
+if (typeof x === "string") { }
+
+// in：判断属性是否存在
+if ("name" in obj) { }
+
+// instanceof：类
+if (err instanceof Error) { }</code></pre>
+<hr>
+<h2 id="9-枚举">9. 枚举</h2>
+<pre class="language-ts"><code>enum Status {
+    Online = "ONLINE",
+    Offline = "OFFLINE",
+    Unknown = "UNKNOWN"
+}
+
+let s: Status = Status.Online;
+console.log(s);                    // "ONLINE"
+
+// 数字枚举（默认从 0 开始）
+enum Level {
+    Low,        // 0
+    Mid,        // 1
+    High        // 2
+}</code></pre>
+<p>注意：枚举会编译出额外的 JS 代码；如果只是要一组常量，也可以用字面量联合类型：</p>
+<pre class="language-ts"><code>type Status2 = "ONLINE" | "OFFLINE" | "UNKNOWN";</code></pre>
+<hr>
+<h2 id="10-类型断言与类型守卫">10. 类型断言与类型守卫</h2>
+<h3 id="101-类型断言你比编译器更确定">10.1 类型断言（你比编译器更确定）</h3>
+<pre class="language-ts"><code>const el = document.querySelector("#app") as HTMLElement;
+el.style.color = "red";
+
+// 或者（旧写法，和 as 等价，但在 tsx 里不能用）
+const el2 = &lt;HTMLElement&gt;document.querySelector("#app");</code></pre>
+<p>非空断言 <code>!</code>：确定不是 null / undefined。</p>
+<pre class="language-ts"><code>const el = document.querySelector("#app")!;</code></pre>
+<p>断言不是「转换」，只是告诉编译器「相信我」，用错了运行时照样报错。</p>
+<h3 id="102-类型守卫">10.2 类型守卫</h3>
+<p>自定义判断函数，返回 <code>x is T</code>：</p>
+<pre class="language-ts"><code>interface User {
+    name: string;
+    age: number;
+}
+
+function isUser(value: unknown): value is User {
+    return typeof value === "object"
+        &amp;&amp; value !== null
+        &amp;&amp; "name" in value
+        &amp;&amp; "age" in value;
+}
+
+const data: unknown = JSON.parse(text);
+if (isUser(data)) {
+    console.log(data.name);       // 这里 TS 认识 data 是 User
+}</code></pre>
+<p>处理接口返回的数据时，类型守卫很有用。</p>
+<hr>
+<h2 id="11-工具类型">11. 工具类型</h2>
+<p>TypeScript 内置了一批「对类型做变换」的工具。</p>
+<pre class="language-ts"><code>interface User {
+    id: number;
+    name: string;
+    password: string;
+    email?: string;
+}
+
+// 全部变可选
+type PartialUser = Partial&lt;User&gt;;
+
+// 全部变必填
+type RequiredUser = Required&lt;User&gt;;
+
+// 全部变只读
+type ReadonlyUser = Readonly&lt;User&gt;;
+
+// 只取几个字段
+type PublicUser = Pick&lt;User, "id" | "name"&gt;;
+
+// 去掉几个字段（常用于隐藏密码）
+type SafeUser = Omit&lt;User, "password"&gt;;
+
+// 键值映射
+type CountMap = Record&lt;string, number&gt;;
+
+// 函数返回值类型
+type Result = ReturnType&lt;typeof getUser&gt;;</code></pre>
+<p><code>Omit</code> 用得最多：</p>
+<pre class="language-ts"><code>function toSafeUser(user: User): Omit&lt;User, "password"&gt; {
+    const { password, ...rest } = user;
+    return rest;
+}</code></pre>
+<hr>
+<h2 id="12-模块与声明文件">12. 模块与声明文件</h2>
+<h3 id="121-模块">12.1 模块</h3>
+<pre class="language-ts"><code>// math.ts
+export function add(a: number, b: number): number {
+    return a + b;
+}
+
+export const PI = 3.14;
+
+export default class Calculator { }
+
+// main.ts
+import { add, PI } from "./math";
+import Calculator from "./math";</code></pre>
+<h3 id="122-声明文件-dts">12.2 声明文件 .d.ts</h3>
+<p>给没有类型的 JS 库补类型：</p>
+<pre class="language-ts"><code>// types/my-lib.d.ts
+declare module "my-lib" {
+    export function doSomething(a: string): number;
+}
+
+// 全局变量
+declare const DEBUG: boolean;</code></pre>
+<p>一般库自带 <code>@types/xxx</code>，装一下就有类型：</p>
+<pre class="language-bash"><code>npm install -D @types/node</code></pre>
+<hr>
+<h2 id="13-实战给数据模型加类型">13. 实战：给数据模型加类型</h2>
+<pre class="language-ts"><code>// 数据模型
+interface DeviceRecord {
+    id: number;
+    device: string;
+    temp: number;
+    time: string;
+}
+
+// 接口返回格式
+interface ApiResponse&lt;T&gt; {
+    code: number;
+    msg: string;
+    data: T;
+}
+
+// 请求函数
+async function loadRecords(limit: number): Promise&lt;ApiResponse&lt;DeviceRecord[]&gt;&gt; {
+    const res = await fetch(`/api/ems?limit=${limit}`);
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+    }
+    return res.json() as Promise&lt;ApiResponse&lt;DeviceRecord[]&gt;&gt;;
+}
+
+// 渲染表格
+function renderTable(rows: DeviceRecord[]): void {
+    const tbody = document.querySelector("tbody") as HTMLElement;
+    tbody.innerHTML = rows.map((row) =&gt; `
+        &lt;tr&gt;
+            &lt;td&gt;${row.device}&lt;/td&gt;
+            &lt;td&gt;${row.temp.toFixed(1)}&lt;/td&gt;
+            &lt;td&gt;${row.time}&lt;/td&gt;
+        &lt;/tr&gt;
+    `).join("");
+}
+
+// 使用
+async function init() {
+    try {
+        const resp = await loadRecords(10);
+        if (resp.code !== 0) {
+            console.error(resp.msg);
+            return;
+        }
+        renderTable(resp.data);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+init();</code></pre>
+<p>这段代码里用到了：接口、泛型接口、<code>Promise</code> 泛型、类型断言、<code>map</code>、模板字符串。</p>
+<hr>
+<h2 id="14-常见编译错误">14. 常见编译错误</h2>
+<table><thead><tr><th>错误码 / 提示</th><th>原因</th><th>解决</th></tr></thead><tbody><tr><td><code>TS2322: Type 'string' is not assignable to type 'number'</code></td><td>类型不匹配</td><td>改值或改类型</td></tr><tr><td><code>TS2345: Argument of type ... is not assignable</code></td><td>函数参数类型错</td><td>检查参数类型</td></tr><tr><td><code>TS2339: Property 'x' does not exist on type 'Y'</code></td><td>类型上没有这个属性</td><td>检查接口定义，或加属性</td></tr><tr><td><code>TS7006: Parameter 'x' implicitly has an 'any' type</code></td><td>参数没标类型</td><td>加类型或给默认值</td></tr><tr><td><code>TS2531: Object is possibly 'null'</code></td><td>可能为 null</td><td>先判空或用 <code>?.</code></td></tr><tr><td><code>TS18048: 'x' is possibly 'undefined'</code></td><td>可能未定义</td><td>判空、默认值、<code>!</code></td></tr><tr><td><code>TS2307: Cannot find module 'x'</code></td><td>没装类型或路径错</td><td>装 <code>@types/x</code> 或检查路径</td></tr><tr><td><code>TS7031: Binding element implicitly has 'any'</code></td><td>解构没类型</td><td>标类型</td></tr><tr><td><code>TS1183: An implementation cannot be declared in ambient contexts</code></td><td>声明文件里写了实现</td><td>删掉函数体</td></tr></tbody></table>
+<p>处理「可能为 null」的三种写法：</p>
+<pre class="language-ts"><code>// ① 判空
+if (el !== null) {
+    el.textContent = "x";
+}
+
+// ② 可选链
+el?.setAttribute("data", "1");
+
+// ③ 非空断言（确定不为空时）
+const el2 = document.querySelector("#app")!;</code></pre>
+<hr>
+<h2 id="15-速查表">15. 速查表</h2>
+<h3 id="151-类型标注">15.1 类型标注</h3>
+<table><thead><tr><th>我想……</th><th>写法</th></tr></thead><tbody><tr><td>数字</td><td><code>let n: number = 1</code></td></tr><tr><td>字符串</td><td><code>let s: string = "a"</code></td></tr><tr><td>布尔</td><td><code>let b: boolean = true</code></td></tr><tr><td>数组</td><td><code>let arr: number[] = []</code></td></tr><tr><td>元组</td><td><code>let t: [string, number]</code></td></tr><tr><td>任意</td><td><code>any</code>（少用）</td></tr><tr><td>未知</td><td><code>unknown</code>（安全）</td></tr><tr><td>无返回</td><td><code>void</code></td></tr><tr><td>永不返回</td><td><code>never</code></td></tr></tbody></table>
+<h3 id="152-结构">15.2 结构</h3>
+<table><thead><tr><th>我想……</th><th>写法</th></tr></thead><tbody><tr><td>对象结构</td><td><code>interface User { id: number }</code></td></tr><tr><td>可选属性</td><td><code>age?: number</code></td></tr><tr><td>只读</td><td><code>readonly id: number</code></td></tr><tr><td>联合</td><td><code>type Id = number | string</code></td></tr><tr><td>交叉</td><td><code>type A = B &amp; C</code></td></tr><tr><td>字面量</td><td><code>type S = "on" | "off"</code></td></tr><tr><td>函数类型</td><td><code>let f: (a: number) =&gt; void</code></td></tr></tbody></table>
+<h3 id="153-进阶">15.3 进阶</h3>
+<table><thead><tr><th>我想……</th><th>写法</th></tr></thead><tbody><tr><td>泛型函数</td><td><code>function f&lt;T&gt;(x: T): T</code></td></tr><tr><td>泛型约束</td><td><code>&lt;T extends { length: number }&gt;</code></td></tr><tr><td>泛型接口</td><td><code>interface Resp&lt;T&gt; { data: T }</code></td></tr><tr><td>断言</td><td><code>value as User</code></td></tr><tr><td>非空</td><td><code>value!</code></td></tr><tr><td>类型守卫</td><td><code>function isUser(x: unknown): x is User</code></td></tr><tr><td>工具类型</td><td><code>Partial&lt;T&gt;</code> / <code>Pick&lt;T, "id"&gt;</code> / <code>Omit&lt;T, "password"&gt;</code></td></tr><tr><td>只读数组</td><td><code>readonly string[]</code></td></tr></tbody></table>
+<h3 id="154-常用命令">15.4 常用命令</h3>
+<table><thead><tr><th>命令</th><th>作用</th></tr></thead><tbody><tr><td><code>npx tsc</code></td><td>编译</td></tr><tr><td><code>npx tsc --watch</code></td><td>监听编译</td></tr><tr><td><code>npx tsc --init</code></td><td>生成 tsconfig</td></tr><tr><td><code>npx ts-node a.ts</code></td><td>直接运行</td></tr><tr><td><code>npm i -D typescript</code></td><td>安装</td></tr><tr><td><code>npm i -D @types/node</code></td><td>装 Node 类型</td></tr></tbody></table>
+</article>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  function paint() {
+    var dark = root.getAttribute('data-theme') === 'dark';
+    btn.textContent = dark ? '☀ 浅色模式' : '🌙 深色模式';
+    btn.title = '点击切换为' + (dark ? '浅色' : '深色') + '主题';
+  }
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('manual-theme', next); } catch (e) {}
+    paint();
+  });
+  paint();
+})();
+</script>
+</body>
+</html>

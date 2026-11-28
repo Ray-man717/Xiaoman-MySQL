@@ -15,6 +15,7 @@
   想处理文字、拼接、截取、正则  |  字符串使用手册（字符串使用手册/字符串使用手册.html）
   想给程序做个窗口界面  |  Swing 使用手册（Swing使用手册/Swing使用手册.html） 或 JavaFX 使用手册（JavaFX使用手册/JavaFX使用手册.html）
   想让程序存数据、查数据  |  SQL 查询手册（SQL查询手册/SQL查询手册.html）
+  想做网页、写前端  |  HTML（HTML使用手册/HTML使用手册.html） / CSS（CSS使用手册/CSS使用手册.html） / JavaScript（JavaScript使用手册/JavaScript使用手册.html） / TypeScript（TypeScript使用手册/TypeScript使用手册.html）
   想让两台电脑互相传数据  |  网络通信使用手册（网络通信使用手册/网络通信使用手册.html）
   想调用网站接口  |  HTTP 请求详解（HTTP请求使用手册/HTTP请求使用手册.html）
   想让程序不卡、同时干多件事  |  多线程使用手册（多线程使用手册/多线程使用手册.html）
@@ -40,6 +41,10 @@
   IO  |  文件读写、CSV、编码  |  ★★☆  |  要读写文件
   命名规则  |  类、方法、变量怎么起名  |  ★☆☆  |  随时翻
   Git 仓库  |  提交、分支、推送、回滚  |  ★★☆  |  管理代码时
+  HTML  |  网页结构、标签、表单  |  ★☆☆  |  写网页第一步
+  CSS  |  样式、Flex/Grid 布局、动画  |  ★★☆  |  让页面好看
+  JavaScript  |  浏览器里的编程语言、DOM、fetch  |  ★★☆  |  让页面会动
+  TypeScript  |  给 JS 加类型、接口、泛型  |  ★★★  |  前端项目变大时
 
 ------------------------------------------------------------------------
 
