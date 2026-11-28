@@ -499,16 +499,154 @@ public int hashCode() {
 }</code></pre>
 <hr>
 <h2 id="13-并发集合">13. 并发集合</h2>
-<p>多线程同时读写普通 <code>HashMap</code> / <code>ArrayList</code> 会丢数据、抛异常甚至死循环（JDK 7 的 HashMap）。</p>
-<table><thead><tr><th>场景</th><th>并发集合</th></tr></thead><tbody><tr><td>并发的 Map</td><td><code>ConcurrentHashMap</code></td></tr><tr><td>读多写少的 List</td><td><code>CopyOnWriteArrayList</code></td></tr><tr><td>并发队列</td><td><code>ConcurrentLinkedQueue</code>、<code>ArrayBlockingQueue</code></td></tr><tr><td>并发 Set</td><td><code>ConcurrentHashMap.newKeySet()</code></td></tr></tbody></table>
+<p>多线程同时读写普通 <code>HashMap</code> / <code>ArrayList</code>，轻则丢数据，重则死循环（JDK 7 的 HashMap），一定要换并发容器或加锁。</p>
+<h3 id="131-为什么普通集合不行">13.1 为什么普通集合不行</h3>
+<pre class="language-java"><code>// 两个线程同时 add，可能丢数据
+List&lt;String&gt; list = new ArrayList&lt;&gt;();
+
+// 两个线程同时 put，可能覆盖、size 错乱；JDK 7 的 HashMap 甚至可能死循环
+Map&lt;String, Double&gt; map = new HashMap&lt;&gt;();</code></pre>
+<p>三种解决办法：</p>
+<table><thead><tr><th>办法</th><th>说明</th></tr></thead><tbody><tr><td>换并发集合</td><td><code>ConcurrentHashMap</code>、<code>CopyOnWriteArrayList</code>（推荐）</td></tr><tr><td>加锁</td><td><code>synchronized</code> 包住所有读写（简单但慢）</td></tr><tr><td>不共享</td><td>每个线程自己一份数据，最后合并（最快但要多写代码）</td></tr></tbody></table>
+<h3 id="132-concurrenthashmap-是怎么做到的">13.2 ConcurrentHashMap 是怎么做到的</h3>
+<table><thead><tr><th>版本</th><th>做法</th><th>锁粒度</th></tr></thead><tbody><tr><td>JDK 7</td><td>分段锁 <code>Segment</code>（默认 16 段）</td><td>一段</td></tr><tr><td>JDK 8+</td><td><code>CAS</code> + <code>synchronized</code> 锁<strong>桶的头节点</strong></td><td>一个桶</td></tr></tbody></table>
+<p>JDK 8 的关键点：</p>
+<ul><li>数组（桶）用 <code>volatile</code> 修饰，<strong>读操作基本不加锁</strong>；</li><li>写的时候只锁「要改的那个桶」，其他桶照样能读写；</li><li>扩容时多个线程可以一起帮忙迁移数据（transfer）；</li><li>链表长度 ≥ 8 且数组 ≥ 64 时转红黑树。</li></ul>
+<p>结果：读几乎无锁，写只影响一个桶，并发度远高于 <code>Hashtable</code>（全表锁）。</p>
+<h3 id="133-常用操作">13.3 常用操作</h3>
+<p>普通操作：</p>
 <pre class="language-java"><code>ConcurrentHashMap&lt;String, Double&gt; map = new ConcurrentHashMap&lt;&gt;();
+
+map.put("ems-01", 26.4);          // 放
+map.get("ems-01");                // 26.4
+map.getOrDefault("ems-99", 0.0);  // 0.0
+map.remove("ems-01");             // 删
+map.containsKey("ems-01");
+map.size();                       // 估算值</code></pre>
+<p><strong>原子复合操作</strong>（重点）：先查再改不是原子的，两个线程可能同时改。</p>
+<pre class="language-java"><code>// 错：先查再改，中间可能被别的线程插入
+if (!map.containsKey("ems-01")) {
+    map.put("ems-01", 0.0);
+}
+
+// 对：用原子方法
+map.putIfAbsent("ems-01", 0.0);                       // 不存在才放
+map.computeIfAbsent("ems-01", k -&gt; 0.0);              // 不存在才计算
+map.compute("ems-01", (k, v) -&gt; v == null ? 1.0 : v + 1);
+map.merge("ems-01", 1.0, Double::sum);                // 计数首选
+map.replace("ems-01", 27.0);                          // 存在才替换</code></pre>
+<table><thead><tr><th>方法</th><th>原子性</th><th>用途</th></tr></thead><tbody><tr><td><code>putIfAbsent(k, v)</code></td><td>是</td><td>只在不存在时放</td></tr><tr><td><code>computeIfAbsent(k, f)</code></td><td>是</td><td>只在不存在时计算并放</td></tr><tr><td><code>compute(k, f)</code></td><td>是</td><td>总是计算并放</td></tr><tr><td><code>merge(k, v, f)</code></td><td>是</td><td>合并旧值，计数</td></tr><tr><td><code>replace(k, v)</code></td><td>是</td><td>存在才替换</td></tr><tr><td><code>remove(k, v)</code></td><td>是</td><td>值匹配才删</td></tr></tbody></table>
+<h3 id="134-遍历size-与弱一致性">13.4 遍历、size 与弱一致性</h3>
+<pre class="language-java"><code>// 遍历：弱一致性迭代器，不会抛 ConcurrentModificationException
+for (Map.Entry&lt;String, Double&gt; e : map.entrySet()) {
+    System.out.println(e.getKey() + " = " + e.getValue());
+}
+
+// 遍历中删除是安全的
+map.entrySet().removeIf(e -&gt; e.getValue() &lt; 0);
+
+// forEach
+map.forEach((k, v) -&gt; System.out.println(k + " -&gt; " + v));</code></pre>
+<p>三个「不精确」要知道：</p>
+<table><thead><tr><th>行为</th><th>说明</th></tr></thead><tbody><tr><td><code>size()</code></td><td>并发下是<strong>估算值</strong>，可能不准</td></tr><tr><td><code>mappingCount()</code></td><td>返回 long，比 size 适合大集合，但仍不精确</td></tr><tr><td>遍历</td><td>弱一致：可能看不到最新写入，也可能看到部分更新，但<strong>不会</strong>抛异常</td></tr></tbody></table>
+<p>如果需要「精确的某一时刻快照」，自己加锁或用 <code>new HashMap&lt;&gt;(map)</code> 复制一份再遍历。</p>
+<h3 id="135-copyonwritearraylist">13.5 CopyOnWriteArrayList</h3>
+<p>原理：<strong>每次写都复制整个数组</strong>，读的时候读的是旧数组，所以读不加锁、迭代器是快照。</p>
+<pre class="language-java"><code>CopyOnWriteArrayList&lt;String&gt; devices = new CopyOnWriteArrayList&lt;&gt;();
+devices.add("ems-01");
+devices.remove("ems-01");
+
+for (String d : devices) {
+    System.out.println(d);      // 迭代器是快照，遍历时增删不影响它
+}</code></pre>
+<table><thead><tr><th>特点</th><th>说明</th></tr></thead><tbody><tr><td>读</td><td>快，不加锁</td></tr><tr><td>写</td><td>慢，每次复制整个数组（O(n)）</td></tr><tr><td>内存</td><td>写的那一刻要两份数组</td></tr><tr><td>适合</td><td>读多写少：监听器列表、设备列表、配置项</td></tr><tr><td>不适合</td><td>频繁写、几万个元素</td></tr></tbody></table>
+<h3 id="136-并发队列">13.6 并发队列</h3>
+<p><strong>ConcurrentLinkedQueue</strong>：无锁队列，适合高并发入队出队。</p>
+<pre class="language-java"><code>ConcurrentLinkedQueue&lt;String&gt; queue = new ConcurrentLinkedQueue&lt;&gt;();
+queue.offer("a");
+queue.poll();          // 取并删，空返回 null
+queue.peek();          // 只看不删</code></pre>
+<p>注意：<code>size()</code> 要遍历整个队列，O(n)，<strong>别在大队列上频繁调</strong>。</p>
+<p><strong>BlockingQueue</strong>：队列满了/空了会等待，是生产者消费者模型的标准工具。</p>
+<table><thead><tr><th>实现</th><th>特点</th><th>场景</th></tr></thead><tbody><tr><td><code>ArrayBlockingQueue(n)</code></td><td>有界数组队列</td><td>固定容量缓冲</td></tr><tr><td><code>LinkedBlockingQueue(n)</code></td><td>可选有界链表队列</td><td>吞吐高</td></tr><tr><td><code>PriorityBlockingQueue</code></td><td>按优先级出队</td><td>任务调度</td></tr><tr><td><code>SynchronousQueue</code></td><td>不存储，必须直接交给消费者</td><td>线程池 handing-off</td></tr><tr><td><code>DelayQueue</code></td><td>延迟到期才能取</td><td>定时任务、缓存过期</td></tr></tbody></table>
+<pre class="language-java"><code>BlockingQueue&lt;String&gt; queue = new ArrayBlockingQueue&lt;&gt;(100);
+
+// 生产者
+queue.put("data");              // 满了阻塞
+queue.offer("data");            // 满了返回 false
+queue.offer("data", 1, TimeUnit.SECONDS);   // 等 1 秒
+
+// 消费者
+String item = queue.take();     // 空了阻塞
+String item2 = queue.poll(1, TimeUnit.SECONDS);  // 等 1 秒，超时返回 null</code></pre>
+<h3 id="137-有序的并发集合">13.7 有序的并发集合</h3>
+<p><code>ConcurrentSkipListMap</code> / <code>ConcurrentSkipListSet</code>：基于跳表，<strong>有序 + 并发安全</strong>，可以替代 <code>TreeMap</code> 在并发场景使用。</p>
+<pre class="language-java"><code>ConcurrentSkipListMap&lt;String, Double&gt; map = new ConcurrentSkipListMap&lt;&gt;();
+map.put("ems-02", 27.0);
 map.put("ems-01", 26.4);
-map.putIfAbsent("ems-02", 27.0);
-map.computeIfAbsent("ems-03", k -&gt; 0.0);
-map.merge("ems-01", 0.5, Double::sum);</code></pre>
-<p>注意：</p>
-<ul><li><code>ConcurrentHashMap</code> <strong>不允许 null 键和 null 值</strong>；</li><li>遍历时删除是安全的（弱一致性迭代器，不会抛 <code>ConcurrentModificationException</code>）；</li><li><code>size()</code> 在并发下是估算值，不精确。</li></ul>
-<p><code>Collections.synchronizedMap</code> 也能用，但全表锁，性能不如 <code>ConcurrentHashMap</code>。</p>
+
+map.firstKey();          // "ems-01"，有序
+map.lastKey();           // "ems-02"
+map.headMap("ems-02");   // 小于 "ems-02" 的部分</code></pre>
+<p>性能比 <code>ConcurrentHashMap</code> 稍差（O(log n)），但能排序、能范围查询。</p>
+<h3 id="138-实战五个常见场景">13.8 实战：五个常见场景</h3>
+<p><strong>场景一：在线设备表</strong></p>
+<pre class="language-java"><code>ConcurrentHashMap&lt;String, Device&gt; online = new ConcurrentHashMap&lt;&gt;();
+
+online.put(deviceId, device);                    // 上线
+online.remove(deviceId);                         // 下线
+boolean onlineNow = online.containsKey(deviceId);
+int count = online.size();
+
+// 原子地「没有就新建」
+Device d = online.computeIfAbsent(deviceId, id -&gt; new Device(id));</code></pre>
+<p><strong>场景二：计数器</strong></p>
+<pre class="language-java"><code>ConcurrentHashMap&lt;String, Integer&gt; count = new ConcurrentHashMap&lt;&gt;();
+count.merge(deviceId, 1, Integer::sum);          // 每个设备上报次数 +1</code></pre>
+<p>如果只是单纯计数、不需要按 key，用 <code>LongAdder</code> 更快：</p>
+<pre class="language-java"><code>LongAdder total = new LongAdder();
+total.increment();
+long v = total.sum();</code></pre>
+<p><strong>场景三：本地缓存</strong></p>
+<pre class="language-java"><code>ConcurrentHashMap&lt;String, CachedValue&gt; cache = new ConcurrentHashMap&lt;&gt;();
+
+CachedValue get(String key) {
+    return cache.computeIfAbsent(key, k -&gt; loadFromDb(k));
+}
+
+// 简单的过期清理
+cache.entrySet().removeIf(e -&gt; e.getValue().isExpired());</code></pre>
+<p><strong>场景四：广播给所有监听者</strong></p>
+<pre class="language-java"><code>CopyOnWriteArrayList&lt;Listener&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+
+listeners.add(listener);
+listeners.remove(listener);
+
+for (Listener l : listeners) {      // 遍历快照，增删安全
+    l.onEvent(event);
+}</code></pre>
+<p><strong>场景五：生产者消费者</strong></p>
+<pre class="language-java"><code>BlockingQueue&lt;Task&gt; queue = new ArrayBlockingQueue&lt;&gt;(500);
+
+// 消费者
+new Thread(() -&gt; {
+    while (true) {
+        try {
+            Task task = queue.take();
+            handle(task);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+        }
+    }
+}).start();
+
+// 生产者
+queue.put(task);</code></pre>
+<h3 id="139-选型表">13.9 选型表</h3>
+<table><thead><tr><th>需求</th><th>用什么</th><th>备注</th></tr></thead><tbody><tr><td>并发 Map</td><td><code>ConcurrentHashMap</code></td><td>不允许 null</td></tr><tr><td>并发 Set</td><td><code>ConcurrentHashMap.newKeySet()</code></td><td></td></tr><tr><td>有序并发 Map</td><td><code>ConcurrentSkipListMap</code></td><td>O(log n)</td></tr><tr><td>读多写少 List</td><td><code>CopyOnWriteArrayList</code></td><td>写会复制整个数组</td></tr><tr><td>高并发队列</td><td><code>ConcurrentLinkedQueue</code></td><td>size 是 O(n)</td></tr><tr><td>生产者消费者</td><td><code>ArrayBlockingQueue</code> / <code>LinkedBlockingQueue</code></td><td>有界更安全</td></tr><tr><td>延迟任务</td><td><code>DelayQueue</code></td><td></td></tr><tr><td>已有集合要加锁</td><td><code>Collections.synchronizedMap(new HashMap&lt;&gt;())</code></td><td>全表锁，慢</td></tr></tbody></table>
+<h3 id="1310-常见坑">13.10 常见坑</h3>
+<table><thead><tr><th>坑</th><th>现象</th><th>解决</th></tr></thead><tbody><tr><td>把 <code>ConcurrentHashMap</code> 当普通 Map 用「先查再改」</td><td>并发下丢更新</td><td>用 <code>compute</code>/<code>merge</code>/<code>putIfAbsent</code></td></tr><tr><td>往 CHM 里放 null</td><td><code>NullPointerException</code></td><td>用 <code>getOrDefault</code>、<code>Optional</code></td></tr><tr><td>以为 <code>size()</code> 精确</td><td>计数偶尔不对</td><td>用 <code>mappingCount</code> 或自己维护 <code>LongAdder</code></td></tr><tr><td>遍历时依赖最新数据</td><td>读不到刚写入的</td><td>弱一致性，需要精确就复制一份</td></tr><tr><td>用 <code>CopyOnWriteArrayList</code> 存频繁写的数据</td><td>卡顿、内存涨</td><td>换 <code>ArrayList</code> + 锁，或 <code>ConcurrentLinkedQueue</code></td></tr><tr><td>在 CHM 上 <code>synchronized(map)</code> 做复合操作</td><td>锁不住内部桶</td><td>用原子方法，别自己加锁</td></tr><tr><td><code>ConcurrentLinkedQueue.size()</code> 频繁调用</td><td>变慢</td><td>只在必要时调，或用计数器</td></tr><tr><td><code>Hashtable</code> 当并发容器</td><td>性能差</td><td>换 <code>ConcurrentHashMap</code></td></tr><tr><td>多线程共享普通 <code>ArrayList</code></td><td>丢数据、<code>ArrayIndexOutOfBoundsException</code></td><td>换并发容器或加锁</td></tr><tr><td>以为并发集合能替代事务</td><td>多个操作组合仍不原子</td><td>组合操作用锁或单线程化</td></tr></tbody></table>
 <hr>
 <h2 id="14-性能对比与选择">14. 性能对比与选择</h2>
 <h3 id="141-时间复杂度">14.1 时间复杂度</h3>
@@ -739,7 +877,7 @@ for (String s : list) {
 <table><thead><tr><th>我想……</th><th>代码</th></tr></thead><tbody><tr><td>并发 Map</td><td><code>new ConcurrentHashMap&lt;&gt;()</code></td></tr><tr><td>并发 List</td><td><code>new CopyOnWriteArrayList&lt;&gt;()</code></td></tr><tr><td>并发 Set</td><td><code>ConcurrentHashMap.newKeySet()</code></td></tr><tr><td>只读包装</td><td><code>Collections.unmodifiableMap(map)</code></td></tr></tbody></table>
 <hr>
 <h2 id="附代码与注释对照表">附：代码与注释对照表</h2>
-<table><thead><tr><th>代码</th><th>作用（注释）</th><th>参数/说明</th></tr></thead><tbody><tr><td><strong>一、List</strong></td><td></td><td></td></tr><tr><td><code>new ArrayList&lt;&gt;()</code></td><td>创建列表</td><td>默认容量 10，扩容 ×1.5</td></tr><tr><td><code>list.add(x)</code></td><td>追加</td><td>返回 boolean</td></tr><tr><td><code>list.get(i)</code></td><td>取</td><td>下标从 0</td></tr><tr><td><code>list.remove(i)</code></td><td>按删下标</td><td>返回被删元素</td></tr><tr><td><code>list.remove(x)</code></td><td>按值删</td><td>删第一个匹配</td></tr><tr><td><code>list.size()</code></td><td>长度</td><td></td></tr><tr><td><code>list.contains(x)</code></td><td>是否包含</td><td>用 equals 比较</td></tr><tr><td><code>Collections.sort(list)</code></td><td>排序</td><td>元素要可比较</td></tr><tr><td><code>new LinkedList&lt;&gt;()</code></td><td>链表</td><td>头尾增删快</td></tr><tr><td><strong>二、Set</strong></td><td></td><td></td></tr><tr><td><code>new HashSet&lt;&gt;()</code></td><td>哈希集合</td><td>无序、不重复</td></tr><tr><td><code>set.add(x)</code></td><td>加</td><td>已存在返回 false</td></tr><tr><td><code>set.contains(x)</code></td><td>是否包含</td><td></td></tr><tr><td><code>new LinkedHashSet&lt;&gt;()</code></td><td>保持插入顺序</td><td></td></tr><tr><td><code>new TreeSet&lt;&gt;()</code></td><td>排序集合</td><td>key 要可比较</td></tr><tr><td><code>set.size()</code></td><td>大小</td><td></td></tr><tr><td><strong>三、Map 基本</strong></td><td></td><td></td></tr><tr><td><code>new HashMap&lt;&gt;()</code></td><td>哈希表</td><td>最常用</td></tr><tr><td><code>map.put(k, v)</code></td><td>放</td><td>返回旧值</td></tr><tr><td><code>map.get(k)</code></td><td>取</td><td>没有返回 null</td></tr><tr><td><code>map.getOrDefault(k, d)</code></td><td>取或默认</td><td></td></tr><tr><td><code>map.putIfAbsent(k, v)</code></td><td>不存在才放</td><td></td></tr><tr><td><code>map.containsKey(k)</code></td><td>是否含键</td><td></td></tr><tr><td><code>map.remove(k)</code></td><td>删</td><td>返回旧值</td></tr><tr><td><code>map.size()</code></td><td>大小</td><td></td></tr><tr><td><code>new HashMap&lt;&gt;(1024)</code></td><td>指定初始容量</td><td>避免扩容</td></tr><tr><td><strong>四、Map 高级</strong></td><td></td><td></td></tr><tr><td><code>map.computeIfAbsent(k, f)</code></td><td>不存在才计算并放</td><td>分组常用</td></tr><tr><td><code>map.compute(k, f)</code></td><td>总是计算并放</td><td></td></tr><tr><td><code>map.merge(k, v, f)</code></td><td>合并</td><td>计数用 <code>Integer::sum</code></td></tr><tr><td><code>map.replace(k, v)</code></td><td>存在才替换</td><td></td></tr><tr><td><code>map.forEach((k, v) -&gt; ...)</code></td><td>遍历</td><td></td></tr><tr><td><code>map.entrySet()</code></td><td>键值对集合</td><td>遍历首选</td></tr><tr><td><code>map.keySet()</code></td><td>键集合</td><td></td></tr><tr><td><code>map.values()</code></td><td>值集合</td><td></td></tr><tr><td><strong>五、遍历删除与排序</strong></td><td></td><td></td></tr><tr><td><code>Iterator it = map.entrySet().iterator()</code></td><td>迭代器</td><td>遍历删除用</td></tr><tr><td><code>it.remove()</code></td><td>迭代器删除</td><td>安全</td></tr><tr><td><code>map.entrySet().removeIf(e -&gt; ...)</code></td><td>条件删除</td><td>JDK 8+</td></tr><tr><td><code>new ArrayList&lt;&gt;(map.entrySet())</code></td><td>转列表</td><td>排序前</td></tr><tr><td><code>list.sort((a, b) -&gt; ...)</code></td><td>自定义排序</td><td></td></tr><tr><td><strong>六、其它实现</strong></td><td></td><td></td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式线程安全 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>new LinkedHashMap&lt;&gt;(16, 0.75f, true)</code></td><td>访问顺序</td><td>LRU 用</td></tr><tr><td><code>removeEldestEntry(...)</code></td><td>淘汰策略</td><td>超过大小返回 true</td></tr><tr><td><code>new TreeMap&lt;&gt;(Comparator.reverseOrder())</code></td><td>倒序 Map</td><td>key 要可比较</td></tr><tr><td><code>new ConcurrentHashMap&lt;&gt;()</code></td><td>并发 Map</td><td>不允许 null</td></tr><tr><td><code>ConcurrentHashMap.newKeySet()</code></td><td>并发 Set</td><td></td></tr><tr><td><code>Collections.unmodifiableMap(map)</code></td><td>只读包装</td><td>改会抛异常</td></tr><tr><td><code>Map.of("a", 1)</code></td><td>不可变 Map</td><td>JDK 9+</td></tr><tr><td><strong>七、老式集合</strong></td><td></td><td></td></tr><tr><td><code>new Vector&lt;&gt;()</code></td><td>老式 List</td><td>所有方法同步，推荐 ArrayList</td></tr><tr><td><code>v.addElement("a")</code></td><td>老式添加</td><td>等价 <code>add</code></td></tr><tr><td><code>v.elementAt(0)</code></td><td>老式取</td><td>等价 <code>get</code></td></tr><tr><td><code>new Stack&lt;&gt;()</code></td><td>老式栈</td><td>推荐 <code>ArrayDeque</code></td></tr><tr><td><code>stack.push(x)</code> / <code>pop()</code></td><td>压栈/弹栈</td><td>Deque 同名方法</td></tr><tr><td><code>stack.search(x)</code></td><td>距栈顶位置</td><td>找不到 -1</td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>table.keys()</code> / <code>elements()</code></td><td>返回 Enumeration</td><td>用 <code>keySet</code>/<code>values</code></td></tr><tr><td><code>new Properties()</code></td><td>配置文件</td><td>继承 Hashtable</td></tr><tr><td><code>prop.getProperty("k", "默认")</code></td><td>读配置</td><td>第二个参数是默认值</td></tr><tr><td><code>prop.setProperty("k", "v")</code></td><td>写配置</td><td>不能传 null</td></tr><tr><td><code>prop.load(reader)</code> / <code>store(writer, "注释")</code></td><td>读/写文件</td><td></td></tr><tr><td><code>new BitSet()</code></td><td>位集合</td><td><code>set</code>/<code>get</code>/<code>cardinality</code></td></tr><tr><td><code>Enumeration e = v.elements()</code></td><td>老式遍历</td><td>用 <code>Iterator</code> 替代</td></tr><tr><td><code>e.hasMoreElements()</code> / <code>nextElement()</code></td><td>老式取元素</td><td><code>hasNext</code>/<code>next</code></td></tr></tbody></table>
+<table><thead><tr><th>代码</th><th>作用（注释）</th><th>参数/说明</th></tr></thead><tbody><tr><td><strong>一、List</strong></td><td></td><td></td></tr><tr><td><code>new ArrayList&lt;&gt;()</code></td><td>创建列表</td><td>默认容量 10，扩容 ×1.5</td></tr><tr><td><code>list.add(x)</code></td><td>追加</td><td>返回 boolean</td></tr><tr><td><code>list.get(i)</code></td><td>取</td><td>下标从 0</td></tr><tr><td><code>list.remove(i)</code></td><td>按删下标</td><td>返回被删元素</td></tr><tr><td><code>list.remove(x)</code></td><td>按值删</td><td>删第一个匹配</td></tr><tr><td><code>list.size()</code></td><td>长度</td><td></td></tr><tr><td><code>list.contains(x)</code></td><td>是否包含</td><td>用 equals 比较</td></tr><tr><td><code>Collections.sort(list)</code></td><td>排序</td><td>元素要可比较</td></tr><tr><td><code>new LinkedList&lt;&gt;()</code></td><td>链表</td><td>头尾增删快</td></tr><tr><td><strong>二、Set</strong></td><td></td><td></td></tr><tr><td><code>new HashSet&lt;&gt;()</code></td><td>哈希集合</td><td>无序、不重复</td></tr><tr><td><code>set.add(x)</code></td><td>加</td><td>已存在返回 false</td></tr><tr><td><code>set.contains(x)</code></td><td>是否包含</td><td></td></tr><tr><td><code>new LinkedHashSet&lt;&gt;()</code></td><td>保持插入顺序</td><td></td></tr><tr><td><code>new TreeSet&lt;&gt;()</code></td><td>排序集合</td><td>key 要可比较</td></tr><tr><td><code>set.size()</code></td><td>大小</td><td></td></tr><tr><td><strong>三、Map 基本</strong></td><td></td><td></td></tr><tr><td><code>new HashMap&lt;&gt;()</code></td><td>哈希表</td><td>最常用</td></tr><tr><td><code>map.put(k, v)</code></td><td>放</td><td>返回旧值</td></tr><tr><td><code>map.get(k)</code></td><td>取</td><td>没有返回 null</td></tr><tr><td><code>map.getOrDefault(k, d)</code></td><td>取或默认</td><td></td></tr><tr><td><code>map.putIfAbsent(k, v)</code></td><td>不存在才放</td><td></td></tr><tr><td><code>map.containsKey(k)</code></td><td>是否含键</td><td></td></tr><tr><td><code>map.remove(k)</code></td><td>删</td><td>返回旧值</td></tr><tr><td><code>map.size()</code></td><td>大小</td><td></td></tr><tr><td><code>new HashMap&lt;&gt;(1024)</code></td><td>指定初始容量</td><td>避免扩容</td></tr><tr><td><strong>四、Map 高级</strong></td><td></td><td></td></tr><tr><td><code>map.computeIfAbsent(k, f)</code></td><td>不存在才计算并放</td><td>分组常用</td></tr><tr><td><code>map.compute(k, f)</code></td><td>总是计算并放</td><td></td></tr><tr><td><code>map.merge(k, v, f)</code></td><td>合并</td><td>计数用 <code>Integer::sum</code></td></tr><tr><td><code>map.replace(k, v)</code></td><td>存在才替换</td><td></td></tr><tr><td><code>map.forEach((k, v) -&gt; ...)</code></td><td>遍历</td><td></td></tr><tr><td><code>map.entrySet()</code></td><td>键值对集合</td><td>遍历首选</td></tr><tr><td><code>map.keySet()</code></td><td>键集合</td><td></td></tr><tr><td><code>map.values()</code></td><td>值集合</td><td></td></tr><tr><td><strong>五、遍历删除与排序</strong></td><td></td><td></td></tr><tr><td><code>Iterator it = map.entrySet().iterator()</code></td><td>迭代器</td><td>遍历删除用</td></tr><tr><td><code>it.remove()</code></td><td>迭代器删除</td><td>安全</td></tr><tr><td><code>map.entrySet().removeIf(e -&gt; ...)</code></td><td>条件删除</td><td>JDK 8+</td></tr><tr><td><code>new ArrayList&lt;&gt;(map.entrySet())</code></td><td>转列表</td><td>排序前</td></tr><tr><td><code>list.sort((a, b) -&gt; ...)</code></td><td>自定义排序</td><td></td></tr><tr><td><strong>六、其它实现</strong></td><td></td><td></td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式线程安全 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>new LinkedHashMap&lt;&gt;(16, 0.75f, true)</code></td><td>访问顺序</td><td>LRU 用</td></tr><tr><td><code>removeEldestEntry(...)</code></td><td>淘汰策略</td><td>超过大小返回 true</td></tr><tr><td><code>new TreeMap&lt;&gt;(Comparator.reverseOrder())</code></td><td>倒序 Map</td><td>key 要可比较</td></tr><tr><td><code>new ConcurrentHashMap&lt;&gt;()</code></td><td>并发 Map</td><td>不允许 null</td></tr><tr><td><code>ConcurrentHashMap.newKeySet()</code></td><td>并发 Set</td><td></td></tr><tr><td><code>Collections.unmodifiableMap(map)</code></td><td>只读包装</td><td>改会抛异常</td></tr><tr><td><code>Map.of("a", 1)</code></td><td>不可变 Map</td><td>JDK 9+</td></tr><tr><td><strong>七、老式集合</strong></td><td></td><td></td></tr><tr><td><code>new Vector&lt;&gt;()</code></td><td>老式 List</td><td>所有方法同步，推荐 ArrayList</td></tr><tr><td><code>v.addElement("a")</code></td><td>老式添加</td><td>等价 <code>add</code></td></tr><tr><td><code>v.elementAt(0)</code></td><td>老式取</td><td>等价 <code>get</code></td></tr><tr><td><code>new Stack&lt;&gt;()</code></td><td>老式栈</td><td>推荐 <code>ArrayDeque</code></td></tr><tr><td><code>stack.push(x)</code> / <code>pop()</code></td><td>压栈/弹栈</td><td>Deque 同名方法</td></tr><tr><td><code>stack.search(x)</code></td><td>距栈顶位置</td><td>找不到 -1</td></tr><tr><td><code>new Hashtable&lt;&gt;()</code></td><td>老式 Map</td><td>不允许 null，推荐 CHM</td></tr><tr><td><code>table.keys()</code> / <code>elements()</code></td><td>返回 Enumeration</td><td>用 <code>keySet</code>/<code>values</code></td></tr><tr><td><code>new Properties()</code></td><td>配置文件</td><td>继承 Hashtable</td></tr><tr><td><code>prop.getProperty("k", "默认")</code></td><td>读配置</td><td>第二个参数是默认值</td></tr><tr><td><code>prop.setProperty("k", "v")</code></td><td>写配置</td><td>不能传 null</td></tr><tr><td><code>prop.load(reader)</code> / <code>store(writer, "注释")</code></td><td>读/写文件</td><td></td></tr><tr><td><code>new BitSet()</code></td><td>位集合</td><td><code>set</code>/<code>get</code>/<code>cardinality</code></td></tr><tr><td><code>Enumeration e = v.elements()</code></td><td>老式遍历</td><td>用 <code>Iterator</code> 替代</td></tr><tr><td><code>e.hasMoreElements()</code> / <code>nextElement()</code></td><td>老式取元素</td><td><code>hasNext</code>/<code>next</code></td></tr><tr><td><strong>八、并发集合</strong></td><td></td><td></td></tr><tr><td><code>new ConcurrentHashMap&lt;&gt;()</code></td><td>并发 Map</td><td>不允许 null 键值</td></tr><tr><td><code>map.putIfAbsent(k, v)</code></td><td>原子放</td><td>不存在才放</td></tr><tr><td><code>map.computeIfAbsent(k, f)</code></td><td>原子计算</td><td>缓存常用</td></tr><tr><td><code>map.merge(k, 1, Integer::sum)</code></td><td>原子计数</td><td>最简洁的计数</td></tr><tr><td><code>map.mappingCount()</code></td><td>元素数量（long）</td><td>估算值</td></tr><tr><td><code>new CopyOnWriteArrayList&lt;&gt;()</code></td><td>读多写少 List</td><td>写时复制</td></tr><tr><td><code>new ArrayBlockingQueue&lt;&gt;(100)</code></td><td>有界阻塞队列</td><td><code>put</code>/<code>take</code></td></tr><tr><td><code>queue.put(x)</code> / <code>queue.take()</code></td><td>阻塞放/取</td><td>满了/空了会等</td></tr><tr><td><code>new ConcurrentLinkedQueue&lt;&gt;()</code></td><td>无锁队列</td><td><code>size</code> 是 O(n)</td></tr><tr><td><code>new ConcurrentSkipListMap&lt;&gt;()</code></td><td>有序并发 Map</td><td>可范围查询</td></tr><tr><td><code>LongAdder.increment()</code></td><td>并发计数</td><td><code>sum()</code> 取总数</td></tr></tbody></table>
 </article>
 <script>
 (function () {
